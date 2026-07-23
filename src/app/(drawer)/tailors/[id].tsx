@@ -47,7 +47,7 @@ export default function TailorDetailsScreen() {
               color={tailor.is_available ? '#16a34a' : '#d97706'}
             />
             {tailor.is_featured ? (
-              <Badge label="Featured" backgroundColor="#ede9fe" color="#7c3aed" />
+              <Badge label="Featured" backgroundColor="#e0f7f8" color="#0c6c75" />
             ) : null}
           </View>
         </Card>

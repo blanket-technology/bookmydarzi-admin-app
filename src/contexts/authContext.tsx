@@ -35,7 +35,6 @@ interface AuthContextValue {
     user: AuthUser;
     accessToken: string;
     refreshToken: string;
-    selectedRole: LoginRole;
   }) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
@@ -78,10 +77,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       user: AuthUser;
       accessToken: string;
       refreshToken: string;
-      selectedRole: LoginRole;
     }) => {
       await tokenStorage.setTokens(payload.accessToken, payload.refreshToken);
-      storeLogin(payload);
+      // There's no role selector to trust — selectedRole is derived from the
+      // server-verified user.role and only ever used as a fallback while a
+      // fresh session's user profile is still loading (see
+      // constants/permissions.ts resolvePermissions). superadmin maps to the
+      // 'admin' LoginRole since resolvePermissions already grants them
+      // identical (full) permissions everywhere.
+      const derivedRole: LoginRole = payload.user.role === 'superadmin' ? 'admin' : (payload.user.role as LoginRole);
+      storeLogin({ ...payload, selectedRole: derivedRole });
     },
     [storeLogin],
   );

@@ -7,4 +7,5 @@ export const useDashboard = (enabled = true) =>
     queryKey: QUERY_KEYS.DASHBOARD,
     queryFn: adminService.getDashboard,
     enabled,
+    retry: false,
   });

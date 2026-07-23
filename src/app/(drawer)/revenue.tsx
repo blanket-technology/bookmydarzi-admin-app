@@ -29,7 +29,7 @@ export default function RevenueScreen() {
         />
       ) : (
         <ScrollView className="px-5">
-          <View className="flex-row flex-wrap justify-between">
+          <View className="flex-row flex-wrap" style={{ gap: 12 }}>
             <StatCard
               title="Total Revenue"
               value={formatCurrency(Number(stats?.total_revenue ?? 0))}

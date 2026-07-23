@@ -21,6 +21,33 @@ export interface AdminUsersResponse {
   total?: number;
 }
 
+// Raw shape of GET /admin/users rows and GET /admin/users/{id} — backend
+// returns build_admin_user_list_item()/UserResponse directly (PascalCase),
+// not the snake_case AdminUserItem shape above. Normalized client-side by
+// customerService so screens (customers/index.tsx, customers/[id].tsx) only
+// ever see AdminUserItem.
+export interface RawAdminUser {
+  Id: number;
+  UserCode?: string | null;
+  FirstName?: string | null;
+  LastName?: string | null;
+  FullName?: string | null;
+  Email?: string | null;
+  Mobile?: string | null;
+  Role: string;
+  IsActive: boolean;
+  IsEmailVerified?: boolean;
+  IsMobileVerified?: boolean;
+  CreatedAt?: string | null;
+}
+
+export interface RawAdminUsersResponse {
+  users: RawAdminUser[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface UserStatusUpdateRequest {
   action: 'activate' | 'deactivate';
 }

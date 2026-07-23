@@ -10,4 +10,12 @@ export const QUERY_KEYS = {
   APPLICATIONS: (params?: Record<string, unknown>) => ['applications', params] as const,
   APPLICATION: (id: string) => ['application', id] as const,
   PROFILE: ['profile'] as const,
+  PAYMENT_BY_ORDER: (orderId: string) => ['payment', 'order', orderId] as const,
+  PAYMENT_REFUNDS: (paymentId: string) => ['payment', paymentId, 'refunds'] as const,
+  ORDER_PHOTOS: (orderId: string) => ['order-photos', orderId] as const,
+  NOTIFICATIONS: (params?: Record<string, unknown>) => ['notifications', params] as const,
+  NOTIFICATIONS_UNREAD_COUNT: ['notifications', 'unread-count'] as const,
+  CHAT_SESSIONS: (params?: Record<string, unknown>) => ['chat-sessions', params] as const,
+  CHAT_MESSAGES: (sessionUuid: string) => ['chat-messages', sessionUuid] as const,
+  CHAT_QUICK_REPLIES: ['chat-quick-replies'] as const,
 } as const;

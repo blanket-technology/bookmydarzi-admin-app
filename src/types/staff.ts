@@ -40,8 +40,6 @@ export interface StaffCreateResponse {
   message?: string;
 }
 
-export interface StaffListResponse {
-  staff?: AdminStaffListItem[];
-  items?: AdminStaffListItem[];
-  total?: number;
-}
+// GET /admin/staff returns a bare JSON array (response_model=List[AdminStaffListItem]),
+// not a {staff:[...]} / {items:[...]} wrapper.
+export type StaffListResponse = AdminStaffListItem[];

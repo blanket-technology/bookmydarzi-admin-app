@@ -3,6 +3,11 @@ export interface AdminDashboardUsers {
   active?: number;
 }
 
+export interface AdminDashboardEmployees {
+  total?: number;
+  active?: number;
+}
+
 export interface AdminDashboardOrders {
   total?: number;
   today?: number;
@@ -23,12 +28,20 @@ export interface AdminDashboardPayments {
   successful?: number;
 }
 
+export interface AdminDashboardTailors {
+  active?: number;
+  available?: number;
+  busy?: number;
+}
+
 /** Shape returned by GET /admin/dashboard */
 export interface AdminDashboardApiResponse {
   users?: AdminDashboardUsers;
+  employees?: AdminDashboardEmployees;
   orders?: AdminDashboardOrders;
   revenue?: AdminDashboardRevenue;
   payments?: AdminDashboardPayments;
+  tailors?: AdminDashboardTailors;
 }
 
 export interface DashboardStats {
@@ -99,9 +112,11 @@ export interface DashboardAssignmentItem {
 
 export interface DashboardResponse {
   users?: AdminDashboardUsers;
+  employees?: AdminDashboardEmployees;
   orders?: AdminDashboardOrders;
   revenue?: AdminDashboardRevenue;
   payments?: AdminDashboardPayments;
+  tailors?: AdminDashboardTailors;
   welcome?: {
     admin_name?: string;
     greeting?: string;

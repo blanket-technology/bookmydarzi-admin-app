@@ -48,6 +48,8 @@ export default function DrawerLayout() {
         <Drawer.Screen name="measurements" options={{ title: 'Measurements' }} />
         <Drawer.Screen name="revenue" options={{ title: 'Revenue' }} />
         <Drawer.Screen name="notifications" options={{ title: 'Notifications' }} />
+        <Drawer.Screen name="chat/index" options={{ title: 'Chat' }} />
+        <Drawer.Screen name="chat/[sessionId]" options={{ drawerItemStyle: { display: 'none' } }} />
         <Drawer.Screen name="settings" options={{ title: 'Settings' }} />
         <Drawer.Screen name="profile" options={{ title: 'Profile' }} />
       </Drawer>

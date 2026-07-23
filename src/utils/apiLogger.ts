@@ -42,6 +42,18 @@ export const logApiResponse = (
   });
 };
 
+// 4xx client errors the app already renders proper UI feedback for (wrong
+// credentials, validation errors, not-found) are expected traffic, not bugs —
+// logging them as console.error triggers Expo's red-screen overlay and makes
+// a normal "user mistyped their password" look like a crash. Only genuinely
+// unexpected failures (5xx, network errors, and 401s outside the login flow,
+// which usually mean a stale/invalid session) warrant console.error.
+const isExpectedClientError = (status: number, url: string): boolean => {
+  if (status === 404 || status === 422) return true;
+  if (status === 401 && url.includes('/auth/')) return true;
+  return false;
+};
+
 export const logApiError = (error: AxiosError | unknown) => {
   if (!__DEV__) return;
 
@@ -51,10 +63,12 @@ export const logApiError = (error: AxiosError | unknown) => {
     : 'unknown';
 
   if (axiosError.response) {
-    console.error('[API Error]', {
+    const status = axiosError.response.status;
+    const log = isExpectedClientError(status, url) ? console.warn : console.error;
+    log('[API Error]', {
       url,
       method: axiosError.config?.method?.toUpperCase(),
-      status: axiosError.response.status,
+      status,
       statusText: axiosError.response.statusText,
       responseBody: axiosError.response.data,
       message: axiosError.message,

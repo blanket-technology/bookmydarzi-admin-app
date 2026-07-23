@@ -17,11 +17,11 @@ import {
   SearchBar,
   SkeletonList,
 } from '@/components/ui';
-import { ORDER_STATUS_COLORS, ORDER_STATUS_OPTIONS } from '@/constants/orderStatus';
+import { ORDER_STATUS_COLORS, ORDER_STATUS_OPTIONS, orderStatusLabel } from '@/constants/orderStatus';
 import { useOrders } from '@/features/orders/hooks/useOrders';
 import { useTheme } from '@/hooks/useTheme';
 import type { AdminOrderItem } from '@/types/orders';
-import { capitalize, formatApiErrorDetail, formatCurrency, formatDate } from '@/utils/errors';
+import { formatApiErrorDetail, formatCurrency, formatDate } from '@/utils/errors';
 
 const LIMIT = 10;
 
@@ -64,7 +64,7 @@ export default function OrdersScreen() {
             </Text>
           </View>
           <Badge
-            label={capitalize(item.status)}
+            label={orderStatusLabel(item.status)}
             backgroundColor={`${statusColor}20`}
             color={statusColor}
           />
@@ -77,6 +77,11 @@ export default function OrdersScreen() {
             {formatCurrency(item.final_amount ?? item.amount)}
           </Text>
         </View>
+        {typeof item.remaining_amount === 'number' && item.remaining_amount > 0 ? (
+          <Text className="text-xs mt-1" style={{ color: colors.error }}>
+            Balance due: {formatCurrency(item.remaining_amount)}
+          </Text>
+        ) : null}
       </Pressable>
     );
   };

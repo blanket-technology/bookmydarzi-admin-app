@@ -36,12 +36,9 @@ const isAuthRoute = (url?: string): boolean => {
   if (!url) return false;
   return (
     url.includes(ENDPOINTS.AUTH.LOGIN) ||
+    url.includes(ENDPOINTS.AUTH.LOGIN_VERIFY_OTP) ||
+    url.includes(ENDPOINTS.AUTH.LOGIN_RESEND_OTP) ||
     url.includes(ENDPOINTS.AUTH.REFRESH) ||
-    url.includes(ENDPOINTS.AUTH.SIGNUP) ||
-    url.includes(ENDPOINTS.AUTH.VERIFY_OTP) ||
-    url.includes(ENDPOINTS.AUTH.RESEND_OTP) ||
-    url.includes(ENDPOINTS.AUTH.MOBILE_REQUEST_OTP) ||
-    url.includes(ENDPOINTS.AUTH.MOBILE_VERIFY_OTP) ||
     url.includes(ENDPOINTS.AUTH.FORGOT_PASSWORD_REQUEST) ||
     url.includes(ENDPOINTS.AUTH.FORGOT_PASSWORD_VERIFY) ||
     url.includes(ENDPOINTS.AUTH.FORGOT_PASSWORD_RESET)

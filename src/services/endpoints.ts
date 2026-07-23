@@ -1,20 +1,16 @@
 export const ENDPOINTS = {
   AUTH: {
     LOGIN: '/api/v1/auth/email/login',
+    LOGIN_VERIFY_OTP: '/api/v1/auth/email/login/verify-otp',
+    LOGIN_RESEND_OTP: '/api/v1/auth/email/login/resend-otp',
     REFRESH: '/api/v1/auth/refresh',
     LOGOUT: '/api/v1/auth/logout',
-    MOBILE_REQUEST_OTP: '/api/v1/auth/mobile/request-otp',
-    MOBILE_VERIFY_OTP: '/api/v1/auth/mobile/verify-otp',
-    SIGNUP: '/api/v1/auth/email/signup',
-    VERIFY_OTP: '/api/v1/auth/email/verify-otp',
-    RESEND_OTP: '/api/v1/auth/email/resend-otp',
     FORGOT_PASSWORD_REQUEST: '/api/v1/auth/forgot-password/request',
     FORGOT_PASSWORD_VERIFY: '/api/v1/auth/forgot-password/verify',
     FORGOT_PASSWORD_RESET: '/api/v1/auth/forgot-password/reset',
   },
   USERS: {
     PROFILE: '/api/v1/users/profile',
-    ME: '/api/v1/users/me',
     CHANGE_PASSWORD: '/api/v1/users/change-password',
   },
   ADMIN: {
@@ -54,5 +50,44 @@ export const ENDPOINTS = {
     HOMEPAGE_OFFERS: '/api/v1/admin/homepage/offers',
     HOMEPAGE_OFFER: (offerId: string) => `/api/v1/admin/homepage/offers/${offerId}`,
     HOMEPAGE_CACHE_CLEAR: '/api/v1/admin/homepage/cache/clear',
+  },
+  EMPLOYEE: {
+    ORDER_ACCEPT: (orderId: string) => `/api/v1/employee/orders/${orderId}/accept`,
+    ORDER_REJECT: (orderId: string) => `/api/v1/employee/orders/${orderId}/reject`,
+    ORDER_SCHEDULE_PICKUP: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/schedule-pickup`,
+    ORDER_CONFIRM_PICKUP: (orderId: string) => `/api/v1/employee/orders/${orderId}/pickup`,
+    ORDER_HAND_TO_TAILOR: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/hand-to-tailor`,
+    ORDER_DELIVERY: (orderId: string) => `/api/v1/employee/orders/${orderId}/delivery`,
+    ORDER_COMPLETE: (orderId: string) => `/api/v1/employee/orders/${orderId}/complete`,
+    ORDER_COLLECT_PAYMENT: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/collect-payment`,
+  },
+  ORDERS: {
+    MY_ORDERS: '/api/v1/orders/my-orders',
+    UPDATE_STATUS: (orderId: string) => `/api/v1/orders/${orderId}/status`,
+    PHOTOS: (orderId: string) => `/api/v1/orders/${orderId}/photos`,
+  },
+  PAYMENTS: {
+    BY_ORDER: (orderId: string) => `/api/v1/payments/order/${orderId}`,
+    BY_ID: (paymentId: string) => `/api/v1/payments/${paymentId}`,
+    UPDATE_STATUS: (paymentId: string) => `/api/v1/payments/${paymentId}/status`,
+    REFUND: (paymentId: string) => `/api/v1/payments/${paymentId}/refund`,
+  },
+  NOTIFICATIONS: {
+    LIST: '/api/v1/notifications',
+    UNREAD_COUNT: '/api/v1/notifications/unread-count',
+    MARK_READ: (notificationId: string) => `/api/v1/notifications/${notificationId}/read`,
+    MARK_ALL_READ: '/api/v1/notifications/read-all',
+  },
+  CHAT: {
+    SESSIONS: '/api/v1/admin/chat/sessions',
+    MESSAGES: (sessionUuid: string) => `/api/v1/admin/chat/sessions/${sessionUuid}/messages`,
+    ASSIGN: (sessionUuid: string) => `/api/v1/admin/chat/sessions/${sessionUuid}/assign`,
+    RESOLVE: (sessionUuid: string) => `/api/v1/admin/chat/sessions/${sessionUuid}/resolve`,
+    ESCALATE: (sessionUuid: string) => `/api/v1/admin/chat/sessions/${sessionUuid}/escalate`,
+    QUICK_REPLIES: '/api/v1/admin/chat/quick-replies',
+    WS: (sessionUuid: string) => `/api/v1/ws/chat/${sessionUuid}`,
   },
 } as const;

@@ -2,12 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useState } from 'react';
 import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
-import { Button, Card, Header } from '@/components/ui';
-import { API_CONFIG } from '@/config/api';
-import { ENDPOINTS } from '@/services/endpoints';
+import { Card, Header } from '@/components/ui';
 import { useTheme } from '@/hooks/useTheme';
 import { useThemeStore, type ThemeMode } from '@/store/themeStore';
-import { runApiDiagnostics, type ApiDiagnosticResult } from '@/utils/apiDiagnostics';
 
 const THEME_OPTIONS: { label: string; value: ThemeMode }[] = [
   { label: 'System', value: 'system' },
@@ -20,55 +17,11 @@ export default function SettingsScreen() {
   const mode = useThemeStore((s) => s.mode);
   const setMode = useThemeStore((s) => s.setMode);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [apiTesting, setApiTesting] = useState(false);
-  const [apiResult, setApiResult] = useState<ApiDiagnosticResult | null>(null);
-
-  const runApiTest = async () => {
-    setApiTesting(true);
-    try {
-      const result = await runApiDiagnostics();
-      setApiResult(result);
-      console.log('[API Test] Full diagnostics:', JSON.stringify(result, null, 2));
-    } finally {
-      setApiTesting(false);
-    }
-  };
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Header title="Settings" subtitle="App preferences" />
       <ScrollView className="px-5">
-        <Card className="mb-4">
-          <Text className="text-sm font-semibold mb-3" style={{ color: colors.textSecondary }}>
-            API CONNECTIVITY (DEBUG)
-          </Text>
-          <Text className="text-xs mb-2" style={{ color: colors.textMuted }}>
-            Base URL: {API_CONFIG.BASE_URL}
-          </Text>
-          <Text className="text-xs mb-4" style={{ color: colors.textMuted }}>
-            Test: GET {ENDPOINTS.ADMIN.DASHBOARD}
-          </Text>
-          <Button
-            title="Test Dashboard API"
-            onPress={runApiTest}
-            loading={apiTesting}
-            fullWidth
-          />
-          {apiResult ? (
-            <View
-              className="mt-4 p-3 rounded-2xl border"
-              style={{ borderColor: colors.border, backgroundColor: colors.surface }}
-            >
-              <Text className="text-xs font-semibold mb-2" style={{ color: colors.text }}>
-                Diagnostics Result
-              </Text>
-              <Text className="text-[10px] leading-4" style={{ color: colors.textSecondary }}>
-                {JSON.stringify(apiResult, null, 2)}
-              </Text>
-            </View>
-          ) : null}
-        </Card>
-
         <Card className="mb-4">
           <Text className="text-sm font-semibold mb-3" style={{ color: colors.textSecondary }}>
             APPEARANCE

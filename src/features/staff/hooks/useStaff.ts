@@ -3,6 +3,7 @@ import { QUERY_KEYS } from '@/constants/queryKeys';
 import { staffService } from '@/services/staffService';
 import type { StaffCreateRequest } from '@/types/staff';
 import { toast } from '@/store/toastStore';
+import { getMutationError } from '@/utils/errors';
 
 export const useStaff = (params?: { role?: string; search?: string }) =>
   useQuery({
@@ -18,7 +19,7 @@ export const useCreateStaffMutation = () => {
       queryClient.invalidateQueries({ queryKey: ['staff'] });
       toast.success('Staff member created successfully');
     },
-    onError: () => toast.error('Failed to create staff member'),
+    onError: (error) => toast.error(getMutationError(error)),
   });
 };
 

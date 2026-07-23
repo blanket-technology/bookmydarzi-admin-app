@@ -11,6 +11,7 @@ export { Header } from './Header';
 export { Input } from './Input';
 export { Loader } from './Loader';
 export { Modal } from './Modal';
+export { OtpInput } from './OtpInput';
 export { Pagination } from './Pagination';
 export { PasswordInput } from './PasswordInput';
 export { SearchBar } from './SearchBar';

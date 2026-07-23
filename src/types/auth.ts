@@ -22,20 +22,33 @@ export interface AuthTokenResponse {
   user?: AuthUser;
 }
 
+/**
+ * Returned by POST /auth/email/login instead of tokens when the account's
+ * role requires a second factor (admin/superadmin/employee/tailor — every
+ * role this app serves). The password has already been verified; complete
+ * login with POST /auth/email/login/verify-otp.
+ */
+export interface LoginOtpRequiredResponse {
+  otp_required: true;
+  email: string;
+  expires_in_seconds: number;
+  resends_remaining: number;
+  cooldown_seconds: number;
+  message: string;
+}
+
+export type EmailLoginResponse = AuthTokenResponse | LoginOtpRequiredResponse;
+
+export const isOtpRequiredResponse = (
+  data: EmailLoginResponse | Record<string, unknown>,
+): data is LoginOtpRequiredResponse => Boolean((data as LoginOtpRequiredResponse)?.otp_required);
+
 export interface EmailLoginRequest {
   email: string;
   password: string;
 }
 
-export interface EmailSignupRequest {
-  first_name: string;
-  last_name: string;
-  email: string;
-  mobile: string;
-  password: string;
-}
-
-export interface EmailVerifyOtpRequest {
+export interface EmailLoginVerifyOtpRequest {
   email: string;
   otp: string;
 }
@@ -58,15 +71,6 @@ export interface ForgotPasswordResetRequest {
 
 export interface RefreshTokenRequest {
   refresh_token: string;
-}
-
-export interface MobileRequestOtpRequest {
-  mobile: string;
-}
-
-export interface MobileVerifyOtpRequest {
-  mobile: string;
-  otp: string;
 }
 
 export interface EmailResendOtpRequest {

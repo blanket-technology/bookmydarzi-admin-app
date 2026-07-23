@@ -26,8 +26,8 @@ export const BottomSheet = ({
         onPress={onClose}
       >
         <Pressable
-          className="rounded-t-3xl px-5 pt-3 pb-8"
-          style={{ backgroundColor: colors.surface }}
+          className="rounded-t-3xl px-5 pt-3 pb-8 self-center w-full"
+          style={{ backgroundColor: colors.surface, maxWidth: 640 }}
           onPress={(event) => event.stopPropagation()}
         >
           <View className="w-12 h-1 rounded-full self-center mb-4" style={{ backgroundColor: colors.border }} />

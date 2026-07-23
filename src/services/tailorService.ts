@@ -11,11 +11,16 @@ export interface TailorsQueryParams {
 }
 
 export const tailorService = {
+  // GET /admin/tailors returns a bare List[AdminTailorListItem] (no
+  // pagination wrapper — see app/api/v1/endpoints/admin.py list_tailors_admin,
+  // response_model=List[AdminTailorListItem]), not an { tailors, total }
+  // envelope. Wrap it here so every consumer of AdminTailorsResponse
+  // (useTailors, tailors/index.tsx, the Assign Tailor sheet) sees one shape.
   getTailors: async (params?: TailorsQueryParams): Promise<AdminTailorsResponse> => {
-    const { data } = await apiClient.get<AdminTailorsResponse>(ENDPOINTS.ADMIN.TAILORS, {
+    const { data } = await apiClient.get<AdminTailorListItem[]>(ENDPOINTS.ADMIN.TAILORS, {
       params,
     });
-    return data;
+    return { tailors: data, total: data.length };
   },
 
   getTailorWorkload: async (): Promise<TailorWorkloadItem[]> => {

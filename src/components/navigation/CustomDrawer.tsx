@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar, DrawerItem } from '@/components/ui';
 import type { AppPermissions } from '@/constants/permissions';
 import { useLogoutMutation } from '@/features/auth/hooks/useAuthMutations';
+import { useUnreadNotificationCount } from '@/features/notifications/hooks/useNotifications';
+import { usePendingChatCount } from '@/features/chat/hooks/useChat';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 
@@ -42,6 +44,12 @@ const MENU_ITEMS: {
     route: '/(drawer)/notifications',
     permission: 'notifications',
   },
+  {
+    label: 'Chat',
+    icon: 'chatbubbles-outline',
+    route: '/(drawer)/chat',
+    permission: 'chat',
+  },
   { label: 'Settings', icon: 'settings-outline', route: '/(drawer)/settings', permission: 'settings' },
   { label: 'Profile', icon: 'person-outline', route: '/(drawer)/profile', permission: 'profile' },
 ];
@@ -49,9 +57,13 @@ const MENU_ITEMS: {
 export const CustomDrawer = (props: DrawerContentComponentProps) => {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { permissions } = usePermissions();
   const logoutMutation = useLogoutMutation();
+  const { data: unreadCount } = useUnreadNotificationCount(
+    isAuthenticated && permissions.notifications,
+  );
+  const { data: pendingChatCount } = usePendingChatCount(isAuthenticated && permissions.chat);
 
   const visibleItems = MENU_ITEMS.filter((item) => permissions[item.permission]);
 
@@ -62,7 +74,7 @@ export const CustomDrawer = (props: DrawerContentComponentProps) => {
 
   return (
     <LinearGradient
-      colors={['#2e1065', '#4c1d95', '#5b21b6']}
+      colors={['#0c6c75', '#107079', '#1aa3b0']}
       style={{ flex: 1, paddingTop: insets.top }}
     >
       <View className="px-5 py-6 border-b border-white/10">
@@ -72,13 +84,13 @@ export const CustomDrawer = (props: DrawerContentComponentProps) => {
             <Text className="text-white font-bold text-lg" numberOfLines={1}>
               {user?.full_name ?? 'Admin'}
             </Text>
-            <Text className="text-violet-200 text-sm capitalize" numberOfLines={1}>
+            <Text className="text-sm capitalize" style={{ color: '#e0f7f8' }} numberOfLines={1}>
               {user?.role ?? 'user'}
             </Text>
           </View>
         </View>
         <View className="mt-4 flex-row items-center bg-white/10 rounded-2xl px-3 py-2">
-          <Ionicons name="cut" size={18} color="#fbbf24" />
+          <Ionicons name="cut" size={18} color="#C9A84C" />
           <Text className="text-white font-semibold ml-2">BookMyDarzi Admin</Text>
         </View>
       </View>
@@ -91,6 +103,13 @@ export const CustomDrawer = (props: DrawerContentComponentProps) => {
             icon={item.icon}
             active={pathname.includes(item.route.split('/').pop() ?? '')}
             onPress={() => navigate(item.route)}
+            badgeCount={
+              item.permission === 'notifications'
+                ? unreadCount
+                : item.permission === 'chat'
+                  ? pendingChatCount
+                  : undefined
+            }
           />
         ))}
       </ScrollView>

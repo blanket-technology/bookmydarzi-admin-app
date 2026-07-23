@@ -69,6 +69,8 @@ export const enrichApiError = (
 };
 
 export const formatApiErrorDetail = (error: unknown): string => {
+  if (!error) return '';
+
   const parsed = parseApiError(error);
   const endpoint = (parsed as ApiError & { endpoint?: string }).endpoint;
   const parts = [
@@ -94,6 +96,13 @@ export const formatApiErrorDetail = (error: unknown): string => {
     console.error('[API Error Detail]', message, parsed);
   }
   return message;
+};
+
+// Bare message for toasts — no HTTP status/code/endpoint noise, unlike
+// formatApiErrorDetail (which is for inline diagnostic display).
+export const getMutationError = (error: unknown): string => {
+  if (!error) return 'Something went wrong';
+  return parseApiError(error).message ?? 'Something went wrong';
 };
 
 export const formatCurrency = (amount?: number): string => {

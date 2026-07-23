@@ -24,8 +24,7 @@ export const staffService = {
   },
 
   getStaffMember: async (id: string): Promise<AdminStaffListItem> => {
-    const response = await staffService.getStaff();
-    const items = response.staff ?? response.items ?? [];
+    const items = await staffService.getStaff();
     const member = items.find((item) => item.id === id);
     if (!member) throw new Error('Staff member not found');
     return member;

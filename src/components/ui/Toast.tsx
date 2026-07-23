@@ -7,7 +7,7 @@ import { useToastStore } from '@/store/toastStore';
 const COLORS = {
   success: { bg: '#dcfce7', text: '#166534', border: '#86efac' },
   error: { bg: '#fee2e2', text: '#991b1b', border: '#fca5a5' },
-  info: { bg: '#ede9fe', text: '#5b21b6', border: '#c4b5fd' },
+  info: { bg: '#e0f7f8', text: '#0c6c75', border: '#80dfe4' },
 };
 
 export const Toast = () => {

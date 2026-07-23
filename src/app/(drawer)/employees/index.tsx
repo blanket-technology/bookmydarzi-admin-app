@@ -10,10 +10,12 @@ import { formatApiErrorDetail, formatDate } from '@/utils/errors';
 export default function EmployeesScreen() {
   const { colors } = useTheme();
   const [search, setSearch] = useState('');
-  const { data, isLoading, isError, error, refetch, isRefetching } = useStaff({ search });
+  const { data, isLoading, isError, error, refetch, isRefetching } = useStaff({
+    role: 'employee',
+  });
 
   const staff = useMemo(() => {
-    const items = data?.staff ?? data?.items ?? [];
+    const items = data ?? [];
     if (!search.trim()) return items;
     const q = search.toLowerCase();
     return items.filter(

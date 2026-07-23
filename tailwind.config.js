@@ -5,29 +5,31 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Matches the customer app's brand palette (react_app/constants/theme.ts
+        // COLORS.primary #1aa3b0 / #0c6c75) so both apps read as one product.
         primary: {
-          50: '#f5f3ff',
-          100: '#ede9fe',
-          200: '#ddd6fe',
-          300: '#c4b5fd',
-          400: '#a78bfa',
-          500: '#8b5cf6',
-          600: '#7c3aed',
-          700: '#6d28d9',
-          800: '#5b21b6',
-          900: '#4c1d95',
-          950: '#2e1065',
+          50: '#e0f7f8',
+          100: '#b3ecef',
+          200: '#80dfe4',
+          300: '#4dd2d9',
+          400: '#26c8d1',
+          500: '#1aa3b0',
+          600: '#158e99',
+          700: '#107079',
+          800: '#0c6c75',
+          900: '#094e54',
+          950: '#052a2e',
         },
         accent: {
-          400: '#fbbf24',
-          500: '#f59e0b',
-          600: '#d97706',
+          400: '#dbc06e',
+          500: '#C9A84C',
+          600: '#a88a3a',
         },
         surface: {
           light: '#ffffff',
-          dark: '#0f172a',
-          card: '#1e293b',
-          muted: '#f8fafc',
+          dark: '#0D0D0D',
+          card: '#1c1c1c',
+          muted: '#FAFAFA',
         },
       },
       fontFamily: {

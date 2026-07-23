@@ -1,8 +1,10 @@
 import type {
   AdminDashboardApiResponse,
+  AdminDashboardEmployees,
   AdminDashboardOrders,
   AdminDashboardPayments,
   AdminDashboardRevenue,
+  AdminDashboardTailors,
   AdminDashboardUsers,
   DashboardAssignmentItem,
   DashboardCustomerItem,
@@ -97,6 +99,14 @@ const parseUsers = (source: unknown): AdminDashboardUsers | undefined => {
   };
 };
 
+const parseEmployees = (source: unknown): AdminDashboardEmployees | undefined => {
+  if (!isRecord(source)) return undefined;
+  return {
+    total: num(source.total),
+    active: num(source.active),
+  };
+};
+
 const parseOrders = (source: unknown): AdminDashboardOrders | undefined => {
   if (!isRecord(source)) return undefined;
   return {
@@ -126,12 +136,22 @@ const parsePayments = (source: unknown): AdminDashboardPayments | undefined => {
   };
 };
 
+const parseTailors = (source: unknown): AdminDashboardTailors | undefined => {
+  if (!isRecord(source)) return undefined;
+  return {
+    active: num(source.active),
+    available: num(source.available),
+    busy: num(source.busy),
+  };
+};
+
 const buildStatisticsFromApi = (api: AdminDashboardApiResponse): DashboardStats => ({
   total_orders: api.orders?.total,
   pending_orders: api.orders?.pending,
   completed_orders: api.orders?.delivered,
   total_users: api.users?.total,
   total_customers: api.users?.total,
+  total_employees: api.employees?.total,
   total_revenue: api.revenue?.total,
   monthly_revenue: api.revenue?.this_month,
   revenue: api.revenue?.total,
@@ -174,11 +194,20 @@ export const normalizeDashboardResponse = (raw: unknown): DashboardResponse => {
   }
 
   const users = parseUsers(payload.users);
+  const employees = parseEmployees(payload.employees);
   const orders = parseOrders(payload.orders);
   const revenue = parseRevenue(payload.revenue);
   const payments = parsePayments(payload.payments);
+  const tailors = parseTailors(payload.tailors);
 
-  const apiResponse: AdminDashboardApiResponse = { users, orders, revenue, payments };
+  const apiResponse: AdminDashboardApiResponse = {
+    users,
+    employees,
+    orders,
+    revenue,
+    payments,
+    tailors,
+  };
   const statistics = buildStatisticsFromApi(apiResponse);
 
   const pendingOrdersField = payload.pending_orders;
@@ -230,13 +259,22 @@ export const isDashboardResponseValid = (raw: unknown): boolean => {
   return hasAdminDashboardFields(payload) || hasLegacyDashboardFields(payload);
 };
 
-/** Maps existing stat cards to the admin dashboard API fields. */
-export const parseDashboardStats = (data?: DashboardResponse | null): DashboardStatItem[] => {
+/**
+ * Maps existing stat cards to the admin dashboard API fields.
+ * `includeRevenue` — revenue is financial data restricted to superadmin;
+ * pass false to omit the Revenue card for the plain admin role.
+ */
+export const parseDashboardStats = (
+  data?: DashboardResponse | null,
+  includeRevenue = true,
+): DashboardStatItem[] => {
   const users = data?.users;
+  const employees = data?.employees;
   const orders = data?.orders;
   const revenue = data?.revenue;
+  const tailors = data?.tailors;
 
-  return [
+  const cards: DashboardStatItem[] = [
     {
       title: 'Total Orders',
       value: formatCount(orders?.total),
@@ -244,8 +282,8 @@ export const parseDashboardStats = (data?: DashboardResponse | null): DashboardS
       color: '#8b5cf6',
     },
     {
-      title: 'Active Orders',
-      value: EMPTY_PLACEHOLDER,
+      title: "Today's Orders",
+      value: formatCount(orders?.today),
       icon: 'pulse-outline',
       color: '#f59e0b',
     },
@@ -256,22 +294,16 @@ export const parseDashboardStats = (data?: DashboardResponse | null): DashboardS
       color: '#3b82f6',
     },
     {
-      title: 'Total Tailors',
-      value: EMPTY_PLACEHOLDER,
+      title: 'Active Tailors',
+      value: formatCount(tailors?.active),
       icon: 'cut-outline',
       color: '#ec4899',
     },
     {
       title: 'Total Employees',
-      value: EMPTY_PLACEHOLDER,
+      value: formatCount(employees?.total),
       icon: 'briefcase-outline',
       color: '#14b8a6',
-    },
-    {
-      title: 'Revenue',
-      value: formatMoney(revenue?.total),
-      icon: 'wallet-outline',
-      color: '#10b981',
     },
     {
       title: 'Pending Orders',
@@ -280,12 +312,23 @@ export const parseDashboardStats = (data?: DashboardResponse | null): DashboardS
       color: '#f97316',
     },
     {
-      title: 'Completed Orders',
-      value: EMPTY_PLACEHOLDER,
+      title: 'Delivered Orders',
+      value: formatCount(orders?.delivered),
       icon: 'checkmark-circle-outline',
       color: '#22c55e',
     },
   ];
+
+  if (includeRevenue) {
+    cards.splice(5, 0, {
+      title: 'Revenue',
+      value: formatMoney(revenue?.total),
+      icon: 'wallet-outline',
+      color: '#10b981',
+    });
+  }
+
+  return cards;
 };
 
 export const formatDashboardCount = (

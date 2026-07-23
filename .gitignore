@@ -11,7 +11,9 @@ npm-debug.*
 web-build/
 .env
 .env.local
-
+.env.example
+CLAUDE.md/
+.claude/
 # macOS
 .DS_Store
 

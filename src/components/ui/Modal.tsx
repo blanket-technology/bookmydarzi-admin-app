@@ -20,8 +20,8 @@ export const Modal = ({ visible, onClose, title, children }: ModalProps) => {
         style={{ backgroundColor: colors.overlay }}
       >
         <View
-          className="rounded-3xl p-5"
-          style={{ backgroundColor: colors.surface }}
+          className="rounded-3xl p-5 self-center w-full"
+          style={{ backgroundColor: colors.surface, maxWidth: 480 }}
         >
           <View className="flex-row items-center justify-between mb-4">
             {title ? (

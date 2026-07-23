@@ -16,7 +16,7 @@ export const StatCard = ({ title, value, icon, color, trend }: StatCardProps) =>
   const accent = color ?? colors.primary;
 
   return (
-    <Card className="flex-1 min-w-[46%] mb-3">
+    <Card className="mb-3" style={{ flexGrow: 1, flexBasis: '45%' }}>
       <View className="flex-row items-start justify-between">
         <View
           className="w-11 h-11 rounded-2xl items-center justify-center"

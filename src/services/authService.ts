@@ -4,17 +4,16 @@ import type {
   AuthTokenResponse,
   AuthUser,
   EmailLoginRequest,
+  EmailLoginResponse,
+  EmailLoginVerifyOtpRequest,
   EmailResendOtpRequest,
-  EmailSignupRequest,
-  EmailVerifyOtpRequest,
   ForgotPasswordRequest,
   ForgotPasswordResetRequest,
   ForgotPasswordVerifyRequest,
-  MobileRequestOtpRequest,
-  MobileVerifyOtpRequest,
   RefreshTokenRequest,
   UserRole,
 } from '@/types/auth';
+import { isOtpRequiredResponse } from '@/types/auth';
 
 const toString = (value: unknown): string | undefined =>
   value === undefined || value === null ? undefined : String(value);
@@ -41,13 +40,37 @@ export const normalizeAuthUser = (raw: Record<string, unknown>): AuthUser => ({
 });
 
 export const authService = {
-  login: async (payload: EmailLoginRequest): Promise<AuthTokenResponse> => {
+  // Staff accounts (admin/superadmin/employee/tailor — every role this app
+  // serves) require a second factor: a correct password returns
+  // { otp_required: true, ... } instead of tokens. Callers must check
+  // isOtpRequiredResponse() on the result before assuming tokens are present.
+  login: async (payload: EmailLoginRequest): Promise<EmailLoginResponse> => {
     const { data } = await apiClient.post<Record<string, unknown>>(ENDPOINTS.AUTH.LOGIN, payload);
+    if (isOtpRequiredResponse(data)) {
+      return data as unknown as EmailLoginResponse;
+    }
     const normalized = normalizeTokenResponse(data);
     if (!normalized.access_token) {
       throw { message: 'Login response missing access_token', code: 'INVALID_LOGIN_RESPONSE' };
     }
     return normalized;
+  },
+
+  verifyLoginOtp: async (payload: EmailLoginVerifyOtpRequest): Promise<AuthTokenResponse> => {
+    const { data } = await apiClient.post<Record<string, unknown>>(
+      ENDPOINTS.AUTH.LOGIN_VERIFY_OTP,
+      payload,
+    );
+    const normalized = normalizeTokenResponse(data);
+    if (!normalized.access_token) {
+      throw { message: 'Verification response missing access_token', code: 'INVALID_OTP_RESPONSE' };
+    }
+    return normalized;
+  },
+
+  resendLoginOtp: async (payload: EmailResendOtpRequest) => {
+    const { data } = await apiClient.post(ENDPOINTS.AUTH.LOGIN_RESEND_OTP, payload);
+    return data;
   },
 
   refresh: async (refreshToken: string): Promise<AuthTokenResponse> => {
@@ -64,34 +87,6 @@ export const authService = {
 
   logout: async (refreshToken: string) => {
     const { data } = await apiClient.post(ENDPOINTS.AUTH.LOGOUT, { refresh_token: refreshToken });
-    return data;
-  },
-
-  signup: async (payload: EmailSignupRequest) => {
-    const { data } = await apiClient.post<{ message: string }>(ENDPOINTS.AUTH.SIGNUP, payload);
-    return data;
-  },
-
-  verifyEmailOtp: async (payload: EmailVerifyOtpRequest): Promise<AuthTokenResponse> => {
-    const { data } = await apiClient.post<AuthTokenResponse>(ENDPOINTS.AUTH.VERIFY_OTP, payload);
-    return data;
-  },
-
-  resendEmailOtp: async (payload: EmailResendOtpRequest) => {
-    const { data } = await apiClient.post(ENDPOINTS.AUTH.RESEND_OTP, payload);
-    return data;
-  },
-
-  requestMobileOtp: async (payload: MobileRequestOtpRequest) => {
-    const { data } = await apiClient.post(ENDPOINTS.AUTH.MOBILE_REQUEST_OTP, payload);
-    return data;
-  },
-
-  verifyMobileOtp: async (payload: MobileVerifyOtpRequest): Promise<AuthTokenResponse> => {
-    const { data } = await apiClient.post<AuthTokenResponse>(
-      ENDPOINTS.AUTH.MOBILE_VERIFY_OTP,
-      payload,
-    );
     return data;
   },
 
@@ -114,7 +109,7 @@ export const authService = {
   },
 
   getCurrentUser: async (): Promise<AuthUser> => {
-    const { data } = await apiClient.get<Record<string, unknown>>(ENDPOINTS.USERS.ME);
+    const { data } = await apiClient.get<Record<string, unknown>>(ENDPOINTS.USERS.PROFILE);
     return normalizeAuthUser(data);
   },
 };

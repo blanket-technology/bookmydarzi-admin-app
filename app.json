@@ -19,13 +19,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#4c1d95",
+        "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.bookmydarzi.admin",
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -36,12 +37,19 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#4c1d95",
+          "backgroundColor": "#ffffff",
           "image": "./assets/splash-icon.png",
           "imageWidth": 200
         }
       ],
       "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "BookMyDarzi Admin needs access to your photos to upload order progress photos.",
+          "cameraPermission": "BookMyDarzi Admin needs camera access to capture order progress photos."
+        }
+      ],
       [
         "expo-build-properties",
         {

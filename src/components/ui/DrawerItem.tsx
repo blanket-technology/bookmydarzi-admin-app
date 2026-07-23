@@ -8,6 +8,7 @@ interface DrawerItemProps {
   active?: boolean;
   onPress: () => void;
   danger?: boolean;
+  badgeCount?: number;
 }
 
 export const DrawerItem = ({
@@ -16,6 +17,7 @@ export const DrawerItem = ({
   active = false,
   onPress,
   danger = false,
+  badgeCount,
 }: DrawerItemProps) => {
   const { colors } = useTheme();
 
@@ -45,6 +47,16 @@ export const DrawerItem = ({
       >
         {label}
       </Text>
+      {badgeCount && badgeCount > 0 ? (
+        <View
+          className="min-w-[20px] h-5 rounded-full items-center justify-center px-1.5 mr-1"
+          style={{ backgroundColor: '#ef4444' }}
+        >
+          <Text className="text-white text-xs font-bold">
+            {badgeCount > 99 ? '99+' : badgeCount}
+          </Text>
+        </View>
+      ) : null}
       {active ? (
         <View className="w-1.5 h-6 rounded-full bg-accent-400" />
       ) : null}

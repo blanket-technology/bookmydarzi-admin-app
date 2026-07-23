@@ -3,6 +3,7 @@ import { QUERY_KEYS } from '@/constants/queryKeys';
 import { customerService } from '@/services/customerService';
 import type { UserStatusUpdateRequest } from '@/types/users';
 import { toast } from '@/store/toastStore';
+import { getMutationError } from '@/utils/errors';
 
 export const useUsers = (
   params?: { search?: string; page?: number; limit?: number },
@@ -39,6 +40,6 @@ export const useUpdateUserStatusMutation = () => {
           : 'User deactivated successfully',
       );
     },
-    onError: () => toast.error('Failed to update user status'),
+    onError: (error) => toast.error(getMutationError(error)),
   });
 };

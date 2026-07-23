@@ -80,9 +80,9 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <LinearGradient colors={['#2e1065', '#4c1d95', '#6d28d9']} className="flex-1">
+    <LinearGradient colors={['#0c6c75', '#1aa3b0', '#2dd4bf']} className="flex-1">
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         <ScrollView
@@ -97,7 +97,8 @@ export default function ForgotPasswordScreen() {
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </Pressable>
 
-          <View className="px-6">
+          <View className="px-6 items-center">
+            <View className="w-full" style={{ maxWidth: 480 }}>
             <View className="bg-white rounded-[32px] p-6">
               <Text className="text-2xl font-bold text-slate-900 mb-1">
                 Forgot Password
@@ -171,6 +172,7 @@ export default function ForgotPasswordScreen() {
                   />
                 </>
               ) : null}
+            </View>
             </View>
           </View>
         </ScrollView>

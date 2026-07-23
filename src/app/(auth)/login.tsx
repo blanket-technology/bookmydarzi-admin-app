@@ -10,12 +10,12 @@ import {
   Pressable,
   ScrollView,
   Text,
+  TextInput,
   View,
 } from 'react-native';
+import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { toast } from '@/store/toastStore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Input, PasswordInput, RoleSelector } from '@/components/ui';
-import type { LoginRole } from '@/constants/roles';
 import { STORAGE_KEYS } from '@/constants/storage';
 import {
   getMutationError,
@@ -27,10 +27,79 @@ import {
 } from '@/features/auth/schemas/authSchemas';
 import { secureStorage } from '@/utils/secureStorage';
 
+/** Frosted-glass field: icon + label-on-focus treatment, built inline since
+ * the shared Input/PasswordInput primitives don't support a leading icon. */
+function GlassField({
+  icon,
+  label,
+  error,
+  rightElement,
+  ...inputProps
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  error?: string;
+  rightElement?: React.ReactNode;
+} & React.ComponentProps<typeof TextInput>) {
+  const focus = useSharedValue(0);
+  const borderStyle = useAnimatedStyle(() => ({
+    borderColor: error
+      ? '#f87171'
+      : `rgba(255,255,255,${0.18 + focus.value * 0.42})`,
+  }));
+
+  return (
+    <View className="mb-4">
+      <Text className="text-xs font-semibold mb-2 tracking-wide" style={{ color: 'rgba(255,255,255,0.65)' }}>
+        {label.toUpperCase()}
+      </Text>
+      <Animated.View
+        style={[
+          {
+            borderWidth: 1.5,
+            borderRadius: 18,
+            backgroundColor: 'rgba(255,255,255,0.08)',
+          },
+          borderStyle,
+        ]}
+        className="flex-row items-center px-4"
+      >
+        <Ionicons name={icon} size={19} color="rgba(255,255,255,0.55)" />
+        <TextInput
+          placeholderTextColor="rgba(255,255,255,0.35)"
+          className="flex-1 py-3.5 px-3 text-base"
+          style={{ color: '#ffffff' }}
+          {...inputProps}
+          onFocus={(e) => {
+            focus.value = withTiming(1, { duration: 180 });
+            inputProps.onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            focus.value = withTiming(0, { duration: 180 });
+            inputProps.onBlur?.(e);
+          }}
+        />
+        {rightElement}
+      </Animated.View>
+      {error ? (
+        <Text className="text-xs mt-1.5 ml-1" style={{ color: '#fca5a5' }}>
+          {error}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const loginMutation = useLoginMutation();
   const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const buttonScale = useSharedValue(1);
+  const buttonAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: buttonScale.value }],
+  }));
 
   useEffect(() => {
     if (__DEV__) {
@@ -45,7 +114,7 @@ export default function LoginScreen() {
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '', role: 'admin' as LoginRole, rememberMe: false },
+    defaultValues: { email: '', password: '', rememberMe: false },
   });
 
   useEffect(() => {
@@ -65,7 +134,7 @@ export default function LoginScreen() {
     }
 
     loginMutation.mutate(
-      { email: data.email, password: data.password, role: data.role },
+      { email: data.email, password: data.password },
       {
         onError: (error) => toast.error(getMutationError(error)),
       },
@@ -73,125 +142,202 @@ export default function LoginScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={['#2e1065', '#4c1d95', '#6d28d9']}
-      className="flex-1"
-    >
+    <LinearGradient colors={['#052a2e', '#0c6c75', '#1aa3b0']} className="flex-1">
+      {/* Ambient glow shapes — depth without a blur dependency */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: -120,
+          right: -80,
+          width: 320,
+          height: 320,
+          borderRadius: 320,
+          backgroundColor: 'rgba(201,168,76,0.16)',
+        }}
+      />
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          bottom: -140,
+          left: -100,
+          width: 360,
+          height: 360,
+          borderRadius: 360,
+          backgroundColor: 'rgba(45,212,191,0.14)',
+        }}
+      />
+
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
-            paddingTop: insets.top + 24,
+            paddingTop: insets.top + 32,
             paddingBottom: insets.bottom + 24,
           }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View className="px-6 flex-1 justify-center">
-            <View className="items-center mb-10">
-              <View className="w-20 h-20 rounded-3xl bg-white/15 items-center justify-center mb-4 border border-white/20">
-                <Ionicons name="cut-outline" size={40} color="#fbbf24" />
-              </View>
-              <Text className="text-white text-3xl font-bold">BookMyDarzi</Text>
-              <Text className="text-violet-200 text-base mt-2">Admin Portal</Text>
-            </View>
-
-            <View className="bg-white rounded-[32px] p-6 shadow-2xl">
-              <Text className="text-2xl font-bold text-slate-900 mb-1">
-                Welcome Back
-              </Text>
-              <Text className="text-slate-500 mb-6">
-                Sign in to manage your tailoring business
-              </Text>
-
-              <Controller
-                control={control}
-                name="email"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    label="Email / Username"
-                    placeholder="admin@bookmydarzi.com"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    error={errors.email?.message}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                  />
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="password"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <PasswordInput
-                    label="Password"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    error={errors.password?.message}
-                  />
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="role"
-                render={({ field: { onChange, value } }) => (
-                  <RoleSelector
-                    value={value}
-                    onChange={onChange}
-                    error={errors.role?.message}
-                  />
-                )}
-              />
-
-              <View className="flex-row items-center justify-between mb-6 -mt-2">
-                <Pressable
-                  onPress={() => setRememberMe((prev) => !prev)}
-                  className="flex-row items-center"
+          <View className="px-6 flex-1 justify-center items-center">
+            <View className="w-full" style={{ maxWidth: 440 }}>
+              <Animated.View entering={FadeInDown.duration(500)} className="items-center mb-9">
+                <View
+                  className="w-[72px] h-[72px] rounded-[24px] items-center justify-center mb-5"
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    borderColor: 'rgba(255,255,255,0.18)',
+                  }}
                 >
-                  <View
-                    className={`w-5 h-5 rounded-md border-2 mr-2 items-center justify-center ${
-                      rememberMe ? 'bg-primary-600 border-primary-600' : 'border-slate-300'
-                    }`}
-                  >
-                    {rememberMe ? (
-                      <Ionicons name="checkmark" size={14} color="#fff" />
-                    ) : null}
-                  </View>
-                  <Text className="text-slate-600 text-sm">Remember Me</Text>
-                </Pressable>
+                  <Ionicons name="cut" size={32} color="#C9A84C" />
+                </View>
+                <Text className="text-white text-[28px] font-bold tracking-tight">
+                  BookMyDarzi
+                </Text>
+                <View className="flex-row items-center mt-2 px-3 py-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                  <View className="w-1.5 h-1.5 rounded-full mr-2" style={{ backgroundColor: '#C9A84C' }} />
+                  <Text className="text-xs font-semibold tracking-wide" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                    OPERATIONS PORTAL
+                  </Text>
+                </View>
+              </Animated.View>
 
-                <Link href="/(auth)/forgot-password" asChild>
-                  <Pressable>
-                    <Text className="text-primary-600 text-sm font-semibold">
-                      Forgot Password?
+              <Animated.View
+                entering={FadeInUp.delay(150).duration(500)}
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.09)',
+                  borderRadius: 28,
+                  borderWidth: 1,
+                  borderColor: 'rgba(255,255,255,0.14)',
+                  padding: 24,
+                }}
+              >
+                <Text className="text-white text-xl font-bold mb-1">
+                  Welcome back
+                </Text>
+                <Text className="text-sm mb-7" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  Sign in with your staff account credentials
+                </Text>
+
+                <Controller
+                  control={control}
+                  name="email"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <GlassField
+                      icon="mail-outline"
+                      label="Email"
+                      placeholder="you@bookmydarzi.com"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      error={errors.email?.message}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoComplete="email"
+                    />
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="password"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <GlassField
+                      icon="lock-closed-outline"
+                      label="Password"
+                      placeholder="••••••••"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      error={errors.password?.message}
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                      rightElement={
+                        <Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={10}>
+                          <Ionicons
+                            name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                            size={19}
+                            color="rgba(255,255,255,0.55)"
+                          />
+                        </Pressable>
+                      }
+                    />
+                  )}
+                />
+
+                <View className="flex-row items-center justify-between mb-7 mt-1">
+                  <Pressable
+                    onPress={() => setRememberMe((prev) => !prev)}
+                    className="flex-row items-center"
+                    hitSlop={6}
+                  >
+                    <View
+                      className="w-[18px] h-[18px] rounded-[6px] mr-2 items-center justify-center"
+                      style={{
+                        borderWidth: 1.5,
+                        borderColor: rememberMe ? '#C9A84C' : 'rgba(255,255,255,0.35)',
+                        backgroundColor: rememberMe ? '#C9A84C' : 'transparent',
+                      }}
+                    >
+                      {rememberMe ? <Ionicons name="checkmark" size={12} color="#052a2e" /> : null}
+                    </View>
+                    <Text className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                      Remember me
                     </Text>
                   </Pressable>
-                </Link>
-              </View>
 
-              <Button
-                title="Sign In"
-                onPress={handleSubmit(onSubmit)}
-                loading={loginMutation.isPending}
-                fullWidth
-              />
+                  <Link href="/(auth)/forgot-password" asChild>
+                    <Pressable hitSlop={6}>
+                      <Text className="text-sm font-semibold" style={{ color: '#C9A84C' }}>
+                        Forgot password?
+                      </Text>
+                    </Pressable>
+                  </Link>
+                </View>
 
-              <View className="flex-row justify-center mt-6">
-                <Text className="text-slate-500">Don&apos;t have an account? </Text>
-                <Link href="/(auth)/signup" asChild>
-                  <Pressable>
-                    <Text className="text-primary-600 font-semibold">Sign Up</Text>
+                <Animated.View style={buttonAnimStyle}>
+                  <Pressable
+                    onPressIn={() => (buttonScale.value = withSpring(0.97, { damping: 15 }))}
+                    onPressOut={() => (buttonScale.value = withSpring(1, { damping: 12 }))}
+                    onPress={handleSubmit(onSubmit)}
+                    disabled={loginMutation.isPending}
+                    style={{ opacity: loginMutation.isPending ? 0.75 : 1 }}
+                  >
+                    <LinearGradient
+                      colors={['#C9A84C', '#dbc06e']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={{
+                        borderRadius: 18,
+                        paddingVertical: 15,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexDirection: 'row',
+                      }}
+                    >
+                      {loginMutation.isPending ? (
+                        <Text className="text-[#052a2e] font-bold text-base">Signing in…</Text>
+                      ) : (
+                        <>
+                          <Text className="text-[#052a2e] font-bold text-base mr-1.5">Sign In</Text>
+                          <Ionicons name="arrow-forward" size={18} color="#052a2e" />
+                        </>
+                      )}
+                    </LinearGradient>
                   </Pressable>
-                </Link>
-              </View>
+                </Animated.View>
+              </Animated.View>
+
+              <Animated.View entering={FadeInUp.delay(300).duration(500)} className="flex-row items-center justify-center mt-8">
+                <Ionicons name="shield-checkmark-outline" size={14} color="rgba(255,255,255,0.4)" />
+                <Text className="text-xs ml-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  Protected by two-factor authentication
+                </Text>
+              </Animated.View>
             </View>
           </View>
         </ScrollView>

@@ -12,6 +12,7 @@ import {
 } from '@/features/settings/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
+import { getMutationError } from '@/utils/errors';
 
 const profileSchema = z.object({
   firstName: z.string().min(2),
@@ -59,7 +60,7 @@ export default function ProfileScreen() {
       { FirstName: data.firstName, LastName: data.lastName },
       {
         onSuccess: () => Alert.alert('Success', 'Profile updated'),
-        onError: () => Alert.alert('Error', 'Failed to update profile'),
+        onError: (error) => Alert.alert('Error', getMutationError(error)),
       },
     );
   };
@@ -73,7 +74,7 @@ export default function ProfileScreen() {
           passwordForm.reset();
           setShowPasswordForm(false);
         },
-        onError: () => Alert.alert('Error', 'Failed to change password'),
+        onError: (error) => Alert.alert('Error', getMutationError(error)),
       },
     );
   };
