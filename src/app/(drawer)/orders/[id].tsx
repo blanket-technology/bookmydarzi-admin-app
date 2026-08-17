@@ -1,10 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { z } from 'zod';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Image, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import {
   Badge,
   BottomSheet,
@@ -15,9 +12,11 @@ import {
   Header,
   Input,
   Loader,
+  ScreenContent,
 } from '@/components/ui';
 import {
   ADMIN_CORRECTABLE_STATUS_OPTIONS,
+  ORDER_STATUS,
   ORDER_STATUS_COLORS,
   orderStatusLabel,
 } from '@/constants/orderStatus';
@@ -27,16 +26,23 @@ import {
   paymentStatusLabel,
 } from '@/constants/paymentStatus';
 import {
+  useAssignTailorEmployeeMutation,
   useAssignTailorMutation,
   useCancelOrderMutation,
   useCollectPaymentMutation,
-  useOrders,
+  useDownloadInvoiceMutation,
+  useOrder,
+  useOrderBroadcastStatus,
   useRejectOrderMutation,
   useSchedulePickupMutation,
-  useUpdateOrderMeasurementMutation,
+  useTriggerBroadcastMutation,
+  useUpdateOrderNotesMutation,
   useUpdateOrderStatusMutation,
 } from '@/features/orders/hooks/useOrders';
 import { useOrderActions, type OrderAction } from '@/features/orders/hooks/useOrderActions';
+import { usePickupBroadcastOffers, useAcceptPickupBroadcastMutation } from '@/features/pickups/hooks/usePickups';
+import { useDeliveryBroadcastOffers, useAcceptDeliveryBroadcastMutation } from '@/features/deliveries/hooks/useDeliveries';
+import { MeasurementManageSheet } from '@/features/orders/components/MeasurementManageSheet';
 import { ProgressPhotosSection } from '@/features/orders/components/ProgressPhotosSection';
 import {
   useCreateRefundMutation,
@@ -45,30 +51,40 @@ import {
   useUpdatePaymentStatusMutation,
 } from '@/features/payments/hooks/usePayments';
 import { useAuth } from '@/hooks/useAuth';
-import { useTailors } from '@/features/tailors/hooks/useTailors';
+import { useTailors, useTailorsForEmployee } from '@/features/tailors/hooks/useTailors';
 import { useTheme } from '@/hooks/useTheme';
 import type { OrderStatus } from '@/types/orders';
-import { capitalize, formatCurrency, formatDate, formatDateTime } from '@/utils/errors';
+import { capitalize, formatApiErrorDetail, formatCurrency, formatDate, formatDateTime } from '@/utils/errors';
 
-const measurementSchema = z.object({
-  profile_name: z.string().min(2, 'Profile name is required'),
-  chest: z.string().min(1, 'Chest measurement is required'),
-  waist: z.string().min(1, 'Waist measurement is required'),
-  hips: z.string().optional(),
-  shoulder: z.string().optional(),
-  sleeve_length: z.string().optional(),
-  notes: z.string().optional(),
-});
+// Same UPI VPA the customer app's balance-payment QR uses
+// (EXPO_PUBLIC_MERCHANT_UPI_ID in react_app/eas.json) - both apps' QR
+// collections land in the same account. No QR library needed: a public
+// QR-image-generation API renders the PNG directly from the UPI deep link.
+const MERCHANT_UPI = process.env.EXPO_PUBLIC_MERCHANT_UPI_ID ?? 'blankettechnolo974972.rzp@raxis';
 
-type MeasurementFormData = z.infer<typeof measurementSchema>;
+function buildUpiQrImageUri(upiId: string, amount: number, orderCode: string, qrSize: number): string {
+  const upiLink =
+    `upi://pay?pa=${encodeURIComponent(upiId)}` +
+    `&pn=${encodeURIComponent('BookMyDarzi')}` +
+    `&tr=${encodeURIComponent(orderCode)}` +
+    `&am=${amount.toFixed(2)}` +
+    `&cu=INR` +
+    `&tn=${encodeURIComponent(`COD collection for order ${orderCode}`)}`;
+  return (
+    `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&margin=12&data=` +
+    encodeURIComponent(upiLink)
+  );
+}
 
 export default function OrderDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
   const { user, selectedRole } = useAuth();
   const [assignSheetVisible, setAssignSheetVisible] = useState(false);
   const [statusSheetVisible, setStatusSheetVisible] = useState(false);
-  const [measurementSheetVisible, setMeasurementSheetVisible] = useState(false);
+  const [measurementManageSheetVisible, setMeasurementManageSheetVisible] = useState(false);
+  const [measurementManageSheetIsAdmin, setMeasurementManageSheetIsAdmin] = useState(false);
   const [rejectSheetVisible, setRejectSheetVisible] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [cancelSheetVisible, setCancelSheetVisible] = useState(false);
@@ -83,63 +99,94 @@ export default function OrderDetailsScreen() {
   const [refundAmount, setRefundAmount] = useState('');
   const [refundReason, setRefundReason] = useState('');
   const [txnId, setTxnId] = useState('');
-
-  // Capped at 50: useOrders routes tailors to GET /orders/my-orders, whose
-  // `limit` query param is hard-capped at 50 server-side (422 above that).
-  const { data, isLoading, isError } = useOrders({ page: 1, limit: 50 });
-  const { data: tailorsData } = useTailors();
-  const assignMutation = useAssignTailorMutation();
-  const statusMutation = useUpdateOrderStatusMutation();
-  const measurementMutation = useUpdateOrderMeasurementMutation();
-  const rejectMutation = useRejectOrderMutation();
-  const schedulePickupMutation = useSchedulePickupMutation();
-  const cancelMutation = useCancelOrderMutation();
-  const collectPaymentMutation = useCollectPaymentMutation();
+  const [failureReason, setFailureReason] = useState('');
+  const [notesSheetVisible, setNotesSheetVisible] = useState(false);
+  const [notesForm, setNotesForm] = useState({
+    description: '',
+    fabric_notes: '',
+    customization_notes: '',
+    cloth_details: '',
+  });
 
   const role = user?.role ?? selectedRole ?? undefined;
   const normalizedRole = String(role ?? '').toLowerCase();
   const isSuperadmin = normalizedRole === 'superadmin';
   const isAdminRole = isSuperadmin || normalizedRole === 'admin';
+  const isEmployeeRole = normalizedRole === 'employee';
+
+  // If THIS employee has a pending pickup/delivery broadcast offer for this
+  // order, surface an inline Accept card (FCFS - matches the broadcast
+  // targeting). Reuses the same offer queries as the Pickups/Deliveries
+  // screens; only runs for the employee role.
+  const { data: pickupOffersData } = usePickupBroadcastOffers(isEmployeeRole);
+  const { data: deliveryOffersData } = useDeliveryBroadcastOffers(isEmployeeRole);
+  const acceptPickupMutation = useAcceptPickupBroadcastMutation();
+  const acceptDeliveryMutation = useAcceptDeliveryBroadcastMutation();
+  const pendingPickupOffer = (pickupOffersData?.broadcasts ?? []).some(
+    (o) => String(o.order_id) === String(id),
+  );
+  const pendingDeliveryOffer = (deliveryOffersData?.broadcasts ?? []).some(
+    (o) => String(o.order_id) === String(id),
+  );
+  // Payment/refund viewing (read-only) is ADMIN_STAFF_ROLES server-side
+  // (includes EMPLOYEE) - see get_payment_by_order / get_refunds_for_payment
+  // in app/services/payments/. Broader than isAdminRole, which is reserved
+  // for admin-only actions (broadcast force-restart, order notes editing,
+  // force-cancel).
+  const isStaffRole = isAdminRole || normalizedRole === 'employee';
+
+  const { data: order, isLoading, isError, error, refetch } = useOrder(id);
+  // Admin/superadmin see the full tailor list (contact details, KYC urls);
+  // employees see a stripped, PII-free list via a separate endpoint - see
+  // GET /employee/tailors vs GET /admin/tailors.
+  const { data: adminTailorsData } = useTailors(undefined, isAdminRole);
+  const { data: employeeTailorsData } = useTailorsForEmployee(!isAdminRole);
+  const assignMutation = useAssignTailorMutation();
+  const assignEmployeeMutation = useAssignTailorEmployeeMutation();
+  const statusMutation = useUpdateOrderStatusMutation();
+  const rejectMutation = useRejectOrderMutation();
+  const schedulePickupMutation = useSchedulePickupMutation();
+  const cancelMutation = useCancelOrderMutation();
+  const collectPaymentMutation = useCollectPaymentMutation();
+  const updateNotesMutation = useUpdateOrderNotesMutation();
+  const triggerBroadcastMutation = useTriggerBroadcastMutation();
+  const downloadInvoiceMutation = useDownloadInvoiceMutation();
+  const [broadcastConfirmVisible, setBroadcastConfirmVisible] = useState(false);
+  // Tailor-assignment broadcast tracker - only meaningful to admins who manage
+  // tailor search. Hidden from Bridge/employee, whose job is pickup/delivery,
+  // not tailor assignment (they were seeing an irrelevant "Broadcast Monitor").
+  const showBroadcastMonitor =
+    isAdminRole &&
+    !!order &&
+    ['searching_tailor', 'broadcasted', 'tailor_assigned'].includes(order.status);
+  const { data: broadcastStatus, isLoading: broadcastStatusLoading } = useOrderBroadcastStatus(
+    order?.order_id ?? '',
+    showBroadcastMonitor,
+  );
 
   const {
     data: payment,
     isLoading: isPaymentLoading,
     isError: isPaymentError,
   } = usePaymentByOrder(id, paymentSheetVisible);
-  const { data: refunds } = usePaymentRefunds(payment?.Id, paymentSheetVisible && isAdminRole);
+  const { data: refunds } = usePaymentRefunds(payment?.Id, paymentSheetVisible && isStaffRole);
   const updatePaymentStatusMutation = useUpdatePaymentStatusMutation(id);
   const createRefundMutation = useCreateRefundMutation(id);
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<MeasurementFormData>({
-    resolver: zodResolver(measurementSchema),
-    defaultValues: {
-      profile_name: '',
-      chest: '',
-      waist: '',
-      hips: '',
-      shoulder: '',
-      sleeve_length: '',
-      notes: '',
-    },
-  });
-
-  const order = useMemo(
-    () => data?.orders?.find((item) => item.order_id === id),
-    [data, id],
-  );
-
   const { actions } = useOrderActions({ role, order });
 
-  const tailors = tailorsData?.tailors ?? tailorsData?.items ?? [];
+  const tailors = isAdminRole
+    ? adminTailorsData?.tailors ?? adminTailorsData?.items ?? []
+    : employeeTailorsData ?? [];
 
   const handleAssign = (tailorId: string) => {
     if (!order) return;
-    assignMutation.mutate(
+    // Admin/superadmin use the unrestricted admin route; employees use the
+    // employee-scoped route (requires the order to be claimed by them and a
+    // measurement to already exist - app/services/orders/employee_order_service.py's
+    // employee_assign_tailor). Different backend preconditions, same UI action.
+    const mutation = isAdminRole ? assignMutation : assignEmployeeMutation;
+    mutation.mutate(
       { orderId: order.order_id, payload: { tailor_id: tailorId } },
       { onSuccess: () => setAssignSheetVisible(false) },
     );
@@ -192,9 +239,16 @@ export default function OrderDetailsScreen() {
         payload: {
           status,
           transaction_id: status === 'success' ? txnId || undefined : undefined,
+          failure_reason: status === 'failed' ? failureReason || undefined : undefined,
         },
       },
-      { onSuccess: () => { setCorrectPaymentSheetVisible(false); setTxnId(''); } },
+      {
+        onSuccess: () => {
+          setCorrectPaymentSheetVisible(false);
+          setTxnId('');
+          setFailureReason('');
+        },
+      },
     );
   };
 
@@ -207,29 +261,29 @@ export default function OrderDetailsScreen() {
     );
   };
 
-  const onSubmitMeasurement = (formData: MeasurementFormData) => {
+  const openNotesSheet = () => {
+    setNotesForm({
+      description: order?.description ?? '',
+      fabric_notes: order?.fabric_notes ?? '',
+      customization_notes: order?.customization_notes ?? '',
+      cloth_details: order?.cloth_details ?? '',
+    });
+    setNotesSheetVisible(true);
+  };
+
+  const handleSaveNotes = () => {
     if (!order) return;
-    measurementMutation.mutate(
+    updateNotesMutation.mutate(
       {
         orderId: order.order_id,
         payload: {
-          profile_name: formData.profile_name,
-          chest: Number(formData.chest),
-          waist: Number(formData.waist),
-          hips: formData.hips ? Number(formData.hips) : undefined,
-          shoulder: formData.shoulder ? Number(formData.shoulder) : undefined,
-          sleeve_length: formData.sleeve_length
-            ? Number(formData.sleeve_length)
-            : undefined,
-          notes: formData.notes,
+          description: notesForm.description || null,
+          fabric_notes: notesForm.fabric_notes || null,
+          customization_notes: notesForm.customization_notes || null,
+          cloth_details: notesForm.cloth_details || null,
         },
       },
-      {
-        onSuccess: () => {
-          setMeasurementSheetVisible(false);
-          reset();
-        },
-      },
+      { onSuccess: () => setNotesSheetVisible(false) },
     );
   };
 
@@ -245,7 +299,12 @@ export default function OrderDetailsScreen() {
         setAssignSheetVisible(true);
         return;
       case 'update_measurement':
-        setMeasurementSheetVisible(true);
+        setMeasurementManageSheetIsAdmin(true);
+        setMeasurementManageSheetVisible(true);
+        return;
+      case 'manage_measurement':
+        setMeasurementManageSheetIsAdmin(false);
+        setMeasurementManageSheetVisible(true);
         return;
       case 'correct_status':
         setStatusSheetVisible(true);
@@ -268,21 +327,45 @@ export default function OrderDetailsScreen() {
     }
   };
 
+  // Prompt the Bridge employee to fill the measurement right after they
+  // confirm physical pickup - the natural moment to collect it, since
+  // customers no longer provide their own measurement at all (product
+  // change: measurement is only ever filled by Bridge/employee at pickup, or
+  // by Admin). Fires once per order-status transition into picked_up, not on
+  // every render/refetch of an order already at that stage.
+  const promptedPickupMeasurementFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isEmployeeRole || !order) return;
+    if (order.status !== ORDER_STATUS.PICKED_UP) return;
+    if (order.measurement) return; // already has one on file
+    if (promptedPickupMeasurementFor.current === order.order_id) return;
+    promptedPickupMeasurementFor.current = order.order_id;
+    setMeasurementManageSheetIsAdmin(false);
+    setMeasurementManageSheetVisible(true);
+  }, [isEmployeeRole, order]);
+
   if (isLoading) return <Loader fullScreen message="Loading order..." />;
   if (isError || !order) {
     return (
       <View className="flex-1" style={{ backgroundColor: colors.background }}>
         <Header title="Order Details" showMenu={false} />
         <EmptyState
-          title="Order not found"
-          actionLabel="Go Back"
-          onAction={() => router.back()}
+          title={isError ? 'Failed to load order' : 'Order not found'}
+          description={isError ? formatApiErrorDetail(error) : undefined}
+          actionLabel={isError ? 'Retry' : 'Go Back'}
+          onAction={isError ? () => refetch() : () => router.back()}
         />
       </View>
     );
   }
 
   const statusColor = ORDER_STATUS_COLORS[order.status] ?? colors.primary;
+  const hasOrderNotes = !!(
+    order.description ||
+    order.fabric_notes ||
+    order.customization_notes ||
+    order.cloth_details
+  );
 
   const toneVariant: Record<OrderAction['tone'], 'primary' | 'outline' | 'danger'> = {
     primary: 'primary',
@@ -297,13 +380,68 @@ export default function OrderDetailsScreen() {
         subtitle={orderStatusLabel(order.status)}
         showMenu={false}
         rightAction={
-          <Pressable onPress={() => router.back()}>
-            <Ionicons name="close" size={24} color={colors.text} />
-          </Pressable>
+          <View className="flex-row items-center gap-4">
+            <Pressable
+              onPress={() =>
+                downloadInvoiceMutation.mutate({ orderId: order.order_id, orderCode: order.order_code })
+              }
+              disabled={downloadInvoiceMutation.isPending}
+              hitSlop={8}
+            >
+              {downloadInvoiceMutation.isPending ? (
+                <ActivityIndicator size="small" color={colors.text} />
+              ) : (
+                <Ionicons name="download-outline" size={22} color={colors.text} />
+              )}
+            </Pressable>
+            <Pressable onPress={() => router.back()}>
+              <Ionicons name="close" size={24} color={colors.text} />
+            </Pressable>
+          </View>
         }
       />
 
-      <ScrollView className="px-5" showsVerticalScrollIndicator={false}>
+      <ScreenContent showsVerticalScrollIndicator={false}>
+        {(pendingPickupOffer || pendingDeliveryOffer) ? (
+          <Card className="mb-4" style={{ borderColor: colors.primary, borderWidth: 1.5 }}>
+            <View className="flex-row items-center mb-2">
+              <Ionicons
+                name={pendingPickupOffer ? 'cube-outline' : 'bicycle-outline'}
+                size={18}
+                color={colors.primary}
+              />
+              <Text className="font-bold ml-2" style={{ color: colors.text }}>
+                {pendingPickupOffer ? 'Pickup offer for you' : 'Delivery offer for you'}
+              </Text>
+            </View>
+            <Text className="text-sm mb-3" style={{ color: colors.textSecondary }}>
+              You have a pending {pendingPickupOffer ? 'pickup' : 'delivery'} offer for this order.
+              Accept to claim it (first come, first served).
+            </Text>
+            <Pressable
+              onPress={() =>
+                pendingPickupOffer
+                  ? acceptPickupMutation.mutate(String(order.order_id))
+                  : acceptDeliveryMutation.mutate(String(order.order_id))
+              }
+              disabled={acceptPickupMutation.isPending || acceptDeliveryMutation.isPending}
+              className="rounded-xl py-3 items-center"
+              style={{
+                backgroundColor: colors.primary,
+                opacity: acceptPickupMutation.isPending || acceptDeliveryMutation.isPending ? 0.6 : 1,
+              }}
+            >
+              <Text className="text-white font-semibold">
+                {acceptPickupMutation.isPending || acceptDeliveryMutation.isPending
+                  ? 'Accepting…'
+                  : pendingPickupOffer
+                    ? 'Accept Pickup'
+                    : 'Accept Delivery'}
+              </Text>
+            </Pressable>
+          </Card>
+        ) : null}
+
         <Card className="mb-4">
           <View className="flex-row items-center justify-between mb-4">
             <Badge
@@ -346,25 +484,207 @@ export default function OrderDetailsScreen() {
           />
         </Card>
 
+        {hasOrderNotes || isAdminRole ? (
+          <Card className="mb-4">
+            <View className="flex-row items-center justify-between mb-2">
+              <Text className="font-bold" style={{ color: colors.text }}>
+                Order Notes
+              </Text>
+              {isAdminRole ? (
+                <Pressable onPress={openNotesSheet} hitSlop={8}>
+                  <Ionicons name="create-outline" size={20} color={colors.primary} />
+                </Pressable>
+              ) : null}
+            </View>
+            {hasOrderNotes ? (
+              <>
+                {order.description ? (
+                  <DetailRow label="Description" value={order.description} colors={colors} />
+                ) : null}
+                {order.fabric_notes ? (
+                  <DetailRow label="Fabric Notes" value={order.fabric_notes} colors={colors} />
+                ) : null}
+                {order.customization_notes ? (
+                  <DetailRow label="Customization" value={order.customization_notes} colors={colors} />
+                ) : null}
+                {order.cloth_details ? (
+                  <DetailRow label="Cloth Details" value={order.cloth_details} colors={colors} />
+                ) : null}
+              </>
+            ) : (
+              <Text className="text-sm py-1" style={{ color: colors.textMuted }}>
+                No notes added yet.
+              </Text>
+            )}
+          </Card>
+        ) : null}
+
+        {order.measurement ? (
+          <Card className="mb-4">
+            <View className="flex-row items-center justify-between mb-2">
+              <Text className="font-bold" style={{ color: colors.text }}>
+                Measurements
+              </Text>
+              <Text className="text-xs" style={{ color: colors.textMuted }}>
+                {order.measurement.profile_name}
+              </Text>
+            </View>
+            {order.measurement.chest != null ? (
+              <DetailRow label="Chest" value={`${order.measurement.chest} in`} colors={colors} />
+            ) : null}
+            {order.measurement.waist != null ? (
+              <DetailRow label="Waist" value={`${order.measurement.waist} in`} colors={colors} />
+            ) : null}
+            {order.measurement.hips != null ? (
+              <DetailRow label="Hips" value={`${order.measurement.hips} in`} colors={colors} />
+            ) : null}
+            {order.measurement.shoulder != null ? (
+              <DetailRow label="Shoulder" value={`${order.measurement.shoulder} in`} colors={colors} />
+            ) : null}
+            {order.measurement.neck != null ? (
+              <DetailRow label="Neck" value={`${order.measurement.neck} in`} colors={colors} />
+            ) : null}
+            {order.measurement.sleeve_length != null ? (
+              <DetailRow label="Sleeve Length" value={`${order.measurement.sleeve_length} in`} colors={colors} />
+            ) : null}
+            {order.measurement.inseam != null ? (
+              <DetailRow label="Inseam" value={`${order.measurement.inseam} in`} colors={colors} />
+            ) : null}
+            {order.measurement.height != null ? (
+              <DetailRow label="Height" value={`${order.measurement.height} in`} colors={colors} />
+            ) : null}
+            {order.measurement.fit_preference ? (
+              <DetailRow label="Fit Preference" value={capitalize(order.measurement.fit_preference)} colors={colors} />
+            ) : null}
+            {order.measurement.notes ? (
+              <DetailRow label="Notes" value={order.measurement.notes} colors={colors} />
+            ) : null}
+          </Card>
+        ) : normalizedRole === 'tailor' ? (
+          <Card className="mb-4">
+            <Text className="font-bold mb-1" style={{ color: colors.text }}>
+              Measurements
+            </Text>
+            <Text className="text-sm" style={{ color: colors.textMuted }}>
+              Not collected yet — the assigned Bridge employee records these at pickup.
+            </Text>
+          </Card>
+        ) : null}
+
         <ProgressPhotosSection
           orderId={order.order_id}
           orderStatus={order.status}
           isTailor={normalizedRole === 'tailor'}
         />
 
-        {actions.map((action) => (
-          <Button
-            key={action.id}
-            title={action.label}
-            variant={toneVariant[action.tone]}
-            loading={action.isLoading}
-            onPress={() => handleActionPress(action)}
-            className="mb-3"
-            fullWidth
-          />
-        ))}
+        {normalizedRole === 'employee' && order.status === ORDER_STATUS.READY_FOR_DISPATCH ? (
+          <Card className="mb-4 flex-row items-start" style={{ backgroundColor: colors.primaryLight }}>
+            <Ionicons name="bicycle-outline" size={18} color={colors.primary} style={{ marginTop: 1 }} />
+            <View className="ml-2.5 flex-1">
+              <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+                Ready for dispatch
+              </Text>
+              <Text className="text-xs mt-0.5" style={{ color: colors.textSecondary }}>
+                This order is now waiting to be claimed on the Deliveries screen — go online there to
+                receive it as a delivery offer.
+              </Text>
+              <Pressable onPress={() => router.push('/(drawer)/deliveries')} className="mt-2">
+                <Text className="text-xs font-bold" style={{ color: colors.primary }}>
+                  Go to Deliveries →
+                </Text>
+              </Pressable>
+            </View>
+          </Card>
+        ) : null}
+
+        {actions.length > 0 ? (
+          <>
+            <Text
+              className="text-xs font-semibold uppercase tracking-wide mb-2 ml-1"
+              style={{ color: colors.textMuted }}
+            >
+              Actions
+            </Text>
+            {actions.map((action) => (
+              <Button
+                key={action.id}
+                title={action.label}
+                variant={toneVariant[action.tone]}
+                loading={action.isLoading}
+                onPress={() => handleActionPress(action)}
+                className="mb-3"
+                fullWidth
+              />
+            ))}
+          </>
+        ) : null}
+
+        {showBroadcastMonitor ? (
+          <Card className="mb-4">
+            <View className="flex-row items-center justify-between mb-2">
+              <Text className="font-bold" style={{ color: colors.text }}>
+                Broadcast Monitor
+              </Text>
+              {broadcastStatusLoading ? <ActivityIndicator size="small" color={colors.textMuted} /> : null}
+            </View>
+            {broadcastStatus && broadcastStatus.broadcasts.length > 0 ? (
+              broadcastStatus.broadcasts.map((b, idx) => (
+                <View
+                  key={b.id}
+                  className="flex-row items-center justify-between py-2.5"
+                  style={
+                    idx < broadcastStatus.broadcasts.length - 1
+                      ? { borderBottomWidth: 1, borderColor: colors.border }
+                      : undefined
+                  }
+                >
+                  <View>
+                    <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+                      Tailor #{b.tailor_id} · Round {b.round}
+                    </Text>
+                    <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
+                      Notified {formatDate(b.notified_at ?? undefined)}
+                      {b.responded_at ? ` · Responded ${formatDate(b.responded_at)}` : ''}
+                    </Text>
+                  </View>
+                  <Badge
+                    label={b.status}
+                    backgroundColor={`${ORDER_STATUS_COLORS[b.status] ?? colors.primary}20`}
+                    color={ORDER_STATUS_COLORS[b.status] ?? colors.primary}
+                  />
+                </View>
+              ))
+            ) : (
+              <Text className="text-sm py-2" style={{ color: colors.textMuted }}>
+                No broadcast attempts yet.
+              </Text>
+            )}
+          </Card>
+        ) : null}
+
+        {isAdminRole ? (
+          <View className="mt-2">
+            <Text
+              className="text-xs font-semibold uppercase tracking-wide mb-2 ml-1"
+              style={{ color: colors.textMuted }}
+            >
+              Admin Tools
+            </Text>
+            <Pressable
+              onPress={() => setBroadcastConfirmVisible(true)}
+              disabled={triggerBroadcastMutation.isPending}
+              className="flex-row items-center justify-center py-3 rounded-2xl border mb-3"
+              style={{ borderColor: colors.border, opacity: triggerBroadcastMutation.isPending ? 0.6 : 1 }}
+            >
+              <Ionicons name="radio-outline" size={16} color={colors.textSecondary} />
+              <Text className="ml-2 text-sm font-semibold" style={{ color: colors.textSecondary }}>
+                {triggerBroadcastMutation.isPending ? 'Triggering…' : 'Force Restart Broadcast'}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
         <View className="mb-8" />
-      </ScrollView>
+      </ScreenContent>
 
       <BottomSheet
         visible={assignSheetVisible}
@@ -386,112 +706,6 @@ export default function OrderDetailsScreen() {
             </Text>
           </Pressable>
         ))}
-      </BottomSheet>
-
-      <BottomSheet
-        visible={measurementSheetVisible}
-        onClose={() => setMeasurementSheetVisible(false)}
-        title="Update Measurement"
-      >
-        <Controller
-          control={control}
-          name="profile_name"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Profile Name"
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              error={errors.profile_name?.message}
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="chest"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Chest (inches)"
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              error={errors.chest?.message}
-              keyboardType="decimal-pad"
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="waist"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Waist (inches)"
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              error={errors.waist?.message}
-              keyboardType="decimal-pad"
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="hips"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Hips (inches)"
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              keyboardType="decimal-pad"
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="shoulder"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Shoulder (inches)"
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              keyboardType="decimal-pad"
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="sleeve_length"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Sleeve Length (inches)"
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              keyboardType="decimal-pad"
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="notes"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Notes"
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              multiline
-            />
-          )}
-        />
-        <Button
-          title="Save Measurement"
-          onPress={handleSubmit(onSubmitMeasurement)}
-          loading={measurementMutation.isPending}
-          fullWidth
-        />
       </BottomSheet>
 
       <BottomSheet
@@ -585,6 +799,42 @@ export default function OrderDetailsScreen() {
           onChangeText={setCollectAmount}
           keyboardType="decimal-pad"
         />
+        {collectMethod === 'qr' ? (
+          Number(collectAmount) > 0 ? (
+            <View className="items-center mb-4">
+              <Text className="text-xs mb-2 text-center" style={{ color: colors.textSecondary }}>
+                Ask the customer to scan this QR with any UPI app
+              </Text>
+              <View
+                className="rounded-2xl overflow-hidden border p-2"
+                style={{ borderColor: colors.border, backgroundColor: '#fff' }}
+              >
+                <Image
+                  source={{
+                    uri: buildUpiQrImageUri(
+                      MERCHANT_UPI,
+                      Number(collectAmount),
+                      order?.order_code ?? String(id ?? ''),
+                      Math.min(screenWidth - 96, 240),
+                    ),
+                  }}
+                  style={{
+                    width: Math.min(screenWidth - 96, 240),
+                    height: Math.min(screenWidth - 96, 240),
+                  }}
+                  resizeMode="contain"
+                />
+              </View>
+              <Text className="text-xs mt-2" style={{ color: colors.textMuted }}>
+                {MERCHANT_UPI}
+              </Text>
+            </View>
+          ) : (
+            <Text className="text-xs mb-4" style={{ color: colors.textMuted }}>
+              Enter an amount above to generate the QR code.
+            </Text>
+          )
+        ) : null}
         <Button
           title="Confirm Collection"
           onPress={handleCollectPayment}
@@ -634,7 +884,7 @@ export default function OrderDetailsScreen() {
             ) : null}
             <DetailRow label="Created" value={formatDateTime(payment.CreatedAt)} colors={colors} />
 
-            {isAdminRole && refunds && refunds.length > 0 ? (
+            {isStaffRole && refunds && refunds.length > 0 ? (
               <View className="mt-4">
                 <Text className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
                   Refund History
@@ -688,6 +938,12 @@ export default function OrderDetailsScreen() {
           value={txnId}
           onChangeText={setTxnId}
         />
+        <Input
+          label="Failure Reason (used when marking Failed)"
+          value={failureReason}
+          onChangeText={setFailureReason}
+          multiline
+        />
         {PAYMENT_STATUS_OPTIONS.map((option) => (
           <Pressable
             key={option.value}
@@ -726,6 +982,43 @@ export default function OrderDetailsScreen() {
         />
       </BottomSheet>
 
+      <BottomSheet
+        visible={notesSheetVisible}
+        onClose={() => setNotesSheetVisible(false)}
+        title="Edit Order Notes"
+      >
+        <Input
+          label="Description"
+          value={notesForm.description}
+          onChangeText={(text) => setNotesForm((f) => ({ ...f, description: text }))}
+          multiline
+        />
+        <Input
+          label="Fabric Notes"
+          value={notesForm.fabric_notes}
+          onChangeText={(text) => setNotesForm((f) => ({ ...f, fabric_notes: text }))}
+          multiline
+        />
+        <Input
+          label="Customization Notes"
+          value={notesForm.customization_notes}
+          onChangeText={(text) => setNotesForm((f) => ({ ...f, customization_notes: text }))}
+          multiline
+        />
+        <Input
+          label="Cloth Details"
+          value={notesForm.cloth_details}
+          onChangeText={(text) => setNotesForm((f) => ({ ...f, cloth_details: text }))}
+          multiline
+        />
+        <Button
+          title="Save Notes"
+          onPress={handleSaveNotes}
+          loading={updateNotesMutation.isPending}
+          fullWidth
+        />
+      </BottomSheet>
+
       <ConfirmModal
         visible={!!confirmAction}
         title={confirmAction?.label ?? ''}
@@ -737,6 +1030,28 @@ export default function OrderDetailsScreen() {
           setConfirmAction(null);
         }}
         onCancel={() => setConfirmAction(null)}
+      />
+
+      <ConfirmModal
+        visible={broadcastConfirmVisible}
+        title="Force Restart Broadcast"
+        message="This restarts tailor broadcast for this order regardless of its current status. Use this to recover a stuck order."
+        confirmLabel="Trigger Broadcast"
+        loading={triggerBroadcastMutation.isPending}
+        onConfirm={() => {
+          triggerBroadcastMutation.mutate(order.order_id);
+          setBroadcastConfirmVisible(false);
+        }}
+        onCancel={() => setBroadcastConfirmVisible(false)}
+      />
+
+      <MeasurementManageSheet
+        visible={measurementManageSheetVisible}
+        onClose={() => setMeasurementManageSheetVisible(false)}
+        orderId={order.order_id}
+        customerId={order.customer_id}
+        serviceLabel={order.service_name ?? order.category_name}
+        useAdminEndpoint={measurementManageSheetIsAdmin}
       />
     </View>
   );
