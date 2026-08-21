@@ -27,6 +27,10 @@ export interface TailorApplicationDetail extends TailorApplicationListItem {
   account_holder_name?: string | null;
   bank_account_number?: string | null;
   ifsc_code?: string | null;
+  upi_id?: string | null;
+  verification_status?: string | null;
+  verification_remarks?: string | null;
+  portfolio_images?: string[] | null;
   rejection_reason?: string | null;
   reviewed_at?: string | null;
   reviewed_by?: number | null;

@@ -8,11 +8,16 @@ import type { AdminOrderItem } from '@/types/orders';
 // counts are derived client-side from that same list the Orders tab already
 // fetches. This intentionally does not aggregate beyond the current page —
 // see EmployeeDashboardStats for the caveat surfaced in the UI.
+// Kept identical to Admin_Web's computeEmployeeStats (web
+// src/features/dashboard/utils/dashboardUtils.js) so the Bridge/employee
+// dashboard reads the same on web and app: queue-based counts (not "today"
+// gating) plus a Today's Tasks metric. Change both files together.
 export interface EmployeeDashboardStats {
-  assignedToday: number;
-  pickupToday: number;
-  deliveryToday: number;
+  assigned: number;
+  pickupQueue: number;
+  deliveryQueue: number;
   codPending: number;
+  todaysTasks: number;
 }
 
 const isToday = (isoDate: string | undefined): boolean => {
@@ -30,34 +35,35 @@ const isToday = (isoDate: string | undefined): boolean => {
 export const computeEmployeeDashboardStats = (
   orders: AdminOrderItem[],
 ): EmployeeDashboardStats => {
-  let assignedToday = 0;
-  let pickupToday = 0;
-  let deliveryToday = 0;
+  let assigned = 0;
+  let pickupQueue = 0;
+  let deliveryQueue = 0;
   let codPending = 0;
+  let todaysTasks = 0;
 
   for (const order of orders) {
-    if (isToday(order.created_at) && order.status !== ORDER_STATUS.ORDER_REJECTED) {
-      assignedToday += 1;
-    }
+    const status = String(order.status ?? '').toLowerCase();
     if (
-      isToday(order.scheduled_pickup_at) &&
-      (order.status === ORDER_STATUS.PICKUP_SCHEDULED || order.status === ORDER_STATUS.PICKUP_PENDING)
+      status === ORDER_STATUS.ORDER_ACCEPTED ||
+      status === ORDER_STATUS.SEARCHING_TAILOR ||
+      status === ORDER_STATUS.BROADCASTED
     ) {
-      pickupToday += 1;
+      assigned += 1;
     }
-    if (isToday(order.expected_delivery_date) && order.status === ORDER_STATUS.OUT_FOR_DELIVERY) {
-      deliveryToday += 1;
+    if (status === ORDER_STATUS.PICKUP_SCHEDULED || status === ORDER_STATUS.PICKUP_PENDING) {
+      pickupQueue += 1;
+      if (isToday(order.scheduled_pickup_at)) todaysTasks += 1;
     }
-    if (
-      order.status === ORDER_STATUS.OUT_FOR_DELIVERY &&
-      typeof order.remaining_amount === 'number' &&
-      order.remaining_amount > 0
-    ) {
-      codPending += 1;
+    if (status === ORDER_STATUS.OUT_FOR_DELIVERY) {
+      deliveryQueue += 1;
+      todaysTasks += 1;
+      if (typeof order.remaining_amount === 'number' && order.remaining_amount > 0) {
+        codPending += 1;
+      }
     }
   }
 
-  return { assignedToday, pickupToday, deliveryToday, codPending };
+  return { assigned, pickupQueue, deliveryQueue, codPending, todaysTasks };
 };
 
 // Tailor dashboard — derived client-side from GET /orders/my-orders (the only
@@ -71,6 +77,7 @@ export interface TailorDashboardStats {
   stitching: number;
   ready: number;
   completed: number;
+  completedEarnings: number;
 }
 
 const STITCHING_STATUSES = new Set<string>([
@@ -86,6 +93,7 @@ export const computeTailorDashboardStats = (
   let stitching = 0;
   let ready = 0;
   let completed = 0;
+  let completedEarnings = 0;
 
   for (const order of orders) {
     if (order.status === ORDER_STATUS.CLOTH_RECEIVED_BY_TAILOR) {
@@ -96,8 +104,9 @@ export const computeTailorDashboardStats = (
       ready += 1;
     } else if (order.status === ORDER_STATUS.COMPLETED) {
       completed += 1;
+      completedEarnings += order.final_amount ?? order.amount ?? 0;
     }
   }
 
-  return { assigned, stitching, ready, completed };
+  return { assigned, stitching, ready, completed, completedEarnings };
 };

@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { Button, Card, Loader, Modal } from '@/components/ui';
+import { ScrollView, Text, View } from 'react-native';
+import { Button, Card, Loader, Modal, Pressable } from '@/components/ui';
 import { ORDER_STATUS } from '@/constants/orderStatus';
 import {
   useOrderPhotos,

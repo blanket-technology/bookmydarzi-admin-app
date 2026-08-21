@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { TextInput, View } from 'react-native';
+import { TextInput, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -20,8 +20,20 @@ interface OtpInputProps {
  */
 export const OtpInput = ({ value, onChange, length = 6, error, autoFocus = true }: OtpInputProps) => {
   const { colors } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
   const inputRefs = useRef<Array<TextInput | null>>([]);
   const digits = Array.from({ length }, (_, i) => value[i] ?? '');
+
+  // Box size (and therefore font size) must scale with the actual screen
+  // width, not a fixed text-2xl - on narrower phones, 6 boxes in a row at a
+  // fixed 24px font overflowed/clipped the digit inside each box. Derive
+  // both from the same available-width calculation so the digit always fits
+  // with room to spare, on any screen size.
+  const HORIZONTAL_PADDING = 24 * 2 + 24 * 2; // screen px-6 (24) + card padding (24), both sides
+  const GAP = 8;
+  const available = screenWidth - HORIZONTAL_PADDING - GAP * (length - 1);
+  const boxSize = Math.max(40, Math.min(56, available / length));
+  const fontSize = Math.round(boxSize * 0.42);
 
   const setDigit = (index: number, text: string) => {
     // Handle a full-code paste landing in any single box.
@@ -59,11 +71,7 @@ export const OtpInput = ({ value, onChange, length = 6, error, autoFocus = true 
           const filled = digit.length > 0;
           const isNextToFill = !filled && (index === 0 || digits[index - 1]);
           return (
-            <Animated.View
-              key={index}
-              entering={FadeIn.delay(index * 40).duration(250)}
-              className="flex-1"
-            >
+            <Animated.View key={index} entering={FadeIn.delay(index * 40).duration(250)}>
               <TextInput
                 ref={(ref) => {
                   inputRefs.current[index] = ref;
@@ -75,10 +83,18 @@ export const OtpInput = ({ value, onChange, length = 6, error, autoFocus = true 
                 maxLength={length}
                 autoFocus={autoFocus && index === 0}
                 textAlign="center"
+                textAlignVertical="center"
                 selectTextOnFocus
-                className="rounded-2xl text-2xl font-bold"
+                className="rounded-2xl font-bold"
                 style={{
-                  aspectRatio: 1,
+                  width: boxSize,
+                  height: boxSize,
+                  fontSize,
+                  lineHeight: fontSize,
+                  paddingVertical: 0,
+                  paddingTop: 0,
+                  paddingBottom: 0,
+                  includeFontPadding: false,
                   backgroundColor: colors.surface,
                   borderWidth: 2,
                   borderColor: error

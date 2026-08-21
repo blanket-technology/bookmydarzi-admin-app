@@ -25,7 +25,13 @@ export const useApplication = (applicationId: string, enabled = true) =>
 export const useApproveApplicationMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (applicationId: string) => applicationService.approveApplication(applicationId),
+    mutationFn: ({
+      applicationId,
+      overridePanRequirement,
+    }: {
+      applicationId: string;
+      overridePanRequirement?: boolean;
+    }) => applicationService.approveApplication(applicationId, { overridePanRequirement }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });

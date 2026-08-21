@@ -1,16 +1,75 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
-import { Avatar, Badge, EmptyState, Header, SearchBar, SkeletonList } from '@/components/ui';
-import { useTailors } from '@/features/tailors/hooks/useTailors';
+import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { Avatar, Badge, EmptyState, Header, Pressable, SearchBar, SkeletonList } from '@/components/ui';
+import { useTailors, useTailorWorkload } from '@/features/tailors/hooks/useTailors';
 import { formatApiErrorDetail } from '@/utils/errors';
 import { useTheme } from '@/hooks/useTheme';
-import type { AdminTailorListItem } from '@/types/tailors';
+import { useResponsive } from '@/hooks/useResponsive';
+import type { AdminTailorListItem, TailorWorkloadItem } from '@/types/tailors';
+
+type TailorsView = 'list' | 'workload';
+
+const WorkloadRow = ({ item, colors }: { item: TailorWorkloadItem; colors: ReturnType<typeof useTheme>['colors'] }) => (
+  <View
+    className="rounded-3xl p-4 mb-3 border flex-row items-center"
+    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+  >
+    <Avatar name={item.tailor_name} size={44} />
+    <View className="ml-3 flex-1">
+      <Text className="font-bold" style={{ color: colors.text }}>
+        {item.tailor_name ?? `Tailor #${item.tailor_id}`}
+      </Text>
+      <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
+        {item.utilization_percentage ?? 0}% utilized
+      </Text>
+    </View>
+    <View className="flex-row" style={{ gap: 16 }}>
+      <View className="items-center">
+        <Text className="font-bold text-base" style={{ color: colors.primary }}>
+          {item.active_orders ?? 0}
+        </Text>
+        <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+          Active
+        </Text>
+      </View>
+      <View className="items-center">
+        <Text className="font-bold text-base" style={{ color: colors.accent ?? colors.text }}>
+          {item.pending_orders ?? 0}
+        </Text>
+        <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+          Pending
+        </Text>
+      </View>
+      <View className="items-center">
+        <Text className="font-bold text-base" style={{ color: '#16a34a' }}>
+          {item.completed_orders ?? 0}
+        </Text>
+        <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+          Done
+        </Text>
+      </View>
+    </View>
+  </View>
+);
 
 export default function TailorsScreen() {
   const { colors } = useTheme();
+  const { contentMaxWidth } = useResponsive();
   const [search, setSearch] = useState('');
-  const { data, isLoading, isError, error, refetch, isRefetching } = useTailors({ search });
+  const [view, setView] = useState<TailorsView>('list');
+  const { data, isLoading, isError, error, refetch, isRefetching } = useTailors(
+    { search },
+    view === 'list',
+  );
+  const {
+    data: workloadData,
+    isLoading: isWorkloadLoading,
+    isError: isWorkloadError,
+    error: workloadError,
+    refetch: refetchWorkload,
+    isRefetching: isWorkloadRefetching,
+  } = useTailorWorkload(view === 'workload');
 
   const tailors = useMemo(() => {
     const items = data?.tailors ?? data?.items ?? [];
@@ -62,33 +121,85 @@ export default function TailorsScreen() {
     </Pressable>
   );
 
+  const workload = workloadData ?? [];
+
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title="Tailors" subtitle={`${tailors.length} tailors`} />
-      <View className="px-5 flex-1">
-        <SearchBar value={search} onChangeText={setSearch} placeholder="Search tailors..." />
-        {isLoading ? (
+      <Header
+        title="Tailors"
+        subtitle={view === 'list' ? `${tailors.length} tailors` : `${workload.length} tailors · workload`}
+      />
+      <View className="px-5 pt-3 flex-row" style={{ gap: 10 }}>
+        {(['list', 'workload'] as TailorsView[]).map((option) => (
+          <Pressable
+            key={option}
+            onPress={() => setView(option)}
+            className="flex-1 items-center justify-center rounded-2xl py-2.5 border"
+            style={{
+              backgroundColor: view === option ? colors.primary : colors.surface,
+              borderColor: view === option ? colors.primary : colors.border,
+            }}
+          >
+            <Text
+              className="font-semibold text-sm"
+              style={{ color: view === option ? '#fff' : colors.text }}
+            >
+              {option === 'list' ? 'Directory' : 'Workload'}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      <View className="px-5 flex-1 mt-3 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
+        {view === 'list' ? (
+          <>
+            <SearchBar value={search} onChangeText={setSearch} placeholder="Search tailors..." />
+            {isLoading ? (
+              <SkeletonList count={5} />
+            ) : isError ? (
+              <EmptyState
+                title="Failed to load tailors"
+                description={formatApiErrorDetail(error)}
+                actionLabel="Retry"
+                onAction={refetch}
+              />
+            ) : (
+              <FlatList
+                data={tailors}
+                keyExtractor={(item) => item.tailor_id}
+                renderItem={renderItem}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={isRefetching}
+                    onRefresh={refetch}
+                    tintColor={colors.primary}
+                  />
+                }
+                ListEmptyComponent={<EmptyState icon="cut-outline" title="No tailors found" />}
+              />
+            )}
+          </>
+        ) : isWorkloadLoading ? (
           <SkeletonList count={5} />
-        ) : isError ? (
+        ) : isWorkloadError ? (
           <EmptyState
-            title="Failed to load tailors"
-            description={formatApiErrorDetail(error)}
+            title="Failed to load workload"
+            description={formatApiErrorDetail(workloadError)}
             actionLabel="Retry"
-            onAction={refetch}
+            onAction={refetchWorkload}
           />
         ) : (
           <FlatList
-            data={tailors}
+            data={workload}
             keyExtractor={(item) => item.tailor_id}
-            renderItem={renderItem}
+            renderItem={({ item }) => <WorkloadRow item={item} colors={colors} />}
             refreshControl={
               <RefreshControl
-                refreshing={isRefetching}
-                onRefresh={refetch}
+                refreshing={isWorkloadRefetching}
+                onRefresh={refetchWorkload}
                 tintColor={colors.primary}
               />
             }
-            ListEmptyComponent={<EmptyState icon="cut-outline" title="No tailors found" />}
+            ListEmptyComponent={<EmptyState icon="bar-chart-outline" title="No workload data" />}
           />
         )}
       </View>

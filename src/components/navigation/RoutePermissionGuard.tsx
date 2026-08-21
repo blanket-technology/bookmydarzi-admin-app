@@ -1,7 +1,7 @@
-import { Redirect, usePathname } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { Loader } from '@/components/ui';
+import { Loader, PermissionDenied } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { toast } from '@/store/toastStore';
@@ -42,7 +42,12 @@ export const RoutePermissionGuard = ({ children }: { children: ReactNode }) => {
   }
 
   if (!canAccessPath(pathname)) {
-    return <Redirect href={defaultRoute as never} />;
+    return (
+      <PermissionDenied
+        message="Your role doesn't have access to this section."
+        onGoBack={() => router.replace(defaultRoute as never)}
+      />
+    );
   }
 
   return children;

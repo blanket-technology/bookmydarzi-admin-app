@@ -2,6 +2,7 @@ import type { UserRole } from './auth';
 
 export interface AdminUserItem {
   id: string;
+  user_code?: string;
   full_name?: string;
   first_name?: string;
   last_name?: string;
@@ -12,6 +13,8 @@ export interface AdminUserItem {
   is_email_verified?: boolean;
   is_mobile_verified?: boolean;
   created_at?: string;
+  last_login?: string;
+  profile_image_url?: string;
   orders_count?: number;
 }
 
@@ -39,6 +42,8 @@ export interface RawAdminUser {
   IsEmailVerified?: boolean;
   IsMobileVerified?: boolean;
   CreatedAt?: string | null;
+  LastLogin?: string | null;
+  ProfileImageUrl?: string | null;
 }
 
 export interface RawAdminUsersResponse {
@@ -50,4 +55,140 @@ export interface RawAdminUsersResponse {
 
 export interface UserStatusUpdateRequest {
   action: 'activate' | 'deactivate';
+}
+
+// Mirrors GET /admin/customers/{id}/full-detail exactly (admin.py's
+// get_customer_full_detail) — a single aggregate response covering
+// everything about a customer beyond orders/audit-log (which have their
+// own paginated endpoints). Each section is capped to 10 recent items
+// server-side, not fully paginated — this is a detail-page summary, not a
+// list screen replacement.
+export interface CustomerAddress {
+  id: string;
+  full_name?: string | null;
+  mobile?: string | null;
+  address_line_1?: string | null;
+  address_line_2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  pincode?: string | null;
+  landmark?: string | null;
+  address_type?: string | null;
+  is_default?: boolean;
+}
+
+export interface CustomerMeasurementSummary {
+  id: string;
+  profile_name: string;
+  gender?: string | null;
+  chest?: number | null;
+  waist?: number | null;
+  hips?: number | null;
+  shoulder?: number | null;
+  height?: number | null;
+  fit_preference?: string | null;
+  is_default?: boolean;
+}
+
+export interface CustomerPaymentSummary {
+  id: string;
+  payment_code?: string | null;
+  order_id?: string | null;
+  amount: number;
+  method?: string | null;
+  status?: string | null;
+  payment_type?: string | null;
+  created_at?: string | null;
+}
+
+export interface CustomerCartSummary {
+  id: string;
+  status?: string | null;
+  total_amount: number;
+  item_count: number;
+  created_at?: string | null;
+}
+
+export interface CustomerSupportTicketSummary {
+  id: string;
+  ticket_code?: string | null;
+  subject?: string | null;
+  category?: string | null;
+  status?: string | null;
+  priority?: string | null;
+  order_id?: string | null;
+  created_at?: string | null;
+}
+
+export interface CustomerChatSessionSummary {
+  id: string;
+  uuid: string;
+  issue_category?: string | null;
+  status?: string | null;
+  ai_handled?: boolean;
+  order_id?: string | null;
+  last_message_at?: string | null;
+  created_at?: string | null;
+}
+
+export interface CustomerCancellationSummary {
+  id: string;
+  cancellation_code?: string | null;
+  order_id?: string | null;
+  status?: string | null;
+  penalty_amount: number;
+  refund_amount: number;
+  created_at?: string | null;
+}
+
+export interface CustomerPenaltySummary {
+  id: string;
+  order_id?: string | null;
+  penalty_amount: number;
+  is_applied?: boolean;
+  applied_to_order_id?: string | null;
+  expires_at?: string | null;
+  created_at?: string | null;
+}
+
+export interface CustomerWishlistItemSummary {
+  id: string;
+  item_type?: string | null;
+  service_id?: string | null;
+  tailor_id?: string | null;
+  created_at?: string | null;
+}
+
+export interface CustomerFullDetail {
+  addresses: CustomerAddress[];
+  measurements: CustomerMeasurementSummary[];
+  payments: { total: number; items: CustomerPaymentSummary[] };
+  carts: { total: number; items: CustomerCartSummary[] };
+  support_tickets: { total: number; items: CustomerSupportTicketSummary[] };
+  chat_sessions: { total: number; items: CustomerChatSessionSummary[] };
+  cancellations: { total: number; items: CustomerCancellationSummary[] };
+  penalties: { total: number; items: CustomerPenaltySummary[] };
+  wishlist: { total: number; items: CustomerWishlistItemSummary[] };
+}
+
+// Mirrors GET /admin/audit-logs — id fields arrive as numbers, normalized
+// to strings for consistency with every other id field in this app.
+export interface AuditLogItem {
+  id: string;
+  action: string;
+  performed_by?: string | null;
+  performed_by_name?: string | null;
+  order_id?: string | null;
+  tailor_id?: string | null;
+  user_id?: string | null;
+  application_id?: string | null;
+  details?: string | null;
+  created_at?: string | null;
+}
+
+export interface AuditLogsResponse {
+  total: number;
+  page: number;
+  limit: number;
+  items: AuditLogItem[];
 }

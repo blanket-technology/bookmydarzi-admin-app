@@ -5,12 +5,16 @@ import type { NotificationsQueryParams } from '@/types/notifications';
 import { toast } from '@/store/toastStore';
 import { formatApiErrorDetail } from '@/utils/errors';
 
-// The backend has no WebSocket/Redis pub-sub channel for the Notification
-// model (fire_event is only wired for chat + order broadcast — see
-// app/core/websocket_manager.py). "Realtime" here means polling, matching
-// what the backend actually supports without inventing a new push channel.
-const UNREAD_COUNT_POLL_MS = 30_000;
-const LIST_POLL_MS = 30_000;
+// Primary delivery is now the app-wide WebSocket (useAppSocket.ts, mounted
+// in AppProviders) - create_notification/broadcast_notification fire a
+// NOTIFICATION event over the same "user:{id}" room chat/broadcasts already
+// use, and the socket handler pushes new rows straight into this hook's
+// query cache. This polling interval is only a fallback for the gap while
+// reconnecting (app was backgrounded, network blip, etc.), not the primary
+// path - kept far less aggressive than before since it no longer carries
+// the main delivery burden.
+const UNREAD_COUNT_POLL_MS = 90_000;
+const LIST_POLL_MS = 90_000;
 
 export const useNotifications = (params?: NotificationsQueryParams, enabled = true) =>
   useQuery({

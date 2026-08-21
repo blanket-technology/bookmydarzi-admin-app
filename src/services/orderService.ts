@@ -11,12 +11,14 @@ import type {
   EmployeeOrderActionResponse,
   MyOrderItem,
   MyOrdersResponse,
+  OrderBroadcastStatus,
   OrderNotesRequest,
   OrderStatusUpdateRequest,
   OrdersQueryParams,
   RejectOrderRequest,
   SchedulePickupRequest,
 } from '@/types/orders';
+import type { EmployeeOrderMeasurementRequest } from '@/types/measurements';
 
 // Both GET /admin/orders and GET /orders/my-orders serialize the same
 // backend OrderResponse shape (PascalCase Id/CustomerId/TailorId/... — see
@@ -41,12 +43,38 @@ function normalizeOrderResponse(item: MyOrderItem): AdminOrderItem {
     booking_amount: item.BookingAmount,
     remaining_amount: item.RemainingAmount,
     tailor_id: item.TailorId != null ? String(item.TailorId) : undefined,
-    tailor_name: item.TailorId != null ? (item.TailorSpecialization ?? `Tailor #${item.TailorId}`) : undefined,
+    // TailorName is only ever populated by the backend for staff-facing
+    // responses (build_order_response's include_tailor_name flag) — never
+    // sent to customers or to a tailor viewing their own order, by design.
+    tailor_name:
+      item.TailorId != null
+        ? (item.TailorName ?? item.TailorSpecialization ?? `Tailor #${item.TailorId}`)
+        : undefined,
     urgency_level: item.UrgencyLevel ?? undefined,
     pickup_type: item.PickupType ?? undefined,
     scheduled_pickup_at: item.ScheduledPickupAt ?? undefined,
     created_at: item.CreatedAt,
     expected_delivery_date: item.ExpectedDeliveryDate ?? undefined,
+    description: item.Description ?? null,
+    fabric_notes: item.FabricNotes ?? null,
+    customization_notes: item.CustomizationNotes ?? null,
+    cloth_details: item.ClothDetails ?? null,
+    assigned_employee_id: item.AssignedEmployeeId != null ? String(item.AssignedEmployeeId) : undefined,
+    measurement: item.measurement ? { ...item.measurement, id: String(item.measurement.id) } : null,
+    needs_manual_assignment: item.NeedsManualAssignment ?? false,
+    broadcast_exhausted_at: item.BroadcastExhaustedAt ?? null,
+    items: (item.Items ?? []).map((raw) => ({
+      order_item_id: raw.order_item_id ?? null,
+      service_id: raw.service_id ?? null,
+      service_name: raw.service_name ?? null,
+      category_name: raw.category_name ?? null,
+      image_url: raw.image_url ?? null,
+      quantity: raw.quantity ?? 1,
+      price: raw.price ?? null,
+      person_name: raw.person_name ?? null,
+      gender: raw.gender ?? null,
+      has_measurement: raw.has_measurement ?? false,
+    })),
   };
 }
 
@@ -59,6 +87,16 @@ export const orderService = {
       page: data.page,
       limit: data.limit,
     };
+  },
+
+  // Single-order fetch by id/order-code. Owner, assigned tailor, employee, or
+  // admin only (backend's assert_can_view_order) — safe for every role this
+  // app runs as. Replaces the previous approach of re-fetching a capped
+  // 50-row list and doing a client-side .find(), which silently showed
+  // "not found" for any order outside that window.
+  getOrderById: async (orderId: string): Promise<AdminOrderItem> => {
+    const { data } = await apiClient.get<MyOrderItem>(ENDPOINTS.ORDERS.DETAIL(orderId));
+    return normalizeOrderResponse(data);
   },
 
   // Tailor-scoped order list — backend excludes TAILOR from GET /admin/orders,
@@ -116,8 +154,34 @@ export const orderService = {
     return data;
   },
 
+  // Admin recovery tool for stuck orders — force-restarts tailor broadcast
+  // regardless of current status. No request body.
+  triggerBroadcast: async (
+    orderId: string,
+  ): Promise<{ message: string; order_id: number; status: string }> => {
+    const { data } = await apiClient.post(ENDPOINTS.ADMIN.ORDER_BROADCAST(orderId));
+    return data;
+  },
+
   acceptOrder: async (orderId: string): Promise<EmployeeOrderActionResponse> => {
     const { data } = await apiClient.patch(ENDPOINTS.EMPLOYEE.ORDER_ACCEPT(orderId));
+    return data;
+  },
+
+  // Employee-side tailor assignment — distinct from assignTailor above
+  // (that's the admin-only /admin/orders/{id}/assign-tailor endpoint).
+  // Requires the order to already be claimed by this employee, and a
+  // measurement to already exist on the order (see
+  // employee_assign_tailor / _ensure_measurement_for_assignment in
+  // app/services/orders/employee_order_service.py).
+  assignTailorEmployee: async (
+    orderId: string,
+    payload: AssignTailorRequest,
+  ): Promise<EmployeeOrderActionResponse> => {
+    const { data } = await apiClient.patch(
+      ENDPOINTS.EMPLOYEE.ORDER_ASSIGN_TAILOR(orderId),
+      payload,
+    );
     return data;
   },
 
@@ -155,6 +219,21 @@ export const orderService = {
     return data;
   },
 
+  // Employee-side measurement collection — distinct from updateMeasurement
+  // above (that's the admin-only /admin/orders/{id}/measurement endpoint).
+  // Accepts either measurement_id (attach an existing saved customer
+  // profile) or profile_name + fields (creates a new reusable profile).
+  collectMeasurement: async (
+    orderId: string,
+    payload: EmployeeOrderMeasurementRequest,
+  ): Promise<EmployeeOrderActionResponse> => {
+    const { data } = await apiClient.post(
+      ENDPOINTS.EMPLOYEE.ORDER_MEASUREMENT(orderId),
+      payload,
+    );
+    return data;
+  },
+
   completeOrder: async (orderId: string): Promise<EmployeeOrderActionResponse> => {
     const { data } = await apiClient.patch(ENDPOINTS.EMPLOYEE.ORDER_COMPLETE(orderId));
     return data;
@@ -168,6 +247,24 @@ export const orderService = {
       ENDPOINTS.EMPLOYEE.ORDER_COLLECT_PAYMENT(orderId),
       payload,
     );
+    return data;
+  },
+
+  getBroadcastStatus: async (orderId: string): Promise<OrderBroadcastStatus> => {
+    const { data } = await apiClient.get<OrderBroadcastStatus>(
+      ENDPOINTS.ORDERS.BROADCAST_STATUS(orderId),
+    );
+    return data;
+  },
+
+  // Returns raw PDF bytes (application/pdf) — see downloadInvoice in
+  // features/orders/hooks/useOrders.ts for the file-write + share flow.
+  // arraybuffer, not the app's usual JSON responseType, since this is a
+  // binary download, not an API resource.
+  getInvoiceBytes: async (orderId: string): Promise<ArrayBuffer> => {
+    const { data } = await apiClient.get<ArrayBuffer>(ENDPOINTS.ORDERS.INVOICE(orderId), {
+      responseType: 'arraybuffer',
+    });
     return data;
   },
 };

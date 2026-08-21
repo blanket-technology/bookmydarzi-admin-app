@@ -6,7 +6,7 @@ interface BadgeProps {
   backgroundColor?: string;
 }
 
-export const Badge = ({ label, color = '#ffffff', backgroundColor = '#1aa3b0' }: BadgeProps) => (
+export const Badge = ({ label, color = '#ffffff', backgroundColor = '#B8923E' }: BadgeProps) => (
   <View
     className="px-2.5 py-1 rounded-full self-start"
     style={{ backgroundColor }}

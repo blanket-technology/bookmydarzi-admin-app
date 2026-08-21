@@ -1,10 +1,14 @@
 import apiClient from '@/config/axios';
 import { ENDPOINTS } from '@/services/endpoints';
 import type {
+  AgentPresenceStatus,
+  ChatAssignmentHistoryResponse,
   ChatMessagesResponse,
   ChatQuickRepliesResponse,
+  ChatSession,
   ChatSessionListResponse,
   ChatSessionsQueryParams,
+  MyAgentStatus,
 } from '@/types/chat';
 
 export const chatService = {
@@ -12,6 +16,11 @@ export const chatService = {
     const { data } = await apiClient.get<ChatSessionListResponse>(ENDPOINTS.CHAT.SESSIONS, {
       params,
     });
+    return data;
+  },
+
+  getSession: async (sessionUuid: string): Promise<ChatSession> => {
+    const { data } = await apiClient.get<ChatSession>(ENDPOINTS.CHAT.SESSION_DETAIL(sessionUuid));
     return data;
   },
 
@@ -43,10 +52,29 @@ export const chatService = {
     return data;
   },
 
+  getAssignmentHistory: async (sessionUuid: string): Promise<ChatAssignmentHistoryResponse> => {
+    const { data } = await apiClient.get<ChatAssignmentHistoryResponse>(
+      ENDPOINTS.CHAT.ASSIGNMENT_HISTORY(sessionUuid),
+    );
+    return data;
+  },
+
   listQuickReplies: async (): Promise<ChatQuickRepliesResponse> => {
     const { data } = await apiClient.get<ChatQuickRepliesResponse>(
       ENDPOINTS.CHAT.QUICK_REPLIES,
     );
+    return data;
+  },
+
+  getMyAgentStatus: async (): Promise<MyAgentStatus> => {
+    const { data } = await apiClient.get<MyAgentStatus>(ENDPOINTS.CHAT.MY_AGENT_STATUS);
+    return data;
+  },
+
+  setAgentStatus: async (agentId: number, status: AgentPresenceStatus) => {
+    const { data } = await apiClient.patch(ENDPOINTS.CHAT.AGENT_STATUS(agentId), null, {
+      params: { status },
+    });
     return data;
   },
 };

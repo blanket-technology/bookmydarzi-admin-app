@@ -14,7 +14,8 @@
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true
-        }
+        },
+        "NSFaceIDUsageDescription": "BookMyDarzi Admin uses Face ID to unlock the app after login."
       }
     },
     "android": {
@@ -43,6 +44,13 @@
         }
       ],
       "expo-secure-store",
+      "expo-document-picker",
+      [
+        "expo-notifications",
+        {
+          "color": "#1aa3b0"
+        }
+      ],
       [
         "expo-image-picker",
         {
@@ -57,7 +65,14 @@
             "usesCleartextTraffic": true
           }
         }
-      ]
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "BookMyDarzi Admin uses your location to match you with nearby deliveries while you're online."
+        }
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true

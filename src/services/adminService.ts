@@ -26,4 +26,16 @@ export const adminService = {
 
     return normalizeDashboardResponse(response.data);
   },
+
+  // Plain-text CSV, not JSON - StreamingResponse with a Content-Disposition
+  // filename (see app/api/v1/endpoints/admin.py's admin_dashboard_export).
+  // responseType 'text' avoids axios's default JSON.parse attempt on a
+  // response that isn't JSON.
+  exportDashboardCsv: async (): Promise<string> => {
+    const { data } = await apiClient.get<string>(ENDPOINTS.ADMIN.DASHBOARD_EXPORT, {
+      responseType: 'text',
+      transformResponse: (res) => res,
+    });
+    return data;
+  },
 };

@@ -4,16 +4,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { Pressable } from '@/components/ui/Pressable';
 import { toast } from '@/store/toastStore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { STORAGE_KEYS } from '@/constants/storage';
@@ -44,13 +37,13 @@ function GlassField({
   const focus = useSharedValue(0);
   const borderStyle = useAnimatedStyle(() => ({
     borderColor: error
-      ? '#f87171'
-      : `rgba(255,255,255,${0.18 + focus.value * 0.42})`,
+      ? '#dc2626'
+      : `rgba(184,146,62,${0.25 + focus.value * 0.55})`,
   }));
 
   return (
     <View className="mb-4">
-      <Text className="text-xs font-semibold mb-2 tracking-wide" style={{ color: 'rgba(255,255,255,0.65)' }}>
+      <Text className="text-xs font-semibold mb-2 tracking-wide" style={{ color: '#8a7561' }}>
         {label.toUpperCase()}
       </Text>
       <Animated.View
@@ -58,17 +51,17 @@ function GlassField({
           {
             borderWidth: 1.5,
             borderRadius: 18,
-            backgroundColor: 'rgba(255,255,255,0.08)',
+            backgroundColor: 'rgba(255,255,255,0.7)',
           },
           borderStyle,
         ]}
         className="flex-row items-center px-4"
       >
-        <Ionicons name={icon} size={19} color="rgba(255,255,255,0.55)" />
+        <Ionicons name={icon} size={19} color="#9c8874" />
         <TextInput
-          placeholderTextColor="rgba(255,255,255,0.35)"
+          placeholderTextColor="#b3a493"
           className="flex-1 py-3.5 px-3 text-base"
-          style={{ color: '#ffffff' }}
+          style={{ color: '#2C1A0E' }}
           {...inputProps}
           onFocus={(e) => {
             focus.value = withTiming(1, { duration: 180 });
@@ -82,7 +75,7 @@ function GlassField({
         {rightElement}
       </Animated.View>
       {error ? (
-        <Text className="text-xs mt-1.5 ml-1" style={{ color: '#fca5a5' }}>
+        <Text className="text-xs mt-1.5 ml-1" style={{ color: '#dc2626' }}>
           {error}
         </Text>
       ) : null}
@@ -121,12 +114,28 @@ export default function LoginScreen() {
     secureStorage.getItem(STORAGE_KEYS.REMEMBER_EMAIL).then((email) => {
       if (email) {
         setValue('email', email);
+        setValue('rememberMe', true);
         setRememberMe(true);
       }
     });
   }, [setValue]);
 
+  const toggleRememberMe = () => {
+    setRememberMe((prev) => {
+      const next = !prev;
+      // Keep the RHF field in sync with the local checkbox state - they were
+      // previously disconnected (defaultValues.rememberMe never updated), so
+      // the form's value never reflected the checkbox.
+      setValue('rememberMe', next);
+      return next;
+    });
+  };
+
   const onSubmit = async (data: LoginFormData) => {
+    // Persist the choice so app boot knows whether to keep the session.
+    // Checked: remember email + keep session across restarts.
+    // Unchecked: single session - cleared on next launch (authContext).
+    await secureStorage.setItem(STORAGE_KEYS.REMEMBER_ME, rememberMe ? 'true' : 'false');
     if (rememberMe) {
       await secureStorage.setItem(STORAGE_KEYS.REMEMBER_EMAIL, data.email);
     } else {
@@ -142,7 +151,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <LinearGradient colors={['#052a2e', '#0c6c75', '#1aa3b0']} className="flex-1">
+    <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} className="flex-1">
       {/* Ambient glow shapes — depth without a blur dependency */}
       <View
         pointerEvents="none"
@@ -153,7 +162,7 @@ export default function LoginScreen() {
           width: 320,
           height: 320,
           borderRadius: 320,
-          backgroundColor: 'rgba(201,168,76,0.16)',
+          backgroundColor: 'rgba(184,146,62,0.14)',
         }}
       />
       <View
@@ -165,7 +174,7 @@ export default function LoginScreen() {
           width: 360,
           height: 360,
           borderRadius: 360,
-          backgroundColor: 'rgba(45,212,191,0.14)',
+          backgroundColor: 'rgba(184,146,62,0.10)',
         }}
       />
 
@@ -188,19 +197,19 @@ export default function LoginScreen() {
                 <View
                   className="w-[72px] h-[72px] rounded-[24px] items-center justify-center mb-5"
                   style={{
-                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    backgroundColor: 'rgba(255,255,255,0.75)',
                     borderWidth: 1,
-                    borderColor: 'rgba(255,255,255,0.18)',
+                    borderColor: 'rgba(184,146,62,0.28)',
                   }}
                 >
-                  <Ionicons name="cut" size={32} color="#C9A84C" />
+                  <Ionicons name="cut" size={32} color="#B8923E" />
                 </View>
-                <Text className="text-white text-[28px] font-bold tracking-tight">
+                <Text className="text-[28px] font-bold tracking-tight" style={{ color: '#2C1A0E' }}>
                   BookMyDarzi
                 </Text>
-                <View className="flex-row items-center mt-2 px-3 py-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-                  <View className="w-1.5 h-1.5 rounded-full mr-2" style={{ backgroundColor: '#C9A84C' }} />
-                  <Text className="text-xs font-semibold tracking-wide" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                <View className="flex-row items-center mt-2 px-3 py-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.6)' }}>
+                  <View className="w-1.5 h-1.5 rounded-full mr-2" style={{ backgroundColor: '#B8923E' }} />
+                  <Text className="text-xs font-semibold tracking-wide" style={{ color: '#7D622A' }}>
                     OPERATIONS PORTAL
                   </Text>
                 </View>
@@ -209,17 +218,17 @@ export default function LoginScreen() {
               <Animated.View
                 entering={FadeInUp.delay(150).duration(500)}
                 style={{
-                  backgroundColor: 'rgba(255,255,255,0.09)',
+                  backgroundColor: 'rgba(255,255,255,0.65)',
                   borderRadius: 28,
                   borderWidth: 1,
-                  borderColor: 'rgba(255,255,255,0.14)',
+                  borderColor: 'rgba(184,146,62,0.2)',
                   padding: 24,
                 }}
               >
-                <Text className="text-white text-xl font-bold mb-1">
+                <Text className="text-xl font-bold mb-1" style={{ color: '#2C1A0E' }}>
                   Welcome back
                 </Text>
-                <Text className="text-sm mb-7" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <Text className="text-sm mb-7" style={{ color: '#8a7561' }}>
                   Sign in with your staff account credentials
                 </Text>
 
@@ -261,7 +270,7 @@ export default function LoginScreen() {
                           <Ionicons
                             name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                             size={19}
-                            color="rgba(255,255,255,0.55)"
+                            color="#9c8874"
                           />
                         </Pressable>
                       }
@@ -271,7 +280,7 @@ export default function LoginScreen() {
 
                 <View className="flex-row items-center justify-between mb-7 mt-1">
                   <Pressable
-                    onPress={() => setRememberMe((prev) => !prev)}
+                    onPress={toggleRememberMe}
                     className="flex-row items-center"
                     hitSlop={6}
                   >
@@ -279,20 +288,20 @@ export default function LoginScreen() {
                       className="w-[18px] h-[18px] rounded-[6px] mr-2 items-center justify-center"
                       style={{
                         borderWidth: 1.5,
-                        borderColor: rememberMe ? '#C9A84C' : 'rgba(255,255,255,0.35)',
-                        backgroundColor: rememberMe ? '#C9A84C' : 'transparent',
+                        borderColor: rememberMe ? '#B8923E' : '#d4c3ae',
+                        backgroundColor: rememberMe ? '#B8923E' : 'transparent',
                       }}
                     >
-                      {rememberMe ? <Ionicons name="checkmark" size={12} color="#052a2e" /> : null}
+                      {rememberMe ? <Ionicons name="checkmark" size={12} color="#ffffff" /> : null}
                     </View>
-                    <Text className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                    <Text className="text-sm" style={{ color: '#8a7561' }}>
                       Remember me
                     </Text>
                   </Pressable>
 
                   <Link href="/(auth)/forgot-password" asChild>
                     <Pressable hitSlop={6}>
-                      <Text className="text-sm font-semibold" style={{ color: '#C9A84C' }}>
+                      <Text className="text-sm font-semibold" style={{ color: '#B8923E' }}>
                         Forgot password?
                       </Text>
                     </Pressable>
@@ -333,9 +342,9 @@ export default function LoginScreen() {
               </Animated.View>
 
               <Animated.View entering={FadeInUp.delay(300).duration(500)} className="flex-row items-center justify-center mt-8">
-                <Ionicons name="shield-checkmark-outline" size={14} color="rgba(255,255,255,0.4)" />
-                <Text className="text-xs ml-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                  Protected by two-factor authentication
+                <Ionicons name="shield-checkmark-outline" size={14} color="#b3a493" />
+                <Text className="text-xs ml-1.5" style={{ color: '#b3a493' }}>
+                  Secured by BookMyDarzi authentication system.
                 </Text>
               </Animated.View>
             </View>

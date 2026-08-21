@@ -54,7 +54,7 @@ const isExpectedClientError = (status: number, url: string): boolean => {
   return false;
 };
 
-export const logApiError = (error: AxiosError | unknown) => {
+export const logApiError = (error: AxiosError | unknown, willRetry = false) => {
   if (!__DEV__) return;
 
   const axiosError = error as AxiosError;
@@ -77,7 +77,12 @@ export const logApiError = (error: AxiosError | unknown) => {
     return;
   }
 
-  console.error('[API Error]', {
+  // A no-response error that's about to be retried is expected transient
+  // noise (Railway's hobby-tier containers sleep when idle and take a few
+  // seconds to wake on a cold request) - only escalate to console.error
+  // (which triggers Expo's red-screen overlay) once retries are exhausted.
+  const log = willRetry ? console.warn : console.error;
+  log(`[API ${willRetry ? 'Retry' : 'Error'}]`, {
     url,
     method: axiosError.config?.method?.toUpperCase(),
     message: axiosError.message,

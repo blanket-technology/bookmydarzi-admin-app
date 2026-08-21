@@ -11,10 +11,11 @@ import type { ChatMessage, ChatWsIncomingFrame, ChatWsOutgoingFrame } from '@/ty
 // MVP scope agreed for this feature (view/send/assign/resolve/escalate only).
 const RECONNECT_DELAY_MS = 3000;
 
-function wsUrl(sessionUuid: string, token: string): string {
+function wsUrl(sessionUuid: string): string {
   const httpBase = API_CONFIG.BASE_URL;
   const wsBase = httpBase.replace(/^http/, 'ws');
-  return `${wsBase}${ENDPOINTS.CHAT.WS(sessionUuid)}?token=${encodeURIComponent(token)}`;
+  // Token is sent in a post-connect auth frame, not the URL (keeps it out of logs).
+  return `${wsBase}${ENDPOINTS.CHAT.WS(sessionUuid)}`;
 }
 
 export interface UseChatSocketResult {
@@ -25,10 +26,17 @@ export interface UseChatSocketResult {
   sendReadReceipt: (lastSeq: number) => void;
 }
 
+export interface ChatSocketSessionEvent {
+  type: 'status_changed' | 'assigned' | 'resolved';
+  status?: string;
+  agentName?: string;
+}
+
 export function useChatSocket(
   sessionUuid: string,
   onMessage: (message: ChatMessage) => void,
   onSendFailed?: (clientId: string | null, message: string) => void,
+  onSessionEvent?: (event: ChatSocketSessionEvent) => void,
 ): UseChatSocketResult {
   const [isConnected, setIsConnected] = useState(false);
   const [peerTyping, setPeerTyping] = useState(false);
@@ -37,8 +45,10 @@ export function useChatSocket(
   const mountedRef = useRef(true);
   const onMessageRef = useRef(onMessage);
   const onSendFailedRef = useRef(onSendFailed);
+  const onSessionEventRef = useRef(onSessionEvent);
   onMessageRef.current = onMessage;
   onSendFailedRef.current = onSendFailed;
+  onSessionEventRef.current = onSessionEvent;
 
   const send = useCallback((frame: ChatWsOutgoingFrame) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -54,10 +64,11 @@ export function useChatSocket(
       const token = useAuthStore.getState().accessToken;
       if (!token) return;
 
-      const socket = new WebSocket(wsUrl(sessionUuid, token));
+      const socket = new WebSocket(wsUrl(sessionUuid));
       wsRef.current = socket;
 
       socket.onopen = () => {
+        try { socket.send(JSON.stringify({ type: 'auth', token })); } catch {}
         if (mountedRef.current) setIsConnected(true);
       };
 
@@ -77,6 +88,12 @@ export function useChatSocket(
           );
         } else if (frame.event === 'typing_indicator') {
           setPeerTyping(frame.is_typing);
+        } else if (frame.event === 'session_status_changed') {
+          onSessionEventRef.current?.({ type: 'status_changed', status: frame.status });
+        } else if (frame.event === 'session_assigned') {
+          onSessionEventRef.current?.({ type: 'assigned', agentName: frame.agent_name });
+        } else if (frame.event === 'session_resolved') {
+          onSessionEventRef.current?.({ type: 'resolved' });
         }
       };
 

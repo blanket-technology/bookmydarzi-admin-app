@@ -58,14 +58,14 @@ export const ORDER_STATUS_COLORS: Record<string, string> = {
   searching_tailor: '#f97316',
   broadcasted: '#f97316',
   tailor_assigned: '#a855f7',
-  pickup_scheduled: '#0ea5e9',
-  pickup_pending: '#0ea5e9',
-  picked_up: '#14b8a6',
+  pickup_scheduled: '#3b82f6',
+  pickup_pending: '#3b82f6',
+  picked_up: '#6366f1',
   cloth_received_by_tailor: '#8b5cf6',
   stitching_started: '#8b5cf6',
-  in_progress: '#0ea5e9',
+  in_progress: '#d946ef',
   final_check: '#eab308',
-  ready_for_dispatch: '#14b8a6',
+  ready_for_dispatch: '#84cc16',
   out_for_delivery: '#22c55e',
   delivered: '#22c55e',
   completed: '#10b981',
@@ -104,3 +104,15 @@ export const ADMIN_CORRECTABLE_STATUS_OPTIONS: { label: string; value: OrderStat
 export function orderStatusLabel(status: string): string {
   return ORDER_STATUS_DISPLAY_LABELS[status] ?? status;
 }
+
+// Mirrors backend EMPLOYEE_QUEUE_EXCLUDED in app/constants/employee_orders.py —
+// orders in these statuses are outside the employee operations queue entirely
+// (assert_can_view_employee_order rejects any employee action on them).
+export const EMPLOYEE_QUEUE_EXCLUDED_STATUSES = new Set<OrderStatus>([
+  ORDER_STATUS.PENDING_PAYMENT,
+  ORDER_STATUS.PAYMENT_FAILED,
+  ORDER_STATUS.CANCELLED,
+  ORDER_STATUS.DELIVERED,
+  ORDER_STATUS.COMPLETED,
+  ORDER_STATUS.ORDER_REJECTED,
+]);

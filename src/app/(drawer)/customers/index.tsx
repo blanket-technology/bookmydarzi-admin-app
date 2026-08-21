@@ -1,18 +1,10 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
-import {
-  Avatar,
-  Badge,
-  ConfirmModal,
-  EmptyState,
-  Header,
-  Pagination,
-  SearchBar,
-  SkeletonList,
-} from '@/components/ui';
+import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { Avatar, Badge, ConfirmModal, EmptyState, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
 import { useUsers, useUpdateUserStatusMutation } from '@/features/users/hooks/useUsers';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import type { AdminUserItem } from '@/types/users';
 import { formatApiErrorDetail, formatDate } from '@/utils/errors';
 
@@ -20,6 +12,7 @@ const LIMIT = 15;
 
 export default function CustomersScreen() {
   const { colors } = useTheme();
+  const { contentMaxWidth } = useResponsive();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [confirmUser, setConfirmUser] = useState<AdminUserItem | null>(null);
@@ -85,7 +78,7 @@ export default function CustomersScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Header title="Customers" subtitle={`${data?.total ?? users.length} customers`} />
-      <View className="px-5 flex-1">
+      <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
         <SearchBar
           value={search}
           onChangeText={(text) => {

@@ -1,16 +1,24 @@
 import apiClient from '@/config/axios';
 import { ENDPOINTS } from '@/services/endpoints';
+import type {
+  Banner,
+  BannerCreateRequest,
+  BannerUpdateRequest,
+  Offer,
+  OfferCreateRequest,
+  OfferUpdateRequest,
+} from '@/types/homepage';
 
 export const homepageService = {
-  getBanners: async () => {
-    const { data } = await apiClient.get(ENDPOINTS.ADMIN.HOMEPAGE_BANNERS);
+  getBanners: async (): Promise<Banner[]> => {
+    const { data } = await apiClient.get<Banner[]>(ENDPOINTS.ADMIN.HOMEPAGE_BANNERS);
     return data;
   },
-  createBanner: async (payload: Record<string, unknown>) => {
+  createBanner: async (payload: BannerCreateRequest) => {
     const { data } = await apiClient.post(ENDPOINTS.ADMIN.HOMEPAGE_BANNERS, payload);
     return data;
   },
-  updateBanner: async (bannerId: string, payload: Record<string, unknown>) => {
+  updateBanner: async (bannerId: string, payload: BannerUpdateRequest) => {
     const { data } = await apiClient.patch(ENDPOINTS.ADMIN.HOMEPAGE_BANNER(bannerId), payload);
     return data;
   },
@@ -18,34 +26,15 @@ export const homepageService = {
     const { data } = await apiClient.delete(ENDPOINTS.ADMIN.HOMEPAGE_BANNER(bannerId));
     return data;
   },
-  getCategories: async () => {
-    const { data } = await apiClient.get(ENDPOINTS.ADMIN.HOMEPAGE_CATEGORIES);
+  getOffers: async (): Promise<Offer[]> => {
+    const { data } = await apiClient.get<Offer[]>(ENDPOINTS.ADMIN.HOMEPAGE_OFFERS);
     return data;
   },
-  createCategory: async (payload: Record<string, unknown>) => {
-    const { data } = await apiClient.post(ENDPOINTS.ADMIN.HOMEPAGE_CATEGORIES, payload);
-    return data;
-  },
-  updateCategory: async (categoryId: string, payload: Record<string, unknown>) => {
-    const { data } = await apiClient.patch(
-      ENDPOINTS.ADMIN.HOMEPAGE_CATEGORY(categoryId),
-      payload,
-    );
-    return data;
-  },
-  deleteCategory: async (categoryId: string) => {
-    const { data } = await apiClient.delete(ENDPOINTS.ADMIN.HOMEPAGE_CATEGORY(categoryId));
-    return data;
-  },
-  getOffers: async () => {
-    const { data } = await apiClient.get(ENDPOINTS.ADMIN.HOMEPAGE_OFFERS);
-    return data;
-  },
-  createOffer: async (payload: Record<string, unknown>) => {
+  createOffer: async (payload: OfferCreateRequest) => {
     const { data } = await apiClient.post(ENDPOINTS.ADMIN.HOMEPAGE_OFFERS, payload);
     return data;
   },
-  updateOffer: async (offerId: string, payload: Record<string, unknown>) => {
+  updateOffer: async (offerId: string, payload: OfferUpdateRequest) => {
     const { data } = await apiClient.patch(ENDPOINTS.ADMIN.HOMEPAGE_OFFER(offerId), payload);
     return data;
   },

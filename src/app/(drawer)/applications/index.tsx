@@ -1,17 +1,14 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { Badge, ConfirmModal, EmptyState, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
 import {
-  Badge,
-  EmptyState,
-  Header,
-  Pagination,
-  SearchBar,
-  SkeletonList,
-} from '@/components/ui';
-import { useApplications } from '@/features/applications/hooks/useApplications';
+  useApplications,
+  useApproveApplicationMutation,
+} from '@/features/applications/hooks/useApplications';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import type { TailorApplicationListItem } from '@/types/applications';
 import { formatApiErrorDetail, formatDate } from '@/utils/errors';
 
@@ -23,16 +20,32 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   rejected: { bg: '#fee2e2', text: '#dc2626' },
 };
 
+// GET /admin/tailor-applications' status filter expects uppercase
+// (PENDING|APPROVED|REJECTED — see admin.py's list_tailor_applications_admin)
+// even though the normalized item.status the rest of this screen renders is
+// lowercase (applicationService.ts normalizes on the way in). value here is
+// what's sent to the backend; label is what's shown.
+const STATUS_FILTERS: { value: string; label: string }[] = [
+  { value: '', label: 'All' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'APPROVED', label: 'Approved' },
+  { value: 'REJECTED', label: 'Rejected' },
+];
+
 export default function ApplicationsScreen() {
   const { colors } = useTheme();
+  const { contentMaxWidth } = useResponsive();
   const { permissions } = usePermissions();
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
+  const [approveTarget, setApproveTarget] = useState<TailorApplicationListItem | null>(null);
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useApplications(
-    { page, limit: LIMIT, search: search || undefined },
+    { page, limit: LIMIT, search: search || undefined, status: statusFilter || undefined },
     permissions.applications,
   );
+  const approveMutation = useApproveApplicationMutation();
 
   const applications = useMemo(
     () => data?.applications ?? data?.items ?? [],
@@ -41,37 +54,68 @@ export default function ApplicationsScreen() {
 
   const totalPages = Math.max(1, Math.ceil((data?.total ?? applications.length) / LIMIT));
 
+  const handleConfirmApprove = () => {
+    if (!approveTarget) return;
+    approveMutation.mutate(
+      { applicationId: String(approveTarget.id) },
+      { onSuccess: () => setApproveTarget(null), onError: () => setApproveTarget(null) },
+    );
+  };
+
   const renderItem = ({ item }: { item: TailorApplicationListItem }) => {
     const statusStyle = STATUS_COLORS[item.status] ?? { bg: colors.primaryLight, text: colors.primary };
+    const isPending = item.status === 'pending';
 
     return (
-      <Pressable
-        onPress={() => router.push(`/(drawer)/applications/${item.id}` as never)}
+      <View
         className="rounded-3xl p-4 mb-3 border"
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
       >
-        <View className="flex-row items-start justify-between">
-          <View className="flex-1">
-            <Text className="font-bold" style={{ color: colors.text }}>
-              {item.full_name}
-            </Text>
-            <Text className="text-xs mt-0.5" style={{ color: colors.primary }}>
-              {item.application_number}
-            </Text>
-            <Text className="text-sm mt-1" style={{ color: colors.textSecondary }}>
-              {item.email} · {item.phone}
-            </Text>
-            <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
-              {item.city ?? '—'} · {formatDate(item.submitted_at)}
-            </Text>
+        <Pressable onPress={() => router.push(`/(drawer)/applications/${item.id}` as never)}>
+          <View className="flex-row items-start justify-between">
+            <View className="flex-1">
+              <Text className="font-bold" style={{ color: colors.text }}>
+                {item.full_name}
+              </Text>
+              <Text className="text-xs mt-0.5" style={{ color: colors.primary }}>
+                {item.application_number}
+              </Text>
+              <Text className="text-sm mt-1" style={{ color: colors.textSecondary }}>
+                {item.email} · {item.phone}
+              </Text>
+              <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
+                {item.city ?? '—'} · {formatDate(item.submitted_at)}
+              </Text>
+            </View>
+            <Badge
+              label={item.status}
+              backgroundColor={statusStyle.bg}
+              color={statusStyle.text}
+            />
           </View>
-          <Badge
-            label={item.status}
-            backgroundColor={statusStyle.bg}
-            color={statusStyle.text}
-          />
-        </View>
-      </Pressable>
+        </Pressable>
+
+        {isPending ? (
+          <View className="flex-row gap-2 mt-3 pt-3 border-t" style={{ borderColor: colors.border }}>
+            <Pressable
+              onPress={() => setApproveTarget(item)}
+              className="flex-1 items-center py-2 rounded-xl"
+              style={{ backgroundColor: colors.primary }}
+            >
+              <Text className="text-xs font-bold text-white">Approve</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push(`/(drawer)/applications/${item.id}` as never)}
+              className="flex-1 items-center py-2 rounded-xl border"
+              style={{ borderColor: colors.border }}
+            >
+              <Text className="text-xs font-bold" style={{ color: colors.textSecondary }}>
+                Reject
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
+      </View>
     );
   };
 
@@ -81,7 +125,7 @@ export default function ApplicationsScreen() {
         title="Applications"
         subtitle={`${data?.total ?? applications.length} tailor applications`}
       />
-      <View className="px-5 flex-1">
+      <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
         <SearchBar
           value={search}
           onChangeText={(text) => {
@@ -90,6 +134,29 @@ export default function ApplicationsScreen() {
           }}
           placeholder="Search applications..."
         />
+        <View className="flex-row gap-2 mb-3">
+          {STATUS_FILTERS.map((f) => (
+            <Pressable
+              key={f.value}
+              onPress={() => {
+                setStatusFilter(f.value);
+                setPage(1);
+              }}
+              className="px-3.5 py-1.5 rounded-full border"
+              style={{
+                backgroundColor: statusFilter === f.value ? colors.primary : colors.surface,
+                borderColor: statusFilter === f.value ? colors.primary : colors.border,
+              }}
+            >
+              <Text
+                className="text-xs font-semibold"
+                style={{ color: statusFilter === f.value ? '#fff' : colors.text }}
+              >
+                {f.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
         {isLoading ? (
           <SkeletonList count={5} />
         ) : isError ? (
@@ -121,6 +188,16 @@ export default function ApplicationsScreen() {
           />
         )}
       </View>
+
+      <ConfirmModal
+        visible={!!approveTarget}
+        title="Approve Application?"
+        message={`Approve ${approveTarget?.full_name ?? 'this application'}? This creates their tailor account.`}
+        confirmLabel="Approve"
+        loading={approveMutation.isPending}
+        onConfirm={handleConfirmApprove}
+        onCancel={() => setApproveTarget(null)}
+      />
     </View>
   );
 }

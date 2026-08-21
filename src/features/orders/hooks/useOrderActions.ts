@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ORDER_STATUS } from '@/constants/orderStatus';
+import { EMPLOYEE_QUEUE_EXCLUDED_STATUSES, ORDER_STATUS } from '@/constants/orderStatus';
 import type { UserRole } from '@/types/auth';
 import type { AdminOrderItem, OrderStatus } from '@/types/orders';
 import {
@@ -10,9 +10,9 @@ import {
   useCompleteOrderMutation,
   useConfirmPickupMutation,
   useHandToTailorMutation,
-  useMarkOutForDeliveryMutation,
   useRejectOrderMutation,
   useSchedulePickupMutation,
+  useUpdateOrderStatusMutation,
   useUpdateStitchingStatusMutation,
 } from '@/features/orders/hooks/useOrders';
 
@@ -33,6 +33,7 @@ export type OrderActionId =
   | 'cancel'
   | 'correct_status'
   | 'update_measurement'
+  | 'manage_measurement'
   | 'view_payment';
 
 export interface OrderAction {
@@ -53,7 +54,7 @@ interface UseOrderActionsArgs {
   role: UserRole | string | null | undefined;
   order: Pick<
     AdminOrderItem,
-    'order_id' | 'status' | 'tailor_id' | 'remaining_amount' | 'payment_status'
+    'order_id' | 'status' | 'tailor_id' | 'remaining_amount' | 'payment_status' | 'customer_id' | 'assigned_employee_id'
   > | null
     | undefined;
 }
@@ -79,12 +80,15 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
   const schedulePickupMutation = useSchedulePickupMutation();
   const confirmPickupMutation = useConfirmPickupMutation();
   const handToTailorMutation = useHandToTailorMutation();
-  const markOutForDeliveryMutation = useMarkOutForDeliveryMutation();
   const completeMutation = useCompleteOrderMutation();
   const collectPaymentMutation = useCollectPaymentMutation();
   const assignTailorMutation = useAssignTailorMutation();
   const cancelMutation = useCancelOrderMutation();
-  const stitchingMutation = useUpdateStitchingStatusMutation();
+  // PATCH /orders/{id}/status (update_status_tailor) is require_roles(TAILOR)
+  // ONLY server-side - staff must go through PATCH /admin/orders/{id}/status
+  // instead (admin_update_order_status, which now also accepts EMPLOYEE).
+  const tailorStitchingMutation = useUpdateStitchingStatusMutation();
+  const staffStitchingMutation = useUpdateOrderStatusMutation();
 
   const normalizedRole = String(role ?? '').toLowerCase();
   const isAdmin = normalizedRole === 'admin' || normalizedRole === 'superadmin';
@@ -121,6 +125,27 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
           requiresConfirmation: true,
           isLoading: rejectMutation.isPending,
           run: () => rejectMutation.mutate({ orderId, payload: undefined }),
+        });
+      } else if (
+        // A pickup can still be manually acquired after the order has moved
+        // past order_placed while the tailor is being searched, as long as no
+        // employee has claimed it yet. The backend /accept endpoint allows any
+        // non-terminal status and only blocks if it's assigned to someone else
+        // (employee_order_service.accept), so this mirrors that. Lets a Bridge
+        // grab an unclaimed pickup instead of waiting for a broadcast offer.
+        !order?.assigned_employee_id &&
+        (status === ORDER_STATUS.SEARCHING_TAILOR ||
+          status === ORDER_STATUS.BROADCASTED ||
+          status === ORDER_STATUS.TAILOR_ASSIGNED)
+      ) {
+        list.push({
+          id: 'accept',
+          label: 'Acquire for Pickup',
+          tone: 'primary',
+          requiresInput: false,
+          requiresConfirmation: false,
+          isLoading: acceptMutation.isPending,
+          run: () => acceptMutation.mutate({ orderId, payload: undefined }),
         });
       }
 
@@ -160,17 +185,12 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
         });
       }
 
-      if (status === ORDER_STATUS.READY_FOR_DISPATCH) {
-        list.push({
-          id: 'out_for_delivery',
-          label: 'Out for Delivery',
-          tone: 'primary',
-          requiresInput: false,
-          requiresConfirmation: false,
-          isLoading: markOutForDeliveryMutation.isPending,
-          run: () => markOutForDeliveryMutation.mutate({ orderId, payload: undefined }),
-        });
-      }
+      // No manual "Out for Delivery" action here — PATCH /employee/orders/
+      // {id}/delivery is deprecated server-side and unconditionally 400s
+      // (employee_order_service.py). Once an order reaches
+      // READY_FOR_DISPATCH it becomes a delivery-broadcast candidate
+      // automatically; the employee claims it via Accept on the Deliveries
+      // screen (see (drawer)/deliveries/index.tsx), not a button here.
 
       if (status === ORDER_STATUS.OUT_FOR_DELIVERY) {
         if (isCodCollectionRequired) {
@@ -198,22 +218,84 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
         }
       }
 
-      if (status === ORDER_STATUS.DELIVERED) {
+      // No action from DELIVERED: complete_employee_order (employee_order_service.py)
+      // only ever transitions OUT_FOR_DELIVERY -> DELIVERED -> COMPLETED in a
+      // single call, and DELIVERED is itself in EMPLOYEE_QUEUE_EXCLUDED
+      // (employee_orders.py) — an employee has no valid action to take once
+      // an order reaches DELIVERED, it's already terminal from their side.
+
+      // Employee-only measurement collection at pickup — mirrors backend's
+      // assert_employee_order_claimed / assert_can_view_employee_order gate
+      // (any non-excluded status, while assigned to this employee). Admins
+      // use the separate 'update_measurement' admin-only endpoint/action
+      // instead, so this is deliberately isEmployee-only to avoid a
+      // duplicate button on the same screen for admin viewers.
+      if (isEmployee && !EMPLOYEE_QUEUE_EXCLUDED_STATUSES.has(status)) {
         list.push({
-          id: 'complete',
-          label: 'Complete Order',
-          tone: 'primary',
+          id: 'manage_measurement',
+          label: 'Update Measurement',
+          tone: 'secondary',
+          requiresInput: true,
+          requiresConfirmation: false,
+          isLoading: false,
+          run: () => {
+            // Opens the measurement management sheet (view saved profiles,
+            // pick one, or add new) — see MeasurementManageSheet.
+          },
+        });
+      }
+
+      // Tailor assignment and payment viewing, employee-only here (isAdmin
+      // already gets its own unconditional versions of both below - this
+      // block must not also fire for admin, since canUseEmployeeActions is
+      // isEmployee || isAdmin and would otherwise push duplicate actions).
+      if (isEmployee) {
+        // PATCH /employee/orders/{id}/assign-tailor - requires the order
+        // claimed by this employee and a measurement to already exist;
+        // distinct precondition from admin's unrestricted
+        // /admin/orders/{id}/assign-tailor route.
+        if (!order?.tailor_id) {
+          list.push({
+            id: 'assign_tailor',
+            label: 'Assign Tailor',
+            tone: 'secondary',
+            requiresInput: true,
+            requiresConfirmation: false,
+            isLoading: false,
+            run: () => {
+              // Caller supplies { tailor_id } — see AssignTailorSheet.
+            },
+          });
+        }
+
+        // Read-only, already permitted for employees server-side
+        // (ADMIN_STAFF_ROLES includes EMPLOYEE in get_payment_by_order /
+        // get_refunds_for_payment).
+        list.push({
+          id: 'view_payment',
+          label: 'View Payment',
+          tone: 'secondary',
           requiresInput: false,
-          requiresConfirmation: true,
-          isLoading: completeMutation.isPending,
-          run: () => completeMutation.mutate({ orderId, payload: undefined }),
+          requiresConfirmation: false,
+          isLoading: false,
+          run: () => {
+            // Navigates to / expands the payment detail section.
+          },
         });
       }
     }
 
-    if (isTailor) {
-      // Server enforces strict sequential progression (order_status_rules.py) —
-      // only one next-stage button is ever valid for a given current status.
+    // Staff (admin/superadmin/employee) can drive every stitching stage
+    // themselves once a tailor is assigned, not just the tailor —
+    // order_status_rules.py's ADMIN_STAFF_ROLES bypass (which includes
+    // EMPLOYEE) and admin.py's admin_update_order_status (now accepting
+    // EMPLOYEE too) already allow this server-side; this was previously
+    // tailor-only client-side with no equivalent staff action at all.
+    if (isTailor || canUseEmployeeActions) {
+      // Server enforces strict sequential progression for tailors
+      // (order_status_rules.py); staff bypass that graph entirely, but the
+      // UI still only ever offers the immediate next stage to keep the
+      // workflow linear and predictable.
       const stitchingStageFor: Partial<Record<OrderStatus, OrderStatus>> = {
         [ORDER_STATUS.CLOTH_RECEIVED_BY_TAILOR]: ORDER_STATUS.STITCHING_STARTED,
         [ORDER_STATUS.STITCHING_STARTED]: ORDER_STATUS.IN_PROGRESS,
@@ -228,15 +310,15 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
       };
       const nextStage = stitchingStageFor[status];
       if (nextStage) {
+        const mutation = isTailor ? tailorStitchingMutation : staffStitchingMutation;
         list.push({
           id: nextStage as OrderActionId,
           label: stitchingLabels[nextStage] ?? nextStage,
           tone: 'primary',
           requiresInput: false,
           requiresConfirmation: false,
-          isLoading: stitchingMutation.isPending,
-          run: () =>
-            stitchingMutation.mutate({ orderId, payload: { status: nextStage } }),
+          isLoading: mutation.isPending,
+          run: () => mutation.mutate({ orderId, payload: { status: nextStage } }),
         });
       }
     }
@@ -330,10 +412,10 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
     schedulePickupMutation,
     confirmPickupMutation,
     handToTailorMutation,
-    markOutForDeliveryMutation,
     completeMutation,
     collectPaymentMutation,
-    stitchingMutation,
+    tailorStitchingMutation,
+    staffStitchingMutation,
     assignTailorMutation,
     cancelMutation,
   ]);

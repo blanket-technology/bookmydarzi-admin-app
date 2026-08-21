@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/Pressable';
 import type { LoginRole } from '@/constants/roles';
 import { LOGIN_ROLES } from '@/constants/roles';
 
@@ -24,6 +25,7 @@ export const RoleSelector = ({
           <Pressable
             key={role.value}
             onPress={() => onChange(role.value)}
+            haptic="selection"
             className={`flex-1 py-3 rounded-2xl border items-center ${
               selected
                 ? 'bg-primary-50 border-primary-600'

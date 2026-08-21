@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
+import { Pressable } from '@/components/ui/Pressable';
 import { useTheme } from '@/hooks/useTheme';
 
 interface PasswordInputProps {
@@ -51,6 +52,8 @@ export const PasswordInput = ({
         />
         <Pressable
           onPress={() => setVisible((prev) => !prev)}
+          pressScale={0.85}
+          haptic="none"
           className="absolute right-4 top-3.5"
           hitSlop={8}
         >

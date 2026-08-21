@@ -2,23 +2,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { OtpInput } from '@/components/ui';
+import { OtpInput, Pressable } from '@/components/ui';
 import {
   getMutationError,
   useLoginVerifyOtpMutation,
   useResendLoginOtpMutation,
 } from '@/features/auth/hooks/useAuthMutations';
+import { toast } from '@/store/toastStore';
 
 export default function LoginOtpVerificationScreen() {
   const insets = useSafeAreaInsets();
@@ -55,10 +48,7 @@ export default function LoginOtpVerificationScreen() {
     verifyMutation.mutate(
       { email: email ?? '', otp },
       {
-        onError: (error) => {
-          setOtpError(getMutationError(error));
-          Alert.alert('Verification Failed', getMutationError(error));
-        },
+        onError: (error) => setOtpError(getMutationError(error)),
       },
     );
   };
@@ -71,9 +61,9 @@ export default function LoginOtpVerificationScreen() {
         onSuccess: (data) => {
           setOtp('');
           setCooldown(data?.cooldown_seconds ?? 30);
-          Alert.alert('Code Sent', 'A new verification code has been sent to your email.');
+          toast.success('A new verification code has been sent to your email.');
         },
-        onError: (error) => Alert.alert('Error', getMutationError(error)),
+        onError: (error) => toast.error(getMutationError(error)),
       },
     );
   };
@@ -82,7 +72,7 @@ export default function LoginOtpVerificationScreen() {
   const seconds = cooldown % 60;
 
   return (
-    <LinearGradient colors={['#052a2e', '#0c6c75', '#1aa3b0']} className="flex-1">
+    <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} className="flex-1">
       <View
         pointerEvents="none"
         style={{
@@ -92,7 +82,7 @@ export default function LoginOtpVerificationScreen() {
           width: 300,
           height: 300,
           borderRadius: 300,
-          backgroundColor: 'rgba(45,212,191,0.14)',
+          backgroundColor: 'rgba(184,146,62,0.10)',
         }}
       />
       <View
@@ -104,12 +94,13 @@ export default function LoginOtpVerificationScreen() {
           width: 320,
           height: 320,
           borderRadius: 320,
-          backgroundColor: 'rgba(201,168,76,0.14)',
+          backgroundColor: 'rgba(184,146,62,0.14)',
         }}
       />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
         className="flex-1"
       >
         <ScrollView
@@ -117,9 +108,9 @@ export default function LoginOtpVerificationScreen() {
             flexGrow: 1,
             paddingTop: insets.top + 16,
             paddingBottom: insets.bottom + 24,
-            justifyContent: 'center',
           }}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           <Pressable
             onPress={() => router.back()}
@@ -127,29 +118,29 @@ export default function LoginOtpVerificationScreen() {
             style={{ position: 'absolute', top: insets.top + 12, left: 0 }}
             hitSlop={10}
           >
-            <Ionicons name="arrow-back" size={22} color="rgba(255,255,255,0.85)" />
+            <Ionicons name="arrow-back" size={22} color="#7D622A" />
           </Pressable>
 
-          <View className="px-6 items-center">
+          <View className="px-6 flex-1 justify-center items-center">
             <View className="w-full" style={{ maxWidth: 440 }}>
               <Animated.View entering={FadeInDown.duration(500)} className="items-center mb-8" style={{ marginTop: 36 }}>
                 <View
                   className="w-[72px] h-[72px] rounded-[24px] items-center justify-center mb-5"
                   style={{
-                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    backgroundColor: 'rgba(255,255,255,0.75)',
                     borderWidth: 1,
-                    borderColor: 'rgba(255,255,255,0.18)',
+                    borderColor: 'rgba(184,146,62,0.28)',
                   }}
                 >
-                  <Ionicons name="shield-checkmark" size={32} color="#C9A84C" />
+                  <Ionicons name="shield-checkmark" size={32} color="#B8923E" />
                 </View>
-                <Text className="text-white text-2xl font-bold tracking-tight">
+                <Text className="text-2xl font-bold tracking-tight" style={{ color: '#2C1A0E' }}>
                   Verify it&apos;s you
                 </Text>
-                <Text className="text-sm mt-2 text-center" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                <Text className="text-sm mt-2 text-center" style={{ color: '#8a7561' }}>
                   We sent a 6-digit code to
                 </Text>
-                <Text className="text-sm font-semibold" style={{ color: '#C9A84C' }}>
+                <Text className="text-sm font-semibold" style={{ color: '#B8923E' }}>
                   {email}
                 </Text>
               </Animated.View>
@@ -157,14 +148,14 @@ export default function LoginOtpVerificationScreen() {
               <Animated.View
                 entering={FadeInUp.delay(150).duration(500)}
                 style={{
-                  backgroundColor: 'rgba(255,255,255,0.09)',
+                  backgroundColor: 'rgba(255,255,255,0.65)',
                   borderRadius: 28,
                   borderWidth: 1,
-                  borderColor: 'rgba(255,255,255,0.14)',
+                  borderColor: 'rgba(184,146,62,0.2)',
                   padding: 24,
                 }}
               >
-                <Text className="text-xs font-semibold mb-3 tracking-wide text-center" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <Text className="text-xs font-semibold mb-3 tracking-wide text-center" style={{ color: '#8a7561' }}>
                   ENTER VERIFICATION CODE
                 </Text>
 
@@ -203,13 +194,13 @@ export default function LoginOtpVerificationScreen() {
                 </Animated.View>
 
                 <View className="flex-row items-center justify-center mt-5">
-                  <Text className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  <Text className="text-sm" style={{ color: '#a3927e' }}>
                     Didn&apos;t get the code?{' '}
                   </Text>
                   <Pressable onPress={handleResend} disabled={cooldown > 0 || resendMutation.isPending} hitSlop={6}>
                     <Text
                       className="text-sm font-semibold"
-                      style={{ color: cooldown > 0 ? 'rgba(255,255,255,0.35)' : '#C9A84C' }}
+                      style={{ color: cooldown > 0 ? '#c3b6a5' : '#B8923E' }}
                     >
                       {cooldown > 0
                         ? `Resend in ${minutes > 0 ? `${minutes}:${seconds.toString().padStart(2, '0')}` : `${seconds}s`}`
@@ -220,8 +211,8 @@ export default function LoginOtpVerificationScreen() {
               </Animated.View>
 
               <Animated.View entering={FadeInUp.delay(300).duration(500)} className="flex-row items-center justify-center mt-8">
-                <Ionicons name="lock-closed-outline" size={13} color="rgba(255,255,255,0.4)" />
-                <Text className="text-xs ml-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                <Ionicons name="lock-closed-outline" size={13} color="#b3a493" />
+                <Text className="text-xs ml-1.5" style={{ color: '#b3a493' }}>
                   This code expires shortly for your security
                 </Text>
               </Animated.View>

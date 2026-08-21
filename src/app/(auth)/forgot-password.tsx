@@ -4,23 +4,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, Pressable } from '@/components/ui';
 import {
   getMutationError,
   useForgotPasswordRequestMutation,
   useForgotPasswordResetMutation,
   useForgotPasswordVerifyMutation,
 } from '@/features/auth/hooks/useAuthMutations';
+import { toast } from '@/store/toastStore';
 import {
   forgotPasswordSchema,
   type ForgotPasswordFormData,
@@ -51,7 +44,7 @@ export default function ForgotPasswordScreen() {
       { email: data.email },
       {
         onSuccess: () => setStep('verify'),
-        onError: (error) => Alert.alert('Error', getMutationError(error)),
+        onError: (error) => toast.error(getMutationError(error)),
       },
     );
   };
@@ -64,7 +57,7 @@ export default function ForgotPasswordScreen() {
           setResetToken(data.reset_token);
           setStep('reset');
         },
-        onError: (error) => Alert.alert('Error', getMutationError(error)),
+        onError: (error) => toast.error(getMutationError(error)),
       },
     );
   };
@@ -73,14 +66,17 @@ export default function ForgotPasswordScreen() {
     resetMutation.mutate(
       { reset_token: resetToken, new_password: newPassword },
       {
-        onSuccess: () => Alert.alert('Success', 'Password reset successfully'),
-        onError: (error) => Alert.alert('Error', getMutationError(error)),
+        onSuccess: () => {
+          toast.success('Password reset successfully. Please sign in.');
+          router.replace('/(auth)/login');
+        },
+        onError: (error) => toast.error(getMutationError(error)),
       },
     );
   };
 
   return (
-    <LinearGradient colors={['#0c6c75', '#1aa3b0', '#2dd4bf']} className="flex-1">
+    <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} className="flex-1">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
@@ -94,7 +90,7 @@ export default function ForgotPasswordScreen() {
           }}
         >
           <Pressable onPress={() => router.back()} className="px-6 mb-4">
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="arrow-back" size={24} color="#7D622A" />
           </Pressable>
 
           <View className="px-6 items-center">

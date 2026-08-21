@@ -5,9 +5,11 @@ import {
   authService,
   normalizeAuthUser,
 } from '@/services/authService';
+import { STORAGE_KEYS } from '@/constants/storage';
 import { tokenStorage } from '@/services/tokenStorage';
 import { useAuthStore } from '@/store/authStore';
 import type { AuthUser } from '@/types/auth';
+import { secureStorage } from '@/utils/secureStorage';
 
 const SESSION_INIT_TIMEOUT_MS = 8_000;
 
@@ -167,6 +169,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const initializeSession = async () => {
       setLoading(true);
       try {
+        // Single-session enforcement: if the user logged in with "Remember me"
+        // unchecked, their session must not survive an app restart. Clearing
+        // here (before any token read below) turns the persisted tokens into a
+        // no-op for this launch. Absent flag => 'true' (keep session), so
+        // sessions predating this flag are never logged out.
+        const rememberMe = await secureStorage.getItem(STORAGE_KEYS.REMEMBER_ME);
+        if (rememberMe === 'false') {
+          storeLogout();
+          await tokenStorage.clearAll();
+          markInitialized();
+          return;
+        }
+
         const storedAccessToken = await tokenStorage.getAccessToken();
         const storedRefreshToken = await tokenStorage.getRefreshToken();
         const { refreshToken, accessToken, isAuthenticated: authed, user: storedUser } =
@@ -214,7 +229,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       clearTimeout(initTimeout);
     };
-  }, [isHydrated, logout, markInitialized, refreshSession, setLoading, setUser]);
+  }, [isHydrated, logout, markInitialized, refreshSession, setLoading, setUser, storeLogout]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

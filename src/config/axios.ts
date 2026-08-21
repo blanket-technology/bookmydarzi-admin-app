@@ -7,11 +7,24 @@ import { API_CONFIG } from '@/config/api';
 import { ENDPOINTS } from '@/services/endpoints';
 import { tokenStorage } from '@/services/tokenStorage';
 import { useAuthStore } from '@/store/authStore';
+import { useSessionStore } from '@/store/sessionStore';
 import type { AuthTokenResponse } from '@/types/auth';
 import { logApiError, logApiRequest, logApiResponse } from '@/utils/apiLogger';
 import { enrichApiError, parseApiError } from '@/utils/errors';
 
-type RetryConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+type RetryConfig = InternalAxiosRequestConfig & { _retry?: boolean; _networkRetryCount?: number };
+
+/**
+ * Max retries + backoff (ms) for network-level (no-response) failures.
+ * Railway's hobby-tier containers sleep when idle and can take 5-10s to
+ * wake on a cold request - a fast-failing "Network Error" right after idle
+ * is usually this, not a real outage. Mirrors react_app's services/api.ts
+ * fix for the same symptom.
+ */
+const MAX_NETWORK_RETRIES = 3;
+const NETWORK_RETRY_DELAYS_MS = [3000, 6000, 10000];
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let isRefreshing = false;
 let refreshQueue: Array<{
@@ -100,9 +113,27 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    logApiError(error);
-
     const originalRequest = error.config as RetryConfig | undefined;
+
+    // Network-level failure (no response at all) - retry with backoff
+    // before giving up, since this is usually a Railway cold-start wake-up
+    // rather than a genuine outage. Timeouts (ECONNABORTED) are excluded -
+    // a request that already waited out the full timeout once is unlikely
+    // to succeed faster on an identical retry.
+    if (!error.response && originalRequest && error.code !== 'ECONNABORTED') {
+      const retryCount = originalRequest._networkRetryCount ?? 0;
+      const willRetry = retryCount < MAX_NETWORK_RETRIES;
+      logApiError(error, willRetry);
+
+      if (willRetry) {
+        originalRequest._networkRetryCount = retryCount + 1;
+        await delay(NETWORK_RETRY_DELAYS_MS[retryCount] ?? NETWORK_RETRY_DELAYS_MS[NETWORK_RETRY_DELAYS_MS.length - 1]);
+        return apiClient(originalRequest);
+      }
+    } else {
+      logApiError(error);
+    }
+
     if (!originalRequest) {
       return Promise.reject(enrichApiError(parseApiError(error), error));
     }
@@ -132,6 +163,7 @@ apiClient.interceptors.response.use(
       if (!refreshToken) {
         isRefreshing = false;
         await clearSession();
+        useSessionStore.getState().markExpired();
         return Promise.reject(
           enrichApiError(
             {
@@ -171,6 +203,7 @@ apiClient.interceptors.response.use(
         logApiError(refreshError);
         processQueue(refreshError, null);
         await clearSession();
+        useSessionStore.getState().markExpired();
         return Promise.reject(
           enrichApiError(
             {
@@ -223,10 +256,18 @@ apiClient.interceptors.response.use(
     }
 
     if (status === 403) {
+      // Prefer the backend's own message (usually specific and actionable,
+      // e.g. "This order is not in the employee operations queue") over a
+      // generic string — the generic fallback only covers the case where
+      // the backend genuinely sent no detail/message field.
+      const parsed = parseApiError(error);
+      const hasBackendMessage = parsed.message && parsed.message !== 'Something went wrong';
       return Promise.reject(
         enrichApiError(
           {
-            message: 'Access forbidden. Your account may not have admin permissions.',
+            message: hasBackendMessage
+              ? parsed.message
+              : 'Access forbidden. Your account may not have permission for this action.',
             status: 403,
             code: 'FORBIDDEN',
             details: error.response.data,

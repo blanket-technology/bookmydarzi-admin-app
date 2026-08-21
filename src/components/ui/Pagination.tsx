@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/Pressable';
 import { useTheme } from '@/hooks/useTheme';
 
 interface PaginationProps {
@@ -18,6 +19,7 @@ export const Pagination = ({ page, totalPages, onPageChange }: PaginationProps) 
       <Pressable
         disabled={page <= 1}
         onPress={() => onPageChange(page - 1)}
+        pressScale={0.9}
         className="w-10 h-10 rounded-xl items-center justify-center border"
         style={{
           borderColor: colors.border,
@@ -33,6 +35,7 @@ export const Pagination = ({ page, totalPages, onPageChange }: PaginationProps) 
       <Pressable
         disabled={page >= totalPages}
         onPress={() => onPageChange(page + 1)}
+        pressScale={0.9}
         className="w-10 h-10 rounded-xl items-center justify-center border"
         style={{
           borderColor: colors.border,

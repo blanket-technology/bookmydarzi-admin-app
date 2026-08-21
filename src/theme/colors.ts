@@ -1,6 +1,7 @@
-// Matches the BookMyDarzi customer app's brand palette (react_app/constants/theme.ts
-// COLORS) so both apps read as the same product. Only the palette is shared —
-// this app's existing layout/spacing/components are unchanged.
+// White/neutral theme - no teal anywhere. Gold/amber (the app's existing
+// `accent`) is now the single primary accent for buttons, active states,
+// badges and links; the drawer is a warm ivory shade distinct from the
+// white content area, not another saturated brand color.
 export const lightColors = {
   background: '#FAFAFA',
   surface: '#ffffff',
@@ -9,15 +10,15 @@ export const lightColors = {
   textSecondary: '#6B7280',
   textMuted: '#9CA3AF',
   border: '#E5E7EB',
-  primary: '#1aa3b0',
-  primaryLight: '#e0f7f8',
-  accent: '#C9A84C',
+  primary: '#B8923E',
+  primaryLight: '#FBF3DF',
+  accent: '#B8923E',
   success: '#065F46',
-  warning: '#C9A84C',
+  warning: '#B8923E',
   error: '#B91C1C',
-  info: '#1aa3b0',
-  drawer: '#0c6c75',
-  drawerText: '#F5E6C0',
+  info: '#6B7280',
+  drawer: '#FAF7F2',
+  drawerText: '#2C1A0E',
   overlay: 'rgba(13, 13, 13, 0.45)',
 } as const;
 
@@ -29,14 +30,14 @@ export const darkColors = {
   textSecondary: '#9CA3AF',
   textMuted: '#6B7280',
   border: '#2C2C2C',
-  primary: '#3fc3cf',
-  primaryLight: '#0c6c75',
-  accent: '#F5E6C0',
+  primary: '#D9B45C',
+  primaryLight: '#3a2f1a',
+  accent: '#D9B45C',
   success: '#34d399',
-  warning: '#F5E6C0',
+  warning: '#D9B45C',
   error: '#f87171',
-  info: '#3fc3cf',
-  drawer: '#0c6c75',
+  info: '#9CA3AF',
+  drawer: '#211a10',
   drawerText: '#F5E6C0',
   overlay: 'rgba(0, 0, 0, 0.6)',
 } as const;

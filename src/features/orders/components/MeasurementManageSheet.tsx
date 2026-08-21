@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { Badge, BottomSheet, Button, Input, SkeletonList } from '@/components/ui';
+import { ScrollView, Text, View } from 'react-native';
+import { Badge, BottomSheet, Button, Input, Pressable, SkeletonList } from '@/components/ui';
 import { useMeasurementProfiles } from '@/features/measurements/hooks/useMeasurementProfiles';
 import {
   useCollectMeasurementMutation,
@@ -24,6 +24,14 @@ interface MeasurementManageSheetProps {
    * either way - only the backing endpoint differs. Defaults to the employee
    * endpoint. */
   useAdminEndpoint?: boolean;
+  /** Which line item this measurement is for - REQUIRED when the order has
+   * more than one item (each garment/person needs its own measurement).
+   * Omit for single-item orders. The caller (orders/[id].tsx) is responsible
+   * for opening this sheet once per item on a multi-item order. */
+  orderItemId?: number;
+  /** e.g. "Men's Shirt for Rahul" - shown as a subtitle so it's clear which
+   * item this sheet is measuring when an order has several. */
+  itemLabel?: string;
 }
 
 const GENDER_OPTIONS: { value: MeasurementGender; label: string }[] = [
@@ -59,6 +67,8 @@ export const MeasurementManageSheet = ({
   customerId,
   serviceLabel,
   useAdminEndpoint = false,
+  orderItemId,
+  itemLabel,
 }: MeasurementManageSheetProps) => {
   const { colors } = useTheme();
   const [mode, setMode] = useState<'list' | 'new'>('list');
@@ -94,7 +104,7 @@ export const MeasurementManageSheet = ({
 
   const handleAttachExisting = (profile: MeasurementProfile) => {
     collectMutation.mutate(
-      { orderId, payload: { measurement_id: profile.id } },
+      { orderId, payload: { order_item_id: orderItemId, measurement_id: profile.id } },
       { onSuccess: handleClose },
     );
   };
@@ -105,6 +115,7 @@ export const MeasurementManageSheet = ({
       {
         orderId,
         payload: {
+          order_item_id: orderItemId,
           profile_name: profileName,
           gender,
           chest: numOrUndefined(values.chest),
@@ -125,6 +136,11 @@ export const MeasurementManageSheet = ({
 
   return (
     <BottomSheet visible={visible} onClose={handleClose} title="Measurements">
+      {itemLabel ? (
+        <Text className="text-xs font-semibold mb-3 -mt-1" style={{ color: colors.textSecondary }}>
+          For: {itemLabel}
+        </Text>
+      ) : null}
       {mode === 'list' ? (
         <>
           {isLoading ? (

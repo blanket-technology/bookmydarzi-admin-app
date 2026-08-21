@@ -12,10 +12,13 @@ export type ChatSessionStatus =
 export interface ChatSession {
   uuid: string;
   user_id: number;
+  customer_name?: string | null;
   order_id: number | null;
+  order_code?: string | null;
   status: ChatSessionStatus;
   assigned_agent_id: number | null;
   ai_handled: boolean;
+  unread_count?: number | null;
   last_message_at: string | null;
   created_at: string | null;
 }
@@ -65,6 +68,32 @@ export interface ChatSessionsQueryParams {
   offset?: number;
 }
 
+export interface ChatAssignmentHistoryItem {
+  id: number;
+  agent_id: number | null;
+  agent_name: string | null;
+  assigned_by: number | null;
+  assigned_by_name: string | null;
+  reason: string;
+  assigned_at: string | null;
+}
+
+export interface ChatAssignmentHistoryResponse {
+  history: ChatAssignmentHistoryItem[];
+}
+
+// GET /admin/agents/me/status — backs the online/offline toggle. "online"
+// is what makes get_and_assign_available_agent() consider this user for
+// new/queued chats; anything else leaves them unassignable.
+export type AgentPresenceStatus = 'online' | 'busy' | 'away' | 'offline';
+
+export interface MyAgentStatus {
+  agent_id: number;
+  status: AgentPresenceStatus;
+  active_session_count: number;
+  max_sessions: number;
+}
+
 // WebSocket frame contract — app/api/v1/endpoints/chat_ws.py.
 export type ChatWsOutgoingFrame =
   | { event: 'send_message'; body: string; client_id: string; message_type?: string }
@@ -78,6 +107,9 @@ export type ChatWsIncomingFrame =
   | { event: 'send_failed'; client_id: string | null; message: string }
   | { event: 'rate_limited'; message: string }
   | { event: 'typing_indicator'; user_id: number; is_typing: boolean }
+  | { event: 'ai_typing' }
   | { event: 'read_receipt_updated'; user_id: number; last_read_seq: number }
+  | { event: 'session_status_changed'; status: ChatSessionStatus }
+  | { event: 'session_assigned'; agent_name: string }
   | { event: 'session_resolved'; resolved_by: string; csat_prompt: boolean }
   | { event: 'pong'; ts?: number };

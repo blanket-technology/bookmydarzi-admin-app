@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { type ReactNode } from 'react';
-import { Modal as RNModal, Pressable, Text, View } from 'react-native';
+import { Modal as RNModal, Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/Pressable';
 import { useTheme } from '@/hooks/useTheme';
 
 interface ModalProps {

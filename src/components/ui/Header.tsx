@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import { useNavigation } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable } from '@/components/ui/Pressable';
 import { useTheme } from '@/hooks/useTheme';
 
 interface HeaderProps {
@@ -31,6 +32,7 @@ export const Header = ({
         {showMenu ? (
           <Pressable
             onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+            pressScale={0.92}
             className="w-10 h-10 rounded-xl items-center justify-center mr-3"
             style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }}
           >

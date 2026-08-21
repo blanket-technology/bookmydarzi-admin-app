@@ -3,22 +3,32 @@ module.exports = {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
   theme: {
+    // Phone-first breakpoints keyed to common device widths (NativeWind
+    // resolves these against useWindowDimensions() width, not a media
+    // query) - `sm` catches larger phones/phablets in landscape, `md`/`lg`
+    // catch iPad mini/portrait and iPad/landscape (supportsTablet: true in
+    // app.json makes this a real target, not a hypothetical).
+    screens: {
+      sm: '480px',
+      md: '768px',
+      lg: '1024px',
+    },
     extend: {
       colors: {
-        // Matches the customer app's brand palette (react_app/constants/theme.ts
-        // COLORS.primary #1aa3b0 / #0c6c75) so both apps read as one product.
+        // White/neutral theme - gold/amber is the single accent used
+        // throughout (buttons, active states, links). No teal anywhere.
         primary: {
-          50: '#e0f7f8',
-          100: '#b3ecef',
-          200: '#80dfe4',
-          300: '#4dd2d9',
-          400: '#26c8d1',
-          500: '#1aa3b0',
-          600: '#158e99',
-          700: '#107079',
-          800: '#0c6c75',
-          900: '#094e54',
-          950: '#052a2e',
+          50: '#FBF3DF',
+          100: '#F5E6C0',
+          200: '#EAD599',
+          300: '#DFC372',
+          400: '#D2AF52',
+          500: '#B8923E',
+          600: '#9C7A34',
+          700: '#7D622A',
+          800: '#5F4A20',
+          900: '#413316',
+          950: '#2A210E',
         },
         accent: {
           400: '#dbc06e',

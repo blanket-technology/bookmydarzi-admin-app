@@ -1,7 +1,8 @@
 import { useMutation } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { getDefaultRouteForRole } from '@/constants/permissions';
+import { getDefaultRouteForRole, mergeEffectivePermissions } from '@/constants/permissions';
 import { useAuthContext } from '@/contexts/authContext';
+import { rbacService } from '@/services/rbacService';
 import {
   authService,
   normalizeAuthUser,
@@ -45,6 +46,24 @@ const completeAuthSession = async (
     accessToken: data.access_token,
     refreshToken: data.refresh_token,
   });
+
+  // Per-account RBAC overrides (Settings/Admin Access) only ever apply to
+  // admin accounts — superadmin bypasses them entirely on the backend
+  // (require_admin_permission/require_permission), employee/tailor 400 if
+  // queried (see _get_manageable_user). Fetch only for admin, same scoping
+  // as BMD-Admin web's AdminLogin.jsx completeLogin.
+  if (String(user.role).toLowerCase() === 'admin') {
+    try {
+      const effective = await rbacService.getMyEffectivePermissions();
+      useAuthStore.getState().setPermissions(mergeEffectivePermissions(user.role, undefined, effective));
+    } catch {
+      // Transient failure - leave permissions null, usePermissions falls
+      // back to resolvePermissions(role) exactly as before this feature.
+      useAuthStore.getState().setPermissions(null);
+    }
+  } else {
+    useAuthStore.getState().setPermissions(null);
+  }
 
   toast.success(`Welcome back, ${user.full_name ?? user.email ?? 'User'}!`);
   router.replace(getDefaultRouteForRole(user.role) as never);

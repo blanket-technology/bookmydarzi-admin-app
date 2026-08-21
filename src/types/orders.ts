@@ -21,6 +21,46 @@ export type OrderStatus =
   | 'completed'
   | 'cancelled';
 
+// Mirrors app/schemas/measurement.py MeasurementResponseSchema — the same
+// fields AdminOrderMeasurementRequest below can edit, but this is what's
+// actually attached to the order already (order_response_builder.py's
+// `measurement` field), read-only display shape.
+interface RawOrderMeasurement {
+  id: number;
+  profile_name: string;
+  gender?: string | null;
+  chest?: number | null;
+  waist?: number | null;
+  hips?: number | null;
+  shoulder?: number | null;
+  neck?: number | null;
+  sleeve_length?: number | null;
+  inseam?: number | null;
+  height?: number | null;
+  fit_preference?: string | null;
+  notes?: string | null;
+}
+
+// Normalized shape (id stringified, matching every other id field in
+// AdminOrderItem) — what orders/[id].tsx actually consumes.
+export interface OrderMeasurement extends Omit<RawOrderMeasurement, 'id'> {
+  id: string;
+}
+
+/** Normalized (snake_case) per-line-item summary - see RawOrderItemSummary. */
+export interface OrderLineItem {
+  order_item_id: number | null;
+  service_id: number | null;
+  service_name: string | null;
+  category_name: string | null;
+  image_url: string | null;
+  quantity: number;
+  price: number | null;
+  person_name: string | null;
+  gender: string | null;
+  has_measurement: boolean;
+}
+
 export interface AdminOrderItem {
   order_id: string;
   order_code?: string;
@@ -42,6 +82,21 @@ export interface AdminOrderItem {
   scheduled_pickup_at?: string;
   created_at?: string;
   expected_delivery_date?: string;
+  description?: string | null;
+  fabric_notes?: string | null;
+  customization_notes?: string | null;
+  cloth_details?: string | null;
+  assigned_employee_id?: string;
+  measurement?: OrderMeasurement | null;
+  /** True when the tailor broadcast exhausted every round (including the
+   * all-tailor fallback) with zero acceptance - needs manual assignment. */
+  needs_manual_assignment?: boolean;
+  broadcast_exhausted_at?: string | null;
+  /** Every booked service on this order - cart orders can have several,
+   * each needing its own measurement. Always at least one entry when the
+   * backend has anything to report (falls back to a synthetic single entry
+   * for legacy direct orders with no ORDER_ITEMS rows). */
+  items: OrderLineItem[];
 }
 
 export interface AdminOrdersResponse {
@@ -65,6 +120,23 @@ export interface MyOrderAddress {
   city: string;
 }
 
+/** One booked service within an order (backend OrderItemSummary). A
+ * direct/buy-now order has exactly one; a cart-checkout order can have
+ * several (e.g. Men's Shirt + Kids Clothing in the same booking), each
+ * needing its own measurement. */
+export interface RawOrderItemSummary {
+  order_item_id?: number | null;
+  service_id?: number | null;
+  service_name?: string | null;
+  category_name?: string | null;
+  image_url?: string | null;
+  quantity: number;
+  price?: number | null;
+  person_name?: string | null;
+  gender?: string | null;
+  has_measurement: boolean;
+}
+
 export interface MyOrderItem {
   Id: number;
   OrderCode?: string | null;
@@ -72,6 +144,7 @@ export interface MyOrderItem {
   CustomerId: number;
   TailorId?: number | null;
   TailorSpecialization?: string | null;
+  TailorName?: string | null;
   ServiceName?: string | null;
   ServiceTitle?: string | null;
   ServiceSubtitle?: string | null;
@@ -87,6 +160,19 @@ export interface MyOrderItem {
   ExpectedDeliveryDate?: string | null;
   CreatedAt: string;
   address?: MyOrderAddress | null;
+  measurement?: RawOrderMeasurement | null;
+  Description?: string | null;
+  /** True when the tailor broadcast exhausted every round (including the
+   * all-tailor fallback) with zero acceptance - Bridge/admin should
+   * manually assign a tailor. Cleared automatically once a tailor is
+   * assigned, by either path. */
+  NeedsManualAssignment?: boolean;
+  BroadcastExhaustedAt?: string | null;
+  FabricNotes?: string | null;
+  CustomizationNotes?: string | null;
+  ClothDetails?: string | null;
+  AssignedEmployeeId?: number | null;
+  Items?: RawOrderItemSummary[] | null;
 }
 
 export interface MyOrdersResponse {
@@ -117,6 +203,9 @@ export interface OrderNotesRequest {
 }
 
 export interface AdminOrderMeasurementRequest {
+  /** Required when the order has more than one item - which garment/person
+   * this measurement is for. Optional for single-item orders. */
+  order_item_id?: number;
   measurement_id?: string;
   profile_name?: string;
   gender?: string;
@@ -138,6 +227,16 @@ export interface OrdersQueryParams {
   limit?: number;
   search?: string;
   status?: string;
+  payment_status?: string;
+  tailor_id?: string;
+  customer_id?: string;
+  employee_id?: string;
+  date_from?: string;
+  date_to?: string;
+  /** true = only orders where the tailor broadcast exhausted every round
+   * (including the all-tailor fallback) with zero acceptance - the "needs
+   * manual assignment" worklist, oldest-stuck-first. */
+  needs_manual_assignment?: boolean;
 }
 
 export interface SchedulePickupRequest {
@@ -169,4 +268,23 @@ export interface EmployeeOrderActionResponse {
   message: string;
   order: AdminOrderItem;
   warning?: string | null;
+}
+
+// Mirrors GET /tailor/orders/{order_id}/broadcast/status (broadcast.py's
+// get_broadcast_status) — one row per tailor offered this order, across all
+// broadcast rounds. Admin/employee only.
+export interface OrderBroadcastAttempt {
+  id: string;
+  tailor_id: string;
+  status: string;
+  round: number;
+  notified_at?: string | null;
+  responded_at?: string | null;
+  expires_at?: string | null;
+}
+
+export interface OrderBroadcastStatus {
+  order_id: string;
+  broadcasts: OrderBroadcastAttempt[];
+  total: number;
 }

@@ -1,20 +1,30 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
-import { Avatar, Badge, EmptyState, Header, SearchBar, SkeletonList } from '@/components/ui';
+import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { Avatar, Badge, EmptyState, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
 import { useStaff } from '@/features/staff/hooks/useStaff';
 import { useTheme } from '@/hooks/useTheme';
+import { useResponsive } from '@/hooks/useResponsive';
 import type { AdminStaffListItem } from '@/types/staff';
 import { formatApiErrorDetail, formatDate } from '@/utils/errors';
 
+const LIMIT = 15;
+
 export default function EmployeesScreen() {
   const { colors } = useTheme();
+  const { contentMaxWidth } = useResponsive();
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const { data, isLoading, isError, error, refetch, isRefetching } = useStaff({
     role: 'employee',
   });
 
-  const staff = useMemo(() => {
+  // GET /admin/staff has no server-side pagination (fetches all staff
+  // unconditionally — app/services/admin/staff_listing_service.py) — for an
+  // admin/employee roster this is bounded and low-cardinality, so paginating
+  // client-side here is simpler than adding page/limit plumbing to the
+  // backend for a list that will never realistically need it.
+  const filtered = useMemo(() => {
     const items = data ?? [];
     if (!search.trim()) return items;
     const q = search.toLowerCase();
@@ -26,6 +36,12 @@ export default function EmployeesScreen() {
         item.role?.toLowerCase().includes(q),
     );
   }, [data, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / LIMIT));
+  const staff = useMemo(
+    () => filtered.slice((page - 1) * LIMIT, page * LIMIT),
+    [filtered, page],
+  );
 
   const renderItem = ({ item }: { item: AdminStaffListItem }) => (
     <Pressable
@@ -65,8 +81,8 @@ export default function EmployeesScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Header
-        title="Employees"
-        subtitle={`${staff.length} staff members`}
+        title="Bridge"
+        subtitle={`${filtered.length} staff members`}
         rightAction={
           <Pressable
             onPress={() => router.push('/(drawer)/employees/add')}
@@ -77,8 +93,15 @@ export default function EmployeesScreen() {
           </Pressable>
         }
       />
-      <View className="px-5 flex-1">
-        <SearchBar value={search} onChangeText={setSearch} placeholder="Search employees..." />
+      <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
+        <SearchBar
+          value={search}
+          onChangeText={(text) => {
+            setSearch(text);
+            setPage(1);
+          }}
+          placeholder="Search employees..."
+        />
         {isLoading ? (
           <SkeletonList count={5} />
         ) : isError ? (
@@ -101,6 +124,9 @@ export default function EmployeesScreen() {
               />
             }
             ListEmptyComponent={<EmptyState icon="briefcase-outline" title="No staff members" />}
+            ListFooterComponent={
+              <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            }
           />
         )}
       </View>

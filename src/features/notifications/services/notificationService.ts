@@ -9,9 +9,15 @@ import type {
 
 export const notificationService = {
   list: async (params?: NotificationsQueryParams): Promise<NotificationListResponse> => {
+    // GET /notifications accepts `type` as repeatable OR comma-separated
+    // (see its docstring) - sending one comma-joined string sidesteps
+    // axios's default `type[]=a&type[]=b` array serialization, which
+    // FastAPI's Query(None) param wouldn't parse the way this array is
+    // intended (repeated bare `type=a&type=b`, not bracketed).
+    const { type, ...rest } = params ?? {};
     const { data } = await apiClient.get<NotificationListResponse>(
       ENDPOINTS.NOTIFICATIONS.LIST,
-      { params },
+      { params: { ...rest, type: type?.length ? type.join(',') : undefined } },
     );
     return data;
   },
@@ -35,5 +41,16 @@ export const notificationService = {
       ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ,
     );
     return data;
+  },
+
+  registerDeviceToken: async (token: string, platform: 'android' | 'ios' | 'web'): Promise<void> => {
+    await apiClient.post(ENDPOINTS.NOTIFICATIONS.DEVICE_TOKENS, { token, platform });
+  },
+
+  unregisterDeviceToken: async (
+    token: string,
+    platform: 'android' | 'ios' | 'web',
+  ): Promise<void> => {
+    await apiClient.delete(ENDPOINTS.NOTIFICATIONS.DEVICE_TOKENS, { data: { token, platform } });
   },
 };

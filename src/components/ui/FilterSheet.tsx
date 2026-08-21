@@ -1,5 +1,6 @@
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { BottomSheet } from '@/components/ui/BottomSheet';
+import { Pressable } from '@/components/ui/Pressable';
 import { useTheme } from '@/hooks/useTheme';
 
 interface FilterOption {
@@ -37,6 +38,7 @@ export const FilterSheet = ({
               onSelect(option.value);
               onClose();
             }}
+            haptic="selection"
             className="flex-row items-center justify-between py-3.5 border-b"
             style={{ borderColor: colors.border }}
           >

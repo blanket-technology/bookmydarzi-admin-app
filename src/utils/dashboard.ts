@@ -109,13 +109,22 @@ const parseEmployees = (source: unknown): AdminDashboardEmployees | undefined =>
 
 const parseOrders = (source: unknown): AdminDashboardOrders | undefined => {
   if (!isRecord(source)) return undefined;
+  const byStatusRaw = source.by_status;
+  const by_status: Record<string, number> | undefined = isRecord(byStatusRaw)
+    ? Object.fromEntries(
+        Object.entries(byStatusRaw).map(([k, v]) => [k, num(v) ?? 0]),
+      )
+    : undefined;
   return {
     total: num(source.total),
     today: num(source.today),
     pending: num(source.pending),
     pending_assignment: num(source.pending_assignment),
+    pending_pickup: num(source.pending_pickup),
+    out_for_delivery: num(source.out_for_delivery),
     delivered: num(source.delivered),
     cancelled: num(source.cancelled),
+    by_status,
   };
 };
 
@@ -126,6 +135,8 @@ const parseRevenue = (source: unknown): AdminDashboardRevenue | undefined => {
     today: num(source.today),
     this_week: num(source.this_week),
     this_month: num(source.this_month),
+    online: num(source.online),
+    cod: num(source.cod),
   };
 };
 
@@ -303,7 +314,7 @@ export const parseDashboardStats = (
       title: 'Total Employees',
       value: formatCount(employees?.total),
       icon: 'briefcase-outline',
-      color: '#14b8a6',
+      color: '#6366f1',
     },
     {
       title: 'Pending Orders',

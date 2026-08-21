@@ -1,9 +1,15 @@
-import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { type ReactNode, useState } from 'react';
+import { MutationCache, onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import NetInfo from '@react-native-community/netinfo';
+import { type ReactNode, useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Toast } from '@/components/ui/Toast';
+import { SessionExpired } from '@/components/ui/SessionExpired';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { AuthProvider } from '@/contexts/authContext';
+import { OfferAlerts } from '@/features/pickups/components/OfferAlerts';
+import { useAppSocket } from '@/hooks/useAppSocket';
+import { useAutoOnline } from '@/hooks/useAutoOnline';
 import { toast } from '@/store/toastStore';
 import { getMutationError } from '@/utils/errors';
 import type { ApiError } from '@/types/api';
@@ -11,6 +17,21 @@ import type { ApiError } from '@/types/api';
 interface AppProvidersProps {
   children: ReactNode;
 }
+
+// useAppSocket needs useQueryClient(), which requires being inside
+// QueryClientProvider - so it's wrapped in a mounted component here rather
+// than called directly in AppProviders, same pattern as OfferAlerts below.
+const AppSocketConnection = () => {
+  useAppSocket();
+  return null;
+};
+
+// Same wrapping reason as AppSocketConnection above - useAutoOnline needs
+// useAuth(), which requires being inside AuthProvider.
+const AutoOnlineConnection = () => {
+  useAutoOnline();
+  return null;
+};
 
 // A 4xx means the request itself is wrong (bad auth, bad input, not found) —
 // retrying sends the exact same request and gets the exact same rejection,
@@ -22,6 +43,16 @@ const isRetryableError = (error: unknown): boolean => {
 };
 
 export const AppProviders = ({ children }: AppProvidersProps) => {
+  // React Query pauses/resumes retries and refetches based on this — wiring
+  // it to NetInfo gives every failed query a real "auto-retry on reconnect"
+  // instead of leaving it stuck in an errored state until manual refresh.
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      onlineManager.setOnline(state.isConnected != null ? state.isConnected : true);
+    });
+    return unsubscribe;
+  }, []);
+
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -55,7 +86,12 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             {children}
+            <AppSocketConnection />
+            <AutoOnlineConnection />
+            <OfferAlerts />
+            <OfflineBanner />
             <Toast />
+            <SessionExpired />
           </AuthProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

@@ -1,4 +1,9 @@
 export const ENDPOINTS = {
+  // Generic authenticated app-wide socket (app/api/v1/endpoints/ws.py) -
+  // distinct from CHAT.WS below, which is a separate per-session endpoint.
+  // Every connected client joins "user:{id}" automatically server-side;
+  // this is what NOTIFICATION events (and any future app-wide push) arrive on.
+  WS: '/api/v1/ws',
   AUTH: {
     LOGIN: '/api/v1/auth/email/login',
     LOGIN_VERIFY_OTP: '/api/v1/auth/email/login/verify-otp',
@@ -11,16 +16,32 @@ export const ENDPOINTS = {
   },
   USERS: {
     PROFILE: '/api/v1/users/profile',
+    PROFILE_PHOTO: '/api/v1/users/profile/photo',
     CHANGE_PASSWORD: '/api/v1/users/change-password',
+    CHANGE_EMAIL_REQUEST: '/api/v1/users/change-email/request',
+    CHANGE_EMAIL_VERIFY: '/api/v1/users/change-email/verify',
+    CHANGE_MOBILE_CURRENT_REQUEST: '/api/v1/users/change-mobile/verify-current/request',
+    CHANGE_MOBILE_CURRENT_VERIFY: '/api/v1/users/change-mobile/verify-current',
+    CHANGE_MOBILE_REQUEST: '/api/v1/users/change-mobile/request',
+    CHANGE_MOBILE_VERIFY: '/api/v1/users/change-mobile/verify',
   },
   ADMIN: {
     DASHBOARD: '/api/v1/admin/dashboard',
     USERS: '/api/v1/admin/users',
     USER_DETAIL: (userId: string) => `/api/v1/admin/users/${userId}`,
     USER_STATUS: (userId: string) => `/api/v1/admin/users/${userId}/status`,
+    USER_PHOTO: (userId: string) => `/api/v1/admin/users/${userId}/photo`,
+    CUSTOMER_FULL_DETAIL: (userId: string) => `/api/v1/admin/customers/${userId}/full-detail`,
+    AUDIT_LOGS: '/api/v1/admin/audit-logs',
     STAFF: '/api/v1/admin/staff',
+    STAFF_DETAIL: (staffId: string) => `/api/v1/admin/staff/${staffId}`,
+    STAFF_BRIDGE_PROFILE: (staffId: string) => `/api/v1/admin/staff/${staffId}/bridge-profile`,
+    STAFF_VERIFICATION: (staffId: string) => `/api/v1/admin/staff/${staffId}/verification`,
+    STAFF_KYC: (staffId: string) => `/api/v1/admin/staff/${staffId}/kyc`,
     TAILORS: '/api/v1/admin/tailors',
     TAILORS_WORKLOAD: '/api/v1/admin/tailors/workload',
+    TAILOR_DETAIL: (tailorId: string) => `/api/v1/admin/tailors/${tailorId}`,
+    TAILOR_KYC: (tailorId: string) => `/api/v1/admin/tailors/${tailorId}/kyc`,
     TAILOR_APPLICATIONS: '/api/v1/admin/tailor-applications',
     TAILOR_APPLICATION_DETAIL: (applicationId: string) =>
       `/api/v1/admin/tailor-applications/${applicationId}`,
@@ -36,6 +57,7 @@ export const ENDPOINTS = {
     ORDER_STATUS: (orderId: string) => `/api/v1/admin/orders/${orderId}/status`,
     ORDER_CANCEL: (orderId: string) => `/api/v1/admin/orders/${orderId}/cancel`,
     ORDER_NOTES: (orderId: string) => `/api/v1/admin/orders/${orderId}/notes`,
+    ORDER_BROADCAST: (orderId: string) => `/api/v1/admin/orders/${orderId}/broadcast`,
     HOMEPAGE_BANNERS: '/api/v1/admin/homepage/banners',
     HOMEPAGE_BANNER: (bannerId: string) => `/api/v1/admin/homepage/banners/${bannerId}`,
     HOMEPAGE_CATEGORIES: '/api/v1/admin/homepage/categories',
@@ -49,11 +71,27 @@ export const ENDPOINTS = {
       `/api/v1/admin/homepage/sub-categories/${subId}`,
     HOMEPAGE_OFFERS: '/api/v1/admin/homepage/offers',
     HOMEPAGE_OFFER: (offerId: string) => `/api/v1/admin/homepage/offers/${offerId}`,
+    HOMEPAGE_OFFER_UPLOAD_IMAGE: '/api/v1/admin/homepage/offers/upload-image',
     HOMEPAGE_CACHE_CLEAR: '/api/v1/admin/homepage/cache/clear',
+    CANCELLATIONS: '/api/v1/admin/cancellations',
+    CANCELLATION_DETAIL: (id: string) => `/api/v1/admin/cancellations/${id}`,
+    CANCELLATION_APPROVE: (id: string) => `/api/v1/admin/cancellations/${id}/approve`,
+    CANCELLATION_REJECT: (id: string) => `/api/v1/admin/cancellations/${id}/reject`,
+    CANCELLATION_POLICY: '/api/v1/admin/cancellation-policy',
+    CANCELLATION_POLICY_STAGE: (stage: string) => `/api/v1/admin/cancellation-policy/${stage}`,
+    AUDIT_LOG_FILTERS: '/api/v1/admin/audit-logs/filters',
+    BILLING_SETTINGS: '/api/v1/admin/settings/billing',
+    DASHBOARD_EXPORT: '/api/v1/admin/dashboard/export',
+  },
+  LOCATION: {
+    ADMIN_SERVICE_AREAS: '/api/v1/location/admin/service-areas',
+    ADMIN_SERVICE_AREA_DETAIL: (areaId: string) => `/api/v1/location/admin/service-areas/${areaId}`,
   },
   EMPLOYEE: {
     ORDER_ACCEPT: (orderId: string) => `/api/v1/employee/orders/${orderId}/accept`,
     ORDER_REJECT: (orderId: string) => `/api/v1/employee/orders/${orderId}/reject`,
+    ORDER_ASSIGN_TAILOR: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/assign-tailor`,
     ORDER_SCHEDULE_PICKUP: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/schedule-pickup`,
     ORDER_CONFIRM_PICKUP: (orderId: string) => `/api/v1/employee/orders/${orderId}/pickup`,
@@ -63,11 +101,46 @@ export const ENDPOINTS = {
     ORDER_COMPLETE: (orderId: string) => `/api/v1/employee/orders/${orderId}/complete`,
     ORDER_COLLECT_PAYMENT: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/collect-payment`,
+    ORDER_MEASUREMENT: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/measurement`,
+    TAILORS: '/api/v1/employee/tailors',
+    ONLINE_STATUS: '/api/v1/employee/me/online',
+    DELIVERY_BROADCASTS: '/api/v1/employee/delivery-broadcasts',
+    DELIVERY_BROADCAST_ACCEPT: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/delivery-broadcast/accept`,
+    DELIVERY_BROADCAST_DECLINE: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/delivery-broadcast/decline`,
+    // Pickup broadcast (Rapido-style FCFS pickup-leg claim), mirrors delivery.
+    PICKUP_BROADCASTS: '/api/v1/employee/pickup-broadcasts',
+    PICKUP_BROADCAST_ACCEPT: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/pickup-broadcast/accept`,
+    PICKUP_BROADCAST_DECLINE: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/pickup-broadcast/decline`,
+    MY_BRIDGE_PROFILE: '/api/v1/employee/me/bridge-profile',
+    MY_KYC: '/api/v1/employee/me/kyc',
+  },
+  TAILOR: {
+    BROADCASTS: '/api/v1/tailor/orders/broadcasts',
+    BROADCAST_ACCEPT: (orderId: string) => `/api/v1/tailor/orders/${orderId}/broadcast/accept`,
+    BROADCAST_DECLINE: (orderId: string) => `/api/v1/tailor/orders/${orderId}/broadcast/decline`,
+    ONLINE_STATUS: '/api/v1/tailors/me/online',
+    ME: '/api/v1/tailors/me',
+    MY_KYC: '/api/v1/tailors/me/kyc',
+  },
+  // Shared by both Tailor and Bridge/Employee roles - same backend routes,
+  // require_roles(TAILOR, EMPLOYEE) (app/api/v1/endpoints/leave_request.py).
+  LEAVE: {
+    LIST_MY: '/api/v1/leave-requests/my',
+    CREATE: '/api/v1/leave-requests',
+    CANCEL: (requestId: string) => `/api/v1/leave-requests/${requestId}/cancel`,
   },
   ORDERS: {
     MY_ORDERS: '/api/v1/orders/my-orders',
+    DETAIL: (orderId: string) => `/api/v1/orders/${orderId}`,
     UPDATE_STATUS: (orderId: string) => `/api/v1/orders/${orderId}/status`,
     PHOTOS: (orderId: string) => `/api/v1/orders/${orderId}/photos`,
+    INVOICE: (orderId: string) => `/api/v1/orders/${orderId}/invoice`,
+    BROADCAST_STATUS: (orderId: string) => `/api/v1/tailor/orders/${orderId}/broadcast/status`,
   },
   PAYMENTS: {
     BY_ORDER: (orderId: string) => `/api/v1/payments/order/${orderId}`,
@@ -75,19 +148,69 @@ export const ENDPOINTS = {
     UPDATE_STATUS: (paymentId: string) => `/api/v1/payments/${paymentId}/status`,
     REFUND: (paymentId: string) => `/api/v1/payments/${paymentId}/refund`,
   },
+  MEASUREMENTS: {
+    LIST: '/api/v1/users/measurements',
+    DETAIL: (measurementId: string) => `/api/v1/users/measurements/${measurementId}`,
+  },
+  SUPPORT: {
+    TICKETS: '/api/v1/support/tickets',
+    TICKET_DETAIL: (ticketId: string) => `/api/v1/support/tickets/${ticketId}`,
+    TICKET_MESSAGES: (ticketId: string) => `/api/v1/support/tickets/${ticketId}/messages`,
+    TICKET_STATUS: (ticketId: string) => `/api/v1/support/tickets/${ticketId}/status`,
+    FAQS: '/api/v1/support/faqs',
+    FAQ_DETAIL: (faqId: string) => `/api/v1/support/faqs/${faqId}`,
+  },
+  INVENTORY: {
+    LIST: '/api/v1/inventory',
+    DETAIL: (itemId: string) => `/api/v1/inventory/${itemId}`,
+  },
+  LOOKBOOK: {
+    LIST: '/api/v1/lookbook',
+    ADMIN_LIST: '/api/v1/admin/lookbook',
+    ADMIN_DETAIL: (itemId: string) => `/api/v1/admin/lookbook/${itemId}`,
+  },
+  CATALOG: {
+    TREE: '/api/v1/catalog/categories/tree',
+    ADMIN_TREE: '/api/v1/catalog/admin/tree',
+    UPLOAD_IMAGE: '/api/v1/catalog/upload-image',
+    CATEGORIES: '/api/v1/catalog/categories',
+    CATEGORY_DETAIL: (categoryId: string) => `/api/v1/catalog/categories/${categoryId}`,
+    SERVICE_LINES: '/api/v1/catalog/service-lines',
+    SERVICE_LINE_DETAIL: (lineId: string) => `/api/v1/catalog/service-lines/${lineId}`,
+    SERVICES: '/api/v1/catalog/services',
+    SERVICE_DETAIL: (serviceId: string) => `/api/v1/catalog/services/${serviceId}`,
+  },
   NOTIFICATIONS: {
     LIST: '/api/v1/notifications',
     UNREAD_COUNT: '/api/v1/notifications/unread-count',
     MARK_READ: (notificationId: string) => `/api/v1/notifications/${notificationId}/read`,
     MARK_ALL_READ: '/api/v1/notifications/read-all',
+    DEVICE_TOKENS: '/api/v1/notifications/device-tokens',
   },
   CHAT: {
     SESSIONS: '/api/v1/admin/chat/sessions',
+    SESSION_DETAIL: (sessionUuid: string) => `/api/v1/chat/v2/sessions/${sessionUuid}`,
     MESSAGES: (sessionUuid: string) => `/api/v1/admin/chat/sessions/${sessionUuid}/messages`,
     ASSIGN: (sessionUuid: string) => `/api/v1/admin/chat/sessions/${sessionUuid}/assign`,
     RESOLVE: (sessionUuid: string) => `/api/v1/admin/chat/sessions/${sessionUuid}/resolve`,
     ESCALATE: (sessionUuid: string) => `/api/v1/admin/chat/sessions/${sessionUuid}/escalate`,
+    ASSIGNMENT_HISTORY: (sessionUuid: string) =>
+      `/api/v1/admin/chat/sessions/${sessionUuid}/assignment-history`,
     QUICK_REPLIES: '/api/v1/admin/chat/quick-replies',
     WS: (sessionUuid: string) => `/api/v1/ws/chat/${sessionUuid}`,
+    MY_AGENT_STATUS: '/api/v1/admin/agents/me/status',
+    AGENT_STATUS: (agentId: number) => `/api/v1/admin/agents/${agentId}/status`,
+  },
+  RBAC: {
+    SCREENS: '/api/v1/rbac/screens',
+    PERMISSIONS: '/api/v1/rbac/permissions',
+    MY_EFFECTIVE: '/api/v1/rbac/user-permissions/me/effective',
+    EFFECTIVE: (userId: number | string) => `/api/v1/rbac/user-permissions/${userId}/effective`,
+    GRANT: '/api/v1/rbac/user-permissions/grant',
+    REVOKE: '/api/v1/rbac/user-permissions/revoke',
+    CLEAR_OVERRIDE: (mappingId: number) => `/api/v1/rbac/user-permissions/${mappingId}`,
+    LOCKOUT_STATUS: (userId: number | string) =>
+      `/api/v1/rbac/user-permissions/${userId}/lockout-status`,
+    UNLOCK: (userId: number | string) => `/api/v1/rbac/user-permissions/${userId}/unlock`,
   },
 } as const;

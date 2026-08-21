@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, Text, type PressableProps } from 'react-native';
+import { ActivityIndicator, Text } from 'react-native';
+import { Pressable, type PressableProps } from '@/components/ui/Pressable';
 import { useTheme } from '@/hooks/useTheme';
 
 interface ButtonProps extends PressableProps {
@@ -38,6 +39,8 @@ export const Button = ({
   return (
     <Pressable
       disabled={disabled || loading}
+      pressScale={0.96}
+      haptic={variant === 'danger' ? 'medium' : 'light'}
       className={`rounded-2xl items-center justify-center flex-row ${sizeClasses} ${fullWidth ? 'w-full' : ''} ${className ?? ''}`}
       style={{
         backgroundColor: variantStyles.bg,

@@ -1,9 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import { z } from 'zod';
-import { Button, Header, Input, PasswordInput, RoleSelector } from '@/components/ui';
+import { Button, Header, Input, PasswordInput, RoleSelector, ScreenContent } from '@/components/ui';
 import type { LoginRole } from '@/constants/roles';
 import { useCreateStaffMutation } from '@/features/staff/hooks/useStaff';
 import { useTheme } from '@/hooks/useTheme';
@@ -62,10 +62,10 @@ export default function AddStaffScreen() {
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Header title="Add Staff" subtitle="Create new employee account" showMenu={false} />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
-        <ScrollView className="px-5" keyboardShouldPersistTaps="handled">
+        <ScreenContent keyboardShouldPersistTaps="handled">
           <Controller
             control={control}
             name="firstName"
@@ -147,7 +147,7 @@ export default function AddStaffScreen() {
             loading={createMutation.isPending}
             fullWidth
           />
-        </ScrollView>
+        </ScreenContent>
       </KeyboardAvoidingView>
     </View>
   );

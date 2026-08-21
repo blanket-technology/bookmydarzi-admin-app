@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Pressable } from '@/components/ui/Pressable';
 import { useTheme } from '@/hooks/useTheme';
 
 interface DrawerItemProps {
@@ -21,30 +22,27 @@ export const DrawerItem = ({
 }: DrawerItemProps) => {
   const { colors } = useTheme();
 
+  const contentColor = danger ? '#dc2626' : active ? colors.primary : colors.text;
+
   return (
     <Pressable
       onPress={onPress}
+      pressScale={0.98}
+      haptic="selection"
       className="flex-row items-center px-4 py-3.5 mx-3 rounded-2xl mb-1"
       style={{
-        backgroundColor: active ? 'rgba(255,255,255,0.15)' : 'transparent',
+        backgroundColor: active ? colors.primaryLight : 'transparent',
       }}
     >
       <View
         className="w-9 h-9 rounded-xl items-center justify-center mr-3"
         style={{
-          backgroundColor: active ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)',
+          backgroundColor: active ? colors.card : 'transparent',
         }}
       >
-        <Ionicons
-          name={icon}
-          size={20}
-          color={danger ? '#fca5a5' : active ? '#ffffff' : colors.drawerText}
-        />
+        <Ionicons name={icon} size={20} color={contentColor} />
       </View>
-      <Text
-        className="text-base font-medium flex-1"
-        style={{ color: danger ? '#fca5a5' : active ? '#ffffff' : colors.drawerText }}
-      >
+      <Text className="text-base font-medium flex-1" style={{ color: contentColor }}>
         {label}
       </Text>
       {badgeCount && badgeCount > 0 ? (
@@ -58,7 +56,7 @@ export const DrawerItem = ({
         </View>
       ) : null}
       {active ? (
-        <View className="w-1.5 h-6 rounded-full bg-accent-400" />
+        <View className="w-1.5 h-6 rounded-full" style={{ backgroundColor: colors.primary }} />
       ) : null}
     </Pressable>
   );

@@ -1,19 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, Text, View, useWindowDimensions } from 'react-native';
-import {
-  Badge,
-  BottomSheet,
-  Button,
-  Card,
-  ConfirmModal,
-  EmptyState,
-  Header,
-  Input,
-  Loader,
-  ScreenContent,
-} from '@/components/ui';
+import { ActivityIndicator, Image, Text, View, useWindowDimensions } from 'react-native';
+import { Badge, BottomSheet, Button, Card, ConfirmModal, EmptyState, Header, Input, Loader, Pressable, ScreenContent } from '@/components/ui';
 import {
   ADMIN_CORRECTABLE_STATUS_OPTIONS,
   ORDER_STATUS,
@@ -85,6 +74,13 @@ export default function OrderDetailsScreen() {
   const [statusSheetVisible, setStatusSheetVisible] = useState(false);
   const [measurementManageSheetVisible, setMeasurementManageSheetVisible] = useState(false);
   const [measurementManageSheetIsAdmin, setMeasurementManageSheetIsAdmin] = useState(false);
+  // Which line item the measurement sheet is targeting - undefined for
+  // single-item orders (backend accepts omitted order_item_id there).
+  // Required to be set before opening the sheet on a multi-item order.
+  const [measurementTargetItem, setMeasurementTargetItem] = useState<{
+    id?: number;
+    label?: string;
+  } | null>(null);
   const [rejectSheetVisible, setRejectSheetVisible] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [cancelSheetVisible, setCancelSheetVisible] = useState(false);
@@ -300,10 +296,16 @@ export default function OrderDetailsScreen() {
         return;
       case 'update_measurement':
         setMeasurementManageSheetIsAdmin(true);
+        setMeasurementTargetItem(
+          order?.items.length === 1 ? { id: order.items[0].order_item_id ?? undefined } : null,
+        );
         setMeasurementManageSheetVisible(true);
         return;
       case 'manage_measurement':
         setMeasurementManageSheetIsAdmin(false);
+        setMeasurementTargetItem(
+          order?.items.length === 1 ? { id: order.items[0].order_item_id ?? undefined } : null,
+        );
         setMeasurementManageSheetVisible(true);
         return;
       case 'correct_status':
@@ -333,14 +335,18 @@ export default function OrderDetailsScreen() {
   // change: measurement is only ever filled by Bridge/employee at pickup, or
   // by Admin). Fires once per order-status transition into picked_up, not on
   // every render/refetch of an order already at that stage.
+  // Multi-item orders deliberately don't auto-prompt - which item to measure
+  // first is ambiguous, so Bridge uses the Items & Measurements card instead.
   const promptedPickupMeasurementFor = useRef<string | null>(null);
   useEffect(() => {
     if (!isEmployeeRole || !order) return;
     if (order.status !== ORDER_STATUS.PICKED_UP) return;
-    if (order.measurement) return; // already has one on file
+    if (order.items.length !== 1) return;
+    if (order.items[0].has_measurement) return; // already has one on file
     if (promptedPickupMeasurementFor.current === order.order_id) return;
     promptedPickupMeasurementFor.current = order.order_id;
     setMeasurementManageSheetIsAdmin(false);
+    setMeasurementTargetItem({ id: order.items[0].order_item_id ?? undefined });
     setMeasurementManageSheetVisible(true);
   }, [isEmployeeRole, order]);
 
@@ -453,6 +459,27 @@ export default function OrderDetailsScreen() {
               {formatCurrency(order.final_amount ?? order.amount)}
             </Text>
           </View>
+
+          {order.needs_manual_assignment ? (
+            <View
+              className="flex-row items-start gap-2 rounded-2xl p-3 mb-3"
+              style={{ backgroundColor: `${colors.error}15`, borderWidth: 1, borderColor: colors.error }}
+            >
+              <Ionicons name="warning" size={18} color={colors.error} style={{ marginTop: 1 }} />
+              <View className="flex-1">
+                <Text className="text-sm font-bold" style={{ color: colors.error }}>
+                  No tailor found
+                </Text>
+                <Text className="text-xs mt-0.5" style={{ color: colors.error }}>
+                  No tailor accepted after every broadcast round, including the all-tailor
+                  fallback. Assign a tailor manually below.
+                  {order.broadcast_exhausted_at
+                    ? `\nExhausted ${formatDate(order.broadcast_exhausted_at)}`
+                    : ''}
+                </Text>
+              </View>
+            </View>
+          ) : null}
 
           <DetailRow label="Customer" value={order.customer_name ?? '—'} colors={colors} />
           <DetailRow label="Mobile" value={order.customer_mobile ?? '—'} colors={colors} />
@@ -597,6 +624,60 @@ export default function OrderDetailsScreen() {
           </Card>
         ) : null}
 
+        {order.items.length > 1 ? (
+          <Card className="mb-4">
+            <Text className="font-bold mb-3" style={{ color: colors.text }}>
+              Items &amp; Measurements ({order.items.length})
+            </Text>
+            {order.items.map((item, idx) => (
+              <View
+                key={item.order_item_id ?? idx}
+                className="flex-row items-center justify-between py-2.5"
+                style={
+                  idx < order.items.length - 1
+                    ? { borderBottomWidth: 1, borderColor: colors.border }
+                    : undefined
+                }
+              >
+                <View className="flex-1 pr-3">
+                  <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+                    {item.service_name ?? item.category_name ?? 'Item'}
+                    {item.person_name ? ` — ${item.person_name}` : ''}
+                  </Text>
+                  <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
+                    Qty {item.quantity}
+                    {item.gender ? ` · ${capitalize(item.gender)}` : ''}
+                    {' · '}
+                    {item.has_measurement ? 'Measured' : 'Not measured'}
+                  </Text>
+                </View>
+                {(isEmployeeRole || isAdminRole) &&
+                !['delivered', 'cancelled', 'order_rejected'].includes(order.status) ? (
+                  <Pressable
+                    onPress={() => {
+                      setMeasurementManageSheetIsAdmin(isAdminRole);
+                      setMeasurementTargetItem({
+                        id: item.order_item_id ?? undefined,
+                        label: `${item.service_name ?? 'Item'}${item.person_name ? ` for ${item.person_name}` : ''}`,
+                      });
+                      setMeasurementManageSheetVisible(true);
+                    }}
+                    className="px-3 py-2 rounded-xl"
+                    style={{ backgroundColor: item.has_measurement ? colors.surface : colors.primary, borderWidth: item.has_measurement ? 1 : 0, borderColor: colors.border }}
+                  >
+                    <Text
+                      className="text-xs font-bold"
+                      style={{ color: item.has_measurement ? colors.text : '#fff' }}
+                    >
+                      {item.has_measurement ? 'Update' : 'Fill'}
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            ))}
+          </Card>
+        ) : null}
+
         {actions.length > 0 ? (
           <>
             <Text
@@ -605,7 +686,13 @@ export default function OrderDetailsScreen() {
             >
               Actions
             </Text>
-            {actions.map((action) => (
+            {actions
+              .filter((action) =>
+                order.items.length > 1
+                  ? action.id !== 'update_measurement' && action.id !== 'manage_measurement'
+                  : true,
+              )
+              .map((action) => (
               <Button
                 key={action.id}
                 title={action.label}
@@ -640,7 +727,7 @@ export default function OrderDetailsScreen() {
                 >
                   <View>
                     <Text className="text-sm font-semibold" style={{ color: colors.text }}>
-                      Tailor #{b.tailor_id} · Round {b.round}
+                      Tailor #{b.tailor_id} · {b.round >= 4 ? 'Round 4 · All Areas' : `Round ${b.round}`}
                     </Text>
                     <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
                       Notified {formatDate(b.notified_at ?? undefined)}
@@ -1047,11 +1134,16 @@ export default function OrderDetailsScreen() {
 
       <MeasurementManageSheet
         visible={measurementManageSheetVisible}
-        onClose={() => setMeasurementManageSheetVisible(false)}
+        onClose={() => {
+          setMeasurementManageSheetVisible(false);
+          setMeasurementTargetItem(null);
+        }}
         orderId={order.order_id}
         customerId={order.customer_id}
         serviceLabel={order.service_name ?? order.category_name}
         useAdminEndpoint={measurementManageSheetIsAdmin}
+        orderItemId={measurementTargetItem?.id}
+        itemLabel={measurementTargetItem?.label}
       />
     </View>
   );

@@ -13,8 +13,11 @@ export interface AdminDashboardOrders {
   today?: number;
   pending?: number;
   pending_assignment?: number;
+  pending_pickup?: number;
+  out_for_delivery?: number;
   delivered?: number;
   cancelled?: number;
+  by_status?: Record<string, number>;
 }
 
 export interface AdminDashboardRevenue {
@@ -22,6 +25,8 @@ export interface AdminDashboardRevenue {
   today?: number;
   this_week?: number;
   this_month?: number;
+  online?: number;
+  cod?: number;
 }
 
 export interface AdminDashboardPayments {
