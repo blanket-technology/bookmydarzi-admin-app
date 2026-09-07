@@ -5,17 +5,30 @@ export interface BroadcastOffer {
   order_id: string;
   order_code?: string | null;
   service_name?: string | null;
+  category_name?: string | null;
   garment_count: number;
   pickup_area?: string | null;
+  /** Rounded to the nearest 0.5 km server-side (see _privacy_safe_order in
+   * app/api/v1/endpoints/broadcast.py) - coarse enough to never leak a
+   * street-level fix on the customer's address, precise enough to help the
+   * tailor judge the job at a glance. Null when either side's coordinates
+   * aren't on file. */
+  distance_km?: number | null;
   status: string;
   created_at?: string | null;
   urgency_level?: string | null;
   expected_delivery_date?: string | null;
+  /** Whole days from now until expected_delivery_date - 0 or negative means
+   * already at/past the expected date. Compute-once on the backend so the
+   * tailor never has to do this math themselves mid-decision. */
+  tat_days?: number | null;
   description?: string | null;
   fabric_notes?: string | null;
   customization_notes?: string | null;
   cloth_details?: string | null;
-  stitching_preferences?: string | null;
+  /** JSON object on the backend (Order.StitchingPreferences), e.g.
+   * {"collar": "mandarin", "sleeve": "full"} - never a plain string. */
+  stitching_preferences?: Record<string, unknown> | null;
   broadcast_id: string;
   expires_at?: string | null;
   notified_at?: string | null;

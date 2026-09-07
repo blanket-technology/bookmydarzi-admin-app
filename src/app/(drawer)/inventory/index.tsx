@@ -101,9 +101,9 @@ export default function InventoryScreen() {
     const payload = {
       name: form.name.trim(),
       category: form.category || undefined,
-      quantity: Number(form.quantity) || 0,
+      quantity: Math.max(0, Number(form.quantity) || 0),
       unit: form.unit || undefined,
-      price_per_unit: Number(form.price_per_unit) || 0,
+      price_per_unit: Math.max(0, Number(form.price_per_unit) || 0),
     };
     if (editingItem) {
       updateMutation.mutate({ id: editingItem.Id, payload }, { onSuccess: () => setSheetVisible(false) });

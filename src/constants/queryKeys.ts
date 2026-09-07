@@ -20,6 +20,7 @@ export const QUERY_KEYS = {
   CHAT_ASSIGNMENT_HISTORY: (sessionUuid: string) => ['chat-assignment-history', sessionUuid] as const,
   CHAT_MESSAGES: (sessionUuid: string) => ['chat-messages', sessionUuid] as const,
   CHAT_QUICK_REPLIES: ['chat-quick-replies'] as const,
+  CHAT_ANALYTICS: ['chat-analytics'] as const,
   MY_AGENT_STATUS: ['my-agent-status'] as const,
   CANCELLATIONS: (params?: Record<string, unknown>) => ['cancellations', params] as const,
   CANCELLATION: (id: string) => ['cancellation', id] as const,

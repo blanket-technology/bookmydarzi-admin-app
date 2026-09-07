@@ -12,6 +12,14 @@ export const useDashboard = (enabled = true) =>
     queryFn: adminService.getDashboard,
     enabled,
     retry: false,
+    // Live ops visibility: previously this only refetched on mount or a
+    // manual pull-to-refresh, and useAppSocket.ts's order_update handler
+    // never invalidated QUERY_KEYS.DASHBOARD at all - an admin staring at
+    // the dashboard while orders/broadcasts changed elsewhere saw stale
+    // numbers indefinitely. WS invalidation (useAppSocket.ts) now covers
+    // the instant case; this interval is the backstop for anything that
+    // doesn't emit a notification the socket handler recognizes.
+    refetchInterval: enabled ? 20_000 : false,
   });
 
 // Same save-to-cache-then-share pattern as useDownloadInvoiceMutation

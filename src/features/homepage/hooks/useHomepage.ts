@@ -3,12 +3,7 @@ import { QUERY_KEYS } from '@/constants/queryKeys';
 import { homepageService } from '@/services/homepageService';
 import { toast } from '@/store/toastStore';
 import { getMutationError } from '@/utils/errors';
-import type {
-  BannerCreateRequest,
-  BannerUpdateRequest,
-  OfferCreateRequest,
-  OfferUpdateRequest,
-} from '@/types/homepage';
+import type { BannerCreateRequest, BannerUpdateRequest } from '@/types/homepage';
 
 export const useBanners = (enabled = true) =>
   useQuery({
@@ -49,50 +44,6 @@ export const useDeleteBannerMutation = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOMEPAGE_BANNERS });
       toast.success('Banner removed');
-    },
-    onError: (error) => toast.error(getMutationError(error)),
-  });
-};
-
-export const useOffers = (enabled = true) =>
-  useQuery({
-    queryKey: QUERY_KEYS.HOMEPAGE_OFFERS,
-    queryFn: () => homepageService.getOffers(),
-    enabled,
-  });
-
-export const useCreateOfferMutation = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: OfferCreateRequest) => homepageService.createOffer(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOMEPAGE_OFFERS });
-      toast.success('Offer created');
-    },
-    onError: (error) => toast.error(getMutationError(error)),
-  });
-};
-
-export const useUpdateOfferMutation = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: OfferUpdateRequest }) =>
-      homepageService.updateOffer(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOMEPAGE_OFFERS });
-      toast.success('Offer updated');
-    },
-    onError: (error) => toast.error(getMutationError(error)),
-  });
-};
-
-export const useDeleteOfferMutation = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => homepageService.deleteOffer(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOMEPAGE_OFFERS });
-      toast.success('Offer removed');
     },
     onError: (error) => toast.error(getMutationError(error)),
   });

@@ -266,11 +266,11 @@ export const useHandToTailorMutation = () =>
     'Handed to tailor',
   );
 
-export const useMarkOutForDeliveryMutation = () =>
-  useEmployeeActionMutation<void>(
-    (orderId) => orderService.markOutForDelivery(orderId),
-    'Order marked out for delivery',
-  );
+// No useMarkOutForDeliveryMutation here - PATCH /employee/orders/{id}/delivery
+// is deprecated server-side and unconditionally 400s (employee_order_service.py).
+// Once an order reaches READY_FOR_DISPATCH it becomes a delivery-broadcast
+// candidate automatically; the employee claims it via Accept on the
+// Deliveries screen instead (see useOrderActions.ts's own note on this).
 
 export const useCompleteOrderMutation = () =>
   useEmployeeActionMutation<void>(

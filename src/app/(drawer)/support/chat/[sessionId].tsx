@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Badge, BottomSheet, Button, ConfirmModal, EmptyState, Header, Input, Loader, Pressable } from '@/components/ui';
 import {
   useAssignmentHistory,
@@ -27,6 +28,7 @@ export default function ChatThreadScreen() {
   const { colors } = useTheme();
   const { contentMaxWidth } = useResponsive();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
   const [draft, setDraft] = useState('');
@@ -245,13 +247,19 @@ export default function ChatThreadScreen() {
           )}
 
           {isResolved ? (
-            <View className="px-5 py-4 border-t items-center" style={{ borderColor: colors.border }}>
+            <View
+              className="px-5 py-4 border-t items-center"
+              style={{ borderColor: colors.border, paddingBottom: 16 + insets.bottom }}
+            >
               <Text className="text-sm font-medium" style={{ color: colors.textMuted }}>
                 This conversation has been resolved.
               </Text>
             </View>
           ) : (
-            <View className="flex-row items-center px-5 py-3 gap-2 border-t" style={{ borderColor: colors.border }}>
+            <View
+              className="flex-row items-center px-5 py-3 gap-2 border-t"
+              style={{ borderColor: colors.border, paddingBottom: 12 + insets.bottom }}
+            >
               <Pressable
                 onPress={() => setQuickRepliesOpen(true)}
                 className="w-11 h-11 rounded-full items-center justify-center border"

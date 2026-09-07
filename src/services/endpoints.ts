@@ -200,6 +200,7 @@ export const ENDPOINTS = {
     WS: (sessionUuid: string) => `/api/v1/ws/chat/${sessionUuid}`,
     MY_AGENT_STATUS: '/api/v1/admin/agents/me/status',
     AGENT_STATUS: (agentId: number) => `/api/v1/admin/agents/${agentId}/status`,
+    ANALYTICS: '/api/v1/admin/chat/analytics',
   },
   RBAC: {
     SCREENS: '/api/v1/rbac/screens',

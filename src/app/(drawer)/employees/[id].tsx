@@ -30,7 +30,8 @@ import { useUpdateUserStatusMutation, useUploadUserPhotoMutation } from '@/featu
 import { useTheme } from '@/hooks/useTheme';
 import type { BridgeProfileUpdateRequest, StaffUpdateRequest } from '@/types/staff';
 import { isPdfUrl, resolveDocUrl } from '@/utils/documents';
-import { formatDate } from '@/utils/errors';
+import { formatCurrency, formatDate } from '@/utils/errors';
+import { isValidEmail, isValidMobile } from '@/utils/validation';
 
 const BRIDGE_TYPE_LABEL: Record<string, string> = {
   full_time: 'Full Time',
@@ -148,6 +149,8 @@ export default function StaffDetailsScreen() {
 
   const handleSave = async () => {
     if (!accountForm) return;
+    if (accountForm.email.trim() && !isValidEmail(accountForm.email)) return;
+    if (accountForm.mobile.trim() && !isValidMobile(accountForm.mobile)) return;
     // Backend's StaffUpdateRequest is first_name/last_name (distinct from
     // AdminTailorUpdateRequest's single full_name — a real inconsistency
     // between the two admin schemas) - split only at the API boundary so
@@ -337,12 +340,14 @@ export default function StaffDetailsScreen() {
               autoCapitalize="none"
               keyboardType="email-address"
               onChangeText={(v) => setAccountForm((p) => (p ? { ...p, email: v } : p))}
+              error={accountForm.email.trim() && !isValidEmail(accountForm.email) ? 'Enter a valid email' : undefined}
             />
             <Input
               label="Mobile"
               value={accountForm.mobile}
               keyboardType="phone-pad"
               onChangeText={(v) => setAccountForm((p) => (p ? { ...p, mobile: v } : p))}
+              error={accountForm.mobile.trim() && !isValidMobile(accountForm.mobile) ? 'Enter a valid 10-digit mobile number' : undefined}
             />
             <Pressable
               onPress={() => setAccountForm((p) => (p ? { ...p, isActive: !p.isActive } : p))}
@@ -549,8 +554,8 @@ export default function StaffDetailsScreen() {
               Earnings
             </Text>
             <Card>
-              <StaffInfoRow label="Total Earnings" value={`₹${staff.bridge_earnings?.total_earnings ?? 0}`} />
-              <StaffInfoRow label="Incentives Earned" value={`₹${staff.bridge_earnings?.incentives_earned ?? 0}`} last />
+              <StaffInfoRow label="Total Earnings" value={formatCurrency(staff.bridge_earnings?.total_earnings)} />
+              <StaffInfoRow label="Incentives Earned" value={formatCurrency(staff.bridge_earnings?.incentives_earned)} last />
             </Card>
           </View>
         ) : null}

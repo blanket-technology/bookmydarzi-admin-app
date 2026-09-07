@@ -362,6 +362,7 @@ export const ROUTE_PERMISSION_MAP: Record<string, keyof AppPermissions> = {
   inventory: 'inventory',
   lookbook: 'lookbook',
   broadcasts: 'broadcasts',
+  pickups: 'deliveries',
   deliveries: 'deliveries',
   leave: 'leave',
   settings: 'settings',

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Badge, BottomSheet, Button, EmptyState, Header, Input, Loader, Pressable } from '@/components/ui';
 import {
   useReplyTicketMutation,
@@ -32,6 +33,7 @@ export default function SupportTicketDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
   const { contentMaxWidth } = useResponsive();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const normalizedRole = String(user?.role ?? '').toLowerCase();
   const isStaff = ['admin', 'superadmin', 'employee'].includes(normalizedRole);
@@ -146,13 +148,13 @@ export default function SupportTicketDetailScreen() {
         </ScrollView>
 
         {isClosed ? (
-          <View className="px-5 py-4">
+          <View className="px-5 py-4" style={{ paddingBottom: 16 + insets.bottom }}>
             <Text className="text-sm text-center" style={{ color: colors.textMuted }}>
               This ticket is closed. Raise a new ticket if you need further help.
             </Text>
           </View>
         ) : (
-          <View className="px-5 py-3 flex-row items-end" style={{ gap: 8 }}>
+          <View className="px-5 py-3 flex-row items-end" style={{ gap: 8, paddingBottom: 12 + insets.bottom }}>
             <View className="flex-1">
               <Input
                 value={message}

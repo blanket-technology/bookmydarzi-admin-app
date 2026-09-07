@@ -1,5 +1,5 @@
 import { ScrollView, Text, View } from 'react-native';
-import { BottomSheet, Button, Input, Pressable } from '@/components/ui';
+import { BottomSheet, Button, DateField, Pressable } from '@/components/ui';
 import { ORDER_STATUS_OPTIONS } from '@/constants/orderStatus';
 import { ORDER_PAYMENT_STATUS_OPTIONS } from '@/constants/paymentStatus';
 import { useTailors } from '@/features/tailors/hooks/useTailors';
@@ -63,9 +63,10 @@ const SectionLabel = ({ children }: { children: string }) => {
 
 // Exposes every filter GET /admin/orders supports (admin.py:555-579:
 // status, payment_status, tailor_id, date_from, date_to) — previously only
-// status was reachable from the UI. Dates are plain YYYY-MM-DD text inputs
-// rather than a native date-picker to avoid adding a new dependency; the
-// backend accepts ISO 8601 so this format parses directly.
+// status was reachable from the UI. Dates use the shared DateField calendar
+// picker (same as Offers/Leave/Audit Log/Schedule Pickup) rather than free
+// text - the backend accepts ISO 8601 so DateField's plain YYYY-MM-DD output
+// parses directly with no conversion needed.
 export const OrdersFilterSheet = ({
   visible,
   onClose,
@@ -136,22 +137,22 @@ export const OrdersFilterSheet = ({
           ))}
         </View>
 
-        <SectionLabel>Date Range (YYYY-MM-DD)</SectionLabel>
+        <SectionLabel>Date Range</SectionLabel>
         <View className="flex-row" style={{ gap: 12 }}>
           <View className="flex-1">
-            <Input
+            <DateField
+              value={filters.dateFrom || null}
+              onChange={(d) => setField('dateFrom', d)}
               placeholder="From"
-              value={filters.dateFrom}
-              onChangeText={(text) => setField('dateFrom', text)}
-              autoCapitalize="none"
+              maximumDate={filters.dateTo ? new Date(`${filters.dateTo}T00:00:00`) : undefined}
             />
           </View>
           <View className="flex-1">
-            <Input
+            <DateField
+              value={filters.dateTo || null}
+              onChange={(d) => setField('dateTo', d)}
               placeholder="To"
-              value={filters.dateTo}
-              onChangeText={(text) => setField('dateTo', text)}
-              autoCapitalize="none"
+              minimumDate={filters.dateFrom ? new Date(`${filters.dateFrom}T00:00:00`) : undefined}
             />
           </View>
         </View>

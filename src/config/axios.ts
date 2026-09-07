@@ -178,7 +178,7 @@ apiClient.interceptors.response.use(
       }
 
       try {
-        console.log('[API] Refreshing access token...');
+        if (__DEV__) console.log('[API] Refreshing access token...');
         const response = await axios.post<AuthTokenResponse>(
           `${API_CONFIG.BASE_URL}${ENDPOINTS.AUTH.REFRESH}`,
           { refresh_token: refreshToken },

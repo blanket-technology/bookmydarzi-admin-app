@@ -214,11 +214,6 @@ export const orderService = {
     return data;
   },
 
-  markOutForDelivery: async (orderId: string): Promise<EmployeeOrderActionResponse> => {
-    const { data } = await apiClient.patch(ENDPOINTS.EMPLOYEE.ORDER_DELIVERY(orderId));
-    return data;
-  },
-
   // Employee-side measurement collection — distinct from updateMeasurement
   // above (that's the admin-only /admin/orders/{id}/measurement endpoint).
   // Accepts either measurement_id (attach an existing saved customer

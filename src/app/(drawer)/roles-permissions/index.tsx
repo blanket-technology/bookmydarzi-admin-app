@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { Header } from '@/components/ui';
+import { Header, Tabs, type TabItem } from '@/components/ui';
+import { AdminAccessPanel } from '@/features/rbac/components/AdminAccessPanel';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -49,83 +51,114 @@ const MODULE_LABELS: Partial<Record<keyof AppPermissions, string>> = {
 
 const MODULE_KEYS = Object.keys(MODULE_LABELS) as (keyof AppPermissions)[];
 
+function RolesMatrixPanel({ myRole }: { myRole: string | undefined }) {
+  const { colors } = useTheme();
+  return (
+    <>
+      <View
+        className="flex-row items-start rounded-2xl px-4 py-3 mb-4"
+        style={{ backgroundColor: colors.primaryLight, gap: 10 }}
+      >
+        <Ionicons name="shield-checkmark-outline" size={16} color={colors.primary} style={{ marginTop: 2 }} />
+        <Text className="text-xs flex-1" style={{ color: colors.text }}>
+          This matrix is enforced in code on both this app and the web admin panel, and mirrored by the
+          backend's role checks. It is read-only by design.
+        </Text>
+      </View>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View>
+          <View className="flex-row border-b" style={{ borderColor: colors.border }}>
+            <View className="w-40 py-2.5 px-2">
+              <Text className="text-xs font-bold" style={{ color: colors.textSecondary }}>
+                Module
+              </Text>
+            </View>
+            {ROLES.map((role) => (
+              <View key={role} className="w-24 py-2.5 px-2 items-center">
+                <Text
+                  className="text-xs font-bold text-center"
+                  style={{ color: role === myRole ? colors.primary : colors.textSecondary }}
+                >
+                  {ROLE_LABELS[role]}
+                </Text>
+                {role === myRole ? (
+                  <Text className="text-[10px]" style={{ color: colors.primary }}>
+                    (you)
+                  </Text>
+                ) : null}
+              </View>
+            ))}
+          </View>
+
+          {MODULE_KEYS.map((moduleKey, i) => (
+            <View
+              key={moduleKey}
+              className="flex-row border-b"
+              style={{ borderColor: colors.border, backgroundColor: i % 2 === 1 ? colors.surface : 'transparent' }}
+            >
+              <View className="w-40 py-2.5 px-2 justify-center">
+                <Text className="text-xs font-semibold" style={{ color: colors.text }} numberOfLines={2}>
+                  {MODULE_LABELS[moduleKey]}
+                </Text>
+              </View>
+              {ROLES.map((role) => {
+                const granted = Boolean(resolvePermissions(role, role)[moduleKey]);
+                return (
+                  <View key={role} className="w-24 py-2.5 px-2 items-center justify-center">
+                    {granted ? (
+                      <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                    ) : (
+                      <View className="w-3 h-px" style={{ backgroundColor: colors.border }} />
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    </>
+  );
+}
+
+type RolesTab = 'roles' | 'admin_access';
+
+const TABS: TabItem[] = [
+  { id: 'roles', label: 'Roles', icon: 'grid-outline' },
+  { id: 'admin_access', label: 'Admin Access', icon: 'key-outline' },
+];
+
 export default function RolesPermissionsScreen() {
   const { colors } = useTheme();
   const { contentMaxWidth } = useResponsive();
   const { user } = useAuth();
   const myRole = user?.role?.toLowerCase();
+  // Per-account grant/revoke/lockout is superadmin-only server-side (see
+  // app/api/v1/rbac/user_permissions.py's require_roles(SUPERADMIN)) - hide
+  // the tab entirely for admin/employee rather than showing a tab whose
+  // every action would 403.
+  const isSuperadmin = myRole === 'superadmin';
+  const [tab, setTab] = useState<RolesTab>('roles');
+  const activeTab: RolesTab = isSuperadmin ? tab : 'roles';
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title="Roles & Permissions" subtitle="Read-only access matrix" />
-      <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
-        <View
-          className="flex-row items-start rounded-2xl px-4 py-3 mb-4"
-          style={{ backgroundColor: colors.primaryLight, gap: 10 }}
-        >
-          <Ionicons name="shield-checkmark-outline" size={16} color={colors.primary} style={{ marginTop: 2 }} />
-          <Text className="text-xs flex-1" style={{ color: colors.text }}>
-            This matrix is enforced in code on both this app and the web admin panel, and mirrored by the
-            backend's role checks. It is read-only by design.
-          </Text>
+      <Header
+        title="Roles & Permissions"
+        subtitle={activeTab === 'roles' ? 'Read-only access matrix' : 'Per-account overrides'}
+      />
+      {isSuperadmin ? <Tabs tabs={TABS} activeTab={activeTab} onChange={(id) => setTab(id as RolesTab)} /> : null}
+      <ScrollView
+        className="px-5 flex-1 w-full self-center"
+        style={{ maxWidth: contentMaxWidth }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="pt-4">
+          {activeTab === 'roles' ? <RolesMatrixPanel myRole={myRole} /> : <AdminAccessPanel />}
         </View>
-
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View>
-              <View className="flex-row border-b" style={{ borderColor: colors.border }}>
-                <View className="w-40 py-2.5 px-2">
-                  <Text className="text-xs font-bold" style={{ color: colors.textSecondary }}>
-                    Module
-                  </Text>
-                </View>
-                {ROLES.map((role) => (
-                  <View key={role} className="w-24 py-2.5 px-2 items-center">
-                    <Text
-                      className="text-xs font-bold text-center"
-                      style={{ color: role === myRole ? colors.primary : colors.textSecondary }}
-                    >
-                      {ROLE_LABELS[role]}
-                    </Text>
-                    {role === myRole ? (
-                      <Text className="text-[10px]" style={{ color: colors.primary }}>
-                        (you)
-                      </Text>
-                    ) : null}
-                  </View>
-                ))}
-              </View>
-
-              {MODULE_KEYS.map((moduleKey, i) => (
-                <View
-                  key={moduleKey}
-                  className="flex-row border-b"
-                  style={{ borderColor: colors.border, backgroundColor: i % 2 === 1 ? colors.surface : 'transparent' }}
-                >
-                  <View className="w-40 py-2.5 px-2 justify-center">
-                    <Text className="text-xs font-semibold" style={{ color: colors.text }} numberOfLines={2}>
-                      {MODULE_LABELS[moduleKey]}
-                    </Text>
-                  </View>
-                  {ROLES.map((role) => {
-                    const granted = Boolean(resolvePermissions(role, role)[moduleKey]);
-                    return (
-                      <View key={role} className="w-24 py-2.5 px-2 items-center justify-center">
-                        {granted ? (
-                          <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                        ) : (
-                          <View className="w-3 h-px" style={{ backgroundColor: colors.border }} />
-                        )}
-                      </View>
-                    );
-                  })}
-                </View>
-              ))}
-            </View>
-          </ScrollView>
-          <View className="mb-6" />
-        </ScrollView>
-      </View>
+        <View className="mb-6" />
+      </ScrollView>
     </View>
   );
 }

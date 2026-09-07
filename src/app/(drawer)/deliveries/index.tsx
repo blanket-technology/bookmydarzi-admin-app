@@ -9,11 +9,13 @@ import {
   useDeliveryBroadcastOffers,
   useSetEmployeeOnlineStatusMutation,
 } from '@/features/deliveries/hooks/useDeliveries';
+import { useEmployeeOnlineStatus } from '@/features/pickups/hooks/usePickups';
 import { useLocation } from '@/hooks/useLocation';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { DeliveryBroadcastOffer } from '@/types/deliveries';
 import { formatApiErrorDetail, formatDate } from '@/utils/errors';
+import { formatDistanceKm, haversineDistanceKm } from '@/utils/geo';
 
 const useCountdown = (expiresAt?: string | null) => {
   const [label, setLabel] = useState('');
@@ -87,6 +89,7 @@ const OfferCard = ({
   onPress,
   accepting,
   declining,
+  myCoords,
 }: {
   offer: DeliveryBroadcastOffer;
   onAccept: () => void;
@@ -94,6 +97,7 @@ const OfferCard = ({
   onPress: () => void;
   accepting: boolean;
   declining: boolean;
+  myCoords: { latitude: number; longitude: number } | null;
 }) => {
   const { colors } = useTheme();
   const countdown = useCountdown(offer.expires_at);
@@ -104,6 +108,16 @@ const OfferCard = ({
         .filter(Boolean)
         .join(', ')
     : null;
+
+  // Distance to the pickup-from-tailor leg, since that's where the employee
+  // starts this job - the drop (customer) distance is shown as part of the
+  // route itself, not the "how far to start" decision signal.
+  const distanceLabel =
+    myCoords && offer.pickup?.latitude != null && offer.pickup?.longitude != null
+      ? formatDistanceKm(
+          haversineDistanceKm(myCoords.latitude, myCoords.longitude, offer.pickup.latitude, offer.pickup.longitude),
+        )
+      : null;
 
   return (
     <Pressable
@@ -120,13 +134,22 @@ const OfferCard = ({
             {offer.order_code ?? `Order #${offer.order_id}`}
           </Text>
         </View>
-        {offer.broadcast_round ? (
-          <View className="px-2.5 py-1 rounded-full" style={{ backgroundColor: colors.surface }}>
-            <Text className="text-xs font-semibold" style={{ color: colors.textSecondary }}>
-              Round {offer.broadcast_round}
-            </Text>
-          </View>
-        ) : null}
+        <View className="items-end" style={{ gap: 4 }}>
+          {distanceLabel ? (
+            <View className="px-2.5 py-1 rounded-full" style={{ backgroundColor: colors.primaryLight }}>
+              <Text className="text-xs font-bold" style={{ color: colors.primary }}>
+                {distanceLabel}
+              </Text>
+            </View>
+          ) : null}
+          {offer.broadcast_round ? (
+            <View className="px-2.5 py-1 rounded-full" style={{ backgroundColor: colors.surface }}>
+              <Text className="text-xs font-semibold" style={{ color: colors.textSecondary }}>
+                Round {offer.broadcast_round}
+              </Text>
+            </View>
+          ) : null}
+        </View>
       </View>
 
       <View className="rounded-2xl p-3 mt-1" style={{ backgroundColor: colors.background }}>
@@ -208,8 +231,20 @@ export default function DeliveriesScreen() {
   const { contentMaxWidth } = useResponsive();
   const location = useLocation();
   const setOnlineStatus = useSetEmployeeOnlineStatusMutation();
+  // Seeded from real server state below - previously hardcoded false on
+  // every mount, so an employee already online server-side (via a prior
+  // session's manual toggle, or useAutoOnline) still saw "offline" here and
+  // the offers query stayed disabled, hiding every pending broadcast.
   const [isOnline, setIsOnline] = useState(false);
   const [togglingOnline, setTogglingOnline] = useState(false);
+  const { data: serverOnlineStatus, isSuccess: hasServerOnlineStatus } = useEmployeeOnlineStatus();
+
+  useEffect(() => {
+    if (hasServerOnlineStatus && serverOnlineStatus) {
+      setIsOnline(serverOnlineStatus.is_online);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasServerOnlineStatus, serverOnlineStatus?.is_online]);
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useDeliveryBroadcastOffers(isOnline);
   const acceptMutation = useAcceptDeliveryBroadcastMutation();
@@ -218,6 +253,17 @@ export default function DeliveriesScreen() {
   const [actingOrderId, setActingOrderId] = useState<string | null>(null);
 
   const offers = data?.broadcasts ?? [];
+
+  // Mirrors pickups/index.tsx - if seeded online from server state above,
+  // this screen's own GPS watch was never started (only handleToggleOnline
+  // calls location.start()), so an already-online employee's location
+  // silently never refreshes here.
+  useEffect(() => {
+    if (isOnline && !location.isWatching) {
+      location.start();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline]);
 
   // Keep the backend's last-known location fresh every time the device's
   // watch position fires while online — same "stay findable while online"
@@ -332,6 +378,7 @@ export default function DeliveriesScreen() {
                 onPress={() => router.push(`/(drawer)/orders/${item.order_id}`)}
                 accepting={acceptMutation.isPending && actingOrderId === item.order_id}
                 declining={declineMutation.isPending && actingOrderId === item.order_id}
+                myCoords={location.coords}
               />
             )}
             refreshControl={

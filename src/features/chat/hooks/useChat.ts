@@ -51,6 +51,13 @@ export const useQuickReplies = (enabled = true) =>
     enabled,
   });
 
+export const useChatAnalytics = (enabled = true) =>
+  useQuery({
+    queryKey: QUERY_KEYS.CHAT_ANALYTICS,
+    queryFn: () => chatService.getAnalytics(),
+    enabled,
+  });
+
 export const useAssignmentHistory = (sessionUuid: string, enabled = true) =>
   useQuery({
     queryKey: QUERY_KEYS.CHAT_ASSIGNMENT_HISTORY(sessionUuid),

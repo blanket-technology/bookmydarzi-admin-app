@@ -8,11 +8,13 @@ import {
   useDeclineBroadcastMutation,
   useSetTailorOnlineStatusMutation,
 } from '@/features/broadcasts/hooks/useBroadcasts';
+import { useMyTailorProfile } from '@/features/tailors/hooks/useTailors';
 import { useLocation } from '@/hooks/useLocation';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { BroadcastOffer } from '@/types/broadcasts';
 import { capitalize, formatApiErrorDetail, formatDate } from '@/utils/errors';
+import { formatDistanceKm } from '@/utils/geo';
 
 const URGENCY_BADGE: Record<string, { bg: string; color: string }> = {
   standard: { bg: '#FBF3DF', color: '#7D622A' },
@@ -62,6 +64,23 @@ const OfferCard = ({
   const urgency = URGENCY_BADGE[offer.urgency_level ?? 'standard'] ?? URGENCY_BADGE.standard;
   const isExpired = countdown === 'Expired';
 
+  // TAT (turnaround time) - the number of days the tailor would actually
+  // have to complete this job, computed server-side from
+  // ExpectedDeliveryDate so the tailor doesn't have to do the date math
+  // themselves while deciding. <=1 day is a hard "can you really finish
+  // this in time" signal, so it gets the same urgent treatment as the
+  // urgency badge rather than blending into the neutral info rows below.
+  const tatDays = offer.tat_days;
+  const tatIsTight = tatDays != null && tatDays <= 1;
+  // Backend clamps tat_days to 0 whenever the delta isn't positive
+  // (broadcast.py) so it never arrives negative - only null/0/positive.
+  const tatLabel =
+    tatDays == null
+      ? null
+      : tatDays === 0
+        ? 'Due today'
+        : `${tatDays} day${tatDays === 1 ? '' : 's'} to complete`;
+
   return (
     <View className="rounded-3xl p-4 mb-3 border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
       <View className="flex-row items-start justify-between mb-2">
@@ -70,17 +89,40 @@ const OfferCard = ({
             {offer.service_name ?? 'Tailoring Order'}
           </Text>
           <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
+            {offer.category_name ? `${offer.category_name} · ` : ''}
             {offer.order_code ?? `Order #${offer.order_id}`}
           </Text>
         </View>
         <Badge label={capitalize(offer.urgency_level ?? 'standard')} backgroundColor={urgency.bg} color={urgency.color} />
       </View>
 
+      {tatLabel ? (
+        <View
+          className="flex-row items-center self-start px-2.5 py-1 rounded-full mb-2"
+          style={{ backgroundColor: tatIsTight ? '#fee2e2' : colors.primaryLight }}
+        >
+          <Ionicons name="timer-outline" size={13} color={tatIsTight ? '#dc2626' : colors.primary} />
+          <Text className="text-xs font-semibold ml-1" style={{ color: tatIsTight ? '#dc2626' : colors.primary }}>
+            {tatLabel}
+          </Text>
+        </View>
+      ) : null}
+
       <View className="flex-row items-center mb-1">
         <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
         <Text className="text-sm ml-1.5" style={{ color: colors.textSecondary }}>
           {offer.pickup_area ?? 'Area unavailable'}
         </Text>
+        {formatDistanceKm(offer.distance_km) ? (
+          <>
+            <Text className="text-sm mx-1" style={{ color: colors.textMuted }}>
+              ·
+            </Text>
+            <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
+              {formatDistanceKm(offer.distance_km)}
+            </Text>
+          </>
+        ) : null}
       </View>
       <View className="flex-row items-center mb-1">
         <Ionicons name="shirt-outline" size={14} color={colors.textSecondary} />
@@ -97,7 +139,7 @@ const OfferCard = ({
         </View>
       ) : null}
 
-      {offer.description || offer.fabric_notes || offer.customization_notes || offer.cloth_details ? (
+      {offer.description || offer.fabric_notes || offer.customization_notes || offer.cloth_details || offer.stitching_preferences ? (
         <View className="mt-2 p-3 rounded-2xl" style={{ backgroundColor: colors.surface }}>
           {offer.description ? (
             <Text className="text-xs mb-1" style={{ color: colors.text }}>
@@ -115,8 +157,16 @@ const OfferCard = ({
             </Text>
           ) : null}
           {offer.cloth_details ? (
-            <Text className="text-xs" style={{ color: colors.textSecondary }}>
+            <Text className="text-xs mb-1" style={{ color: colors.textSecondary }}>
               Cloth: {offer.cloth_details}
+            </Text>
+          ) : null}
+          {offer.stitching_preferences && Object.keys(offer.stitching_preferences).length > 0 ? (
+            <Text className="text-xs" style={{ color: colors.textSecondary }}>
+              Design notes:{' '}
+              {Object.entries(offer.stitching_preferences)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join(', ')}
             </Text>
           ) : null}
         </View>
@@ -158,8 +208,20 @@ export default function BroadcastsScreen() {
   const { contentMaxWidth } = useResponsive();
   const location = useLocation();
   const setOnlineStatus = useSetTailorOnlineStatusMutation();
+  // Seeded from real server state below - previously hardcoded false on
+  // every mount, so a tailor already online server-side (via a prior
+  // session's manual toggle, or useAutoOnline) still saw "offline" here
+  // and the offers query stayed disabled, hiding every pending broadcast.
   const [isOnline, setIsOnline] = useState(false);
   const [togglingOnline, setTogglingOnline] = useState(false);
+  const { data: tailorProfile, isSuccess: hasTailorProfile } = useMyTailorProfile();
+
+  useEffect(() => {
+    if (hasTailorProfile && tailorProfile) {
+      setIsOnline(tailorProfile.IsOnline);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasTailorProfile, tailorProfile?.IsOnline]);
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useBroadcastOffers(
     { limit: 50 },
@@ -171,6 +233,16 @@ export default function BroadcastsScreen() {
   const [actingOrderId, setActingOrderId] = useState<string | null>(null);
 
   const offers = data?.broadcasts ?? [];
+
+  // Mirrors pickups/deliveries - if seeded online from server state above,
+  // this screen's own GPS watch was never started, so an already-online
+  // tailor's location silently never refreshes here.
+  useEffect(() => {
+    if (isOnline && !location.isWatching) {
+      location.start();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline]);
 
   // Keep the backend's last-known location fresh every time the device's
   // watch position fires while online — same pattern as the employee side's

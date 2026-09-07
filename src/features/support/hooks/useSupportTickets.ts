@@ -10,7 +10,7 @@ import type {
 } from '@/types/support';
 
 export const useSupportTickets = (
-  params?: { status?: string; page?: number; limit?: number },
+  params?: { status?: string; search?: string; page?: number; limit?: number },
   enabled = true,
 ) =>
   useQuery({

@@ -101,6 +101,62 @@ const FunnelRow = ({
   );
 };
 
+// Full raw order-status distribution (mirrors web's ReportingComponents.jsx
+// "Orders by Status" section) - deliberately separate from the Order Funnel
+// above, which only groups the 6 lifecycle stages an ops person tracks day
+// to day. This shows every status verbatim, including rare/stuck ones the
+// funnel folds away (e.g. final_check, cloth_received_by_tailor).
+const STATUS_DISTRIBUTION_COLORS: Record<string, string> = {
+  order_accepted: '#3b82f6',
+  pending_assignment: '#f59e0b',
+  tailor_assigned: '#8b5cf6',
+  pickup_scheduled: '#8b5cf6',
+  picked_up: '#6366f1',
+  cloth_received_by_tailor: '#6366f1',
+  stitching_in_progress: '#0ea5e9',
+  final_check: '#0ea5e9',
+  ready_for_dispatch: '#3b82f6',
+  out_for_delivery: '#3b82f6',
+  delivered: '#16a34a',
+  completed: '#16a34a',
+  cancelled: '#ef4444',
+  order_rejected: '#ef4444',
+};
+
+const StatusDistributionRow = ({
+  status,
+  count,
+  pct,
+  color,
+}: {
+  status: string;
+  count: number;
+  pct: number;
+  color: string;
+}) => {
+  const { colors } = useTheme();
+  return (
+    <View className="flex-row items-center mb-2.5" style={{ gap: 10 }}>
+      <Text
+        className="text-xs font-semibold capitalize"
+        style={{ color: colors.textSecondary, width: 128 }}
+        numberOfLines={1}
+      >
+        {status.replace(/_/g, ' ')}
+      </Text>
+      <View className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: colors.surface }}>
+        <View style={{ width: `${pct}%`, height: '100%', backgroundColor: color }} />
+      </View>
+      <Text className="text-xs font-bold [font-variant-numeric:tabular-nums]" style={{ color: colors.text, width: 28, textAlign: 'right' }}>
+        {count}
+      </Text>
+      <Text className="text-[11px] [font-variant-numeric:tabular-nums]" style={{ color: colors.textMuted, width: 32, textAlign: 'right' }}>
+        {pct}%
+      </Text>
+    </View>
+  );
+};
+
 const InfoRow = ({ label, value, last }: { label: string; value: string; last?: boolean }) => {
   const { colors } = useTheme();
   return (
@@ -151,6 +207,19 @@ export default function RevenueScreen() {
     { label: 'Cancelled', value: orders.cancelled ?? 0, color: colors.error },
   ];
   const funnelMax = Math.max(1, ...funnel.map((f) => f.value));
+
+  const statusDistribution = useMemo(() => {
+    const byStatus = orders.by_status ?? {};
+    const totalCount = Math.max(1, Object.values(byStatus).reduce((s, v) => s + v, 0));
+    return Object.entries(byStatus)
+      .sort((a, b) => b[1] - a[1])
+      .map(([status, count]) => ({
+        status,
+        count,
+        pct: Math.round((count / totalCount) * 100),
+        color: STATUS_DISTRIBUTION_COLORS[status] ?? colors.textMuted,
+      }));
+  }, [orders.by_status, colors.textMuted]);
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
@@ -238,6 +307,16 @@ export default function RevenueScreen() {
               <FunnelRow key={f.label} label={f.label} value={f.value} max={funnelMax} color={f.color} />
             ))}
           </Card>
+
+          {/* Orders by status — full raw distribution, not just the funnel's 6 stages */}
+          {statusDistribution.length > 0 ? (
+            <Card className="mb-4">
+              <SectionHeader title="Orders by Status" icon="stats-chart-outline" />
+              {statusDistribution.map((s) => (
+                <StatusDistributionRow key={s.status} status={s.status} count={s.count} pct={s.pct} color={s.color} />
+              ))}
+            </Card>
+          ) : null}
 
           {/* Tailor workforce */}
           <Card className="mb-8">

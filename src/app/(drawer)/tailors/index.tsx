@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
@@ -113,9 +114,12 @@ export default function TailorsScreen() {
             backgroundColor={item.is_available ? '#dcfce7' : '#fef3c7'}
             color={item.is_available ? '#16a34a' : '#d97706'}
           />
-          <Text className="font-bold" style={{ color: colors.accent }}>
-            ★ {item.rating?.toFixed(1) ?? '—'}
-          </Text>
+          <View className="flex-row items-center" style={{ gap: 3 }}>
+            <Ionicons name="star" size={13} color={colors.accent} />
+            <Text className="font-bold" style={{ color: colors.accent }}>
+              {item.rating?.toFixed(1) ?? '—'}
+            </Text>
+          </View>
         </View>
       </View>
     </Pressable>
@@ -128,6 +132,15 @@ export default function TailorsScreen() {
       <Header
         title="Tailors"
         subtitle={view === 'list' ? `${tailors.length} tailors` : `${workload.length} tailors · workload`}
+        rightAction={
+          <Pressable
+            onPress={() => router.push('/(drawer)/tailors/add')}
+            className="w-10 h-10 rounded-xl items-center justify-center"
+            style={{ backgroundColor: colors.primary }}
+          >
+            <Text className="text-white text-xl font-bold">+</Text>
+          </Pressable>
+        }
       />
       <View className="px-5 pt-3 flex-row" style={{ gap: 10 }}>
         {(['list', 'workload'] as TailorsView[]).map((option) => (

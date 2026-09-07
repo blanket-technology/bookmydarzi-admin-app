@@ -171,24 +171,9 @@ export interface CustomerFullDetail {
   wishlist: { total: number; items: CustomerWishlistItemSummary[] };
 }
 
-// Mirrors GET /admin/audit-logs — id fields arrive as numbers, normalized
-// to strings for consistency with every other id field in this app.
-export interface AuditLogItem {
-  id: string;
-  action: string;
-  performed_by?: string | null;
-  performed_by_name?: string | null;
-  order_id?: string | null;
-  tailor_id?: string | null;
-  user_id?: string | null;
-  application_id?: string | null;
-  details?: string | null;
-  created_at?: string | null;
-}
-
-export interface AuditLogsResponse {
-  total: number;
-  page: number;
-  limit: number;
-  items: AuditLogItem[];
-}
+// Audit log types live in types/auditLog.ts (the dedicated Audit Log
+// screen's own module) - this file used to duplicate a stale AuditLogItem/
+// AuditLogsResponse pair for a second, parallel auditLogService/useAuditLogs
+// wrapper around the identical /api/v1/admin/audit-logs endpoint, used only
+// by the customer detail screen's activity timeline. That's gone now; the
+// customer detail screen calls the canonical hook directly.

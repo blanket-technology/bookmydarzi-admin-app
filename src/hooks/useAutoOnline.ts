@@ -30,14 +30,20 @@ export function useAutoOnline() {
     const isEmployee = role === 'employee';
     if (!isAuthenticated || (!isTailor && !isEmployee)) return;
 
-    const goOnlineIfLocationAvailable = async () => {
+    const goOnlineIfLocationAvailable = async (promptIfUndetermined: boolean) => {
       try {
-        const { status } = await Location.getForegroundPermissionsAsync();
-        // Deliberately does NOT prompt for permission here - an unsolicited
-        // permission dialog on app launch is a bad first impression. The
-        // manual "go online" toggle (which the user has presumably already
-        // used once) is what first requests it; this only auto-applies once
-        // permission already exists.
+        let { status } = await Location.getForegroundPermissionsAsync();
+        // A brand-new Tailor/Bridge account that has never manually toggled
+        // "online" has no way to be discovered by order broadcasts at all -
+        // permission was never requested, so this silently no-op'd forever
+        // and the account stayed invisible with no error surfaced anywhere.
+        // Prompt exactly once, only on the very first successful login of
+        // an authenticated session (not on every foreground - see the
+        // caller), and only if the user hasn't already decided (granted or
+        // denied) - never re-prompt someone who explicitly denied it.
+        if (status === 'undetermined' && promptIfUndetermined) {
+          ({ status } = await Location.requestForegroundPermissionsAsync());
+        }
         if (status !== 'granted') {
           if (__DEV__) console.log('[useAutoOnline] skipped: location permission not granted', status);
           return;
@@ -69,11 +75,11 @@ export function useAutoOnline() {
 
     if (!attemptedRef.current) {
       attemptedRef.current = true;
-      goOnlineIfLocationAvailable();
+      goOnlineIfLocationAvailable(true);
     }
 
     const subscription = AppState.addEventListener('change', (state: AppStateStatus) => {
-      if (state === 'active') goOnlineIfLocationAvailable();
+      if (state === 'active') goOnlineIfLocationAvailable(false);
     });
 
     return () => {

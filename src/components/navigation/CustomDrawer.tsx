@@ -110,8 +110,16 @@ export const CustomDrawer = (props: DrawerContentComponentProps) => {
 
   const navigate = (route: string) => {
     // drawerType: 'permanent' (tablet/desktop-web, _layout.tsx) has no
-    // closeable overlay - CLOSE_DRAWER has no navigator to dispatch to and
-    // throws "action not handled" in dev. Only close on the phone overlay.
+    // closeable overlay - CLOSE_DRAWER has no navigator to dispatch to.
+    // Navigation's dispatch() never throws for an unhandled action (see
+    // @react-navigation/core's useNavigationHelpers.dispatch - it calls
+    // onUnhandledAction via console.error, it does not throw) so a
+    // try/catch here can never actually catch anything; that was a no-op
+    // fix. The navigation itself (router.push below) always succeeds
+    // regardless - this LogBox warning is purely cosmetic dev-mode noise,
+    // not a real failure, but it was covering the whole screen and reading
+    // as "the screen didn't open." Just don't call closeDrawer() at all
+    // unless there's an overlay to actually close.
     if (!isTablet) {
       props.navigation.closeDrawer();
     }

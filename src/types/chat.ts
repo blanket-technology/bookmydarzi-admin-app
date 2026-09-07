@@ -94,6 +94,17 @@ export interface MyAgentStatus {
   max_sessions: number;
 }
 
+// GET /admin/chat/analytics - app/api/v1/endpoints/chat_v2.py's get_analytics.
+// A compact 24h stat summary, not a time series - there is no per-agent
+// workload or volume-over-time breakdown on the backend today.
+export interface ChatAnalytics {
+  period: string;
+  total_sessions: number;
+  ai_resolved: number;
+  ai_resolve_rate: number;
+  avg_csat: number | null;
+}
+
 // WebSocket frame contract — app/api/v1/endpoints/chat_ws.py.
 export type ChatWsOutgoingFrame =
   | { event: 'send_message'; body: string; client_id: string; message_type?: string }

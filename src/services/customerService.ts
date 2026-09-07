@@ -3,7 +3,6 @@ import { ENDPOINTS } from '@/services/endpoints';
 import type {
   AdminUserItem,
   AdminUsersResponse,
-  AuditLogsResponse,
   CustomerFullDetail,
   RawAdminUser,
   RawAdminUsersResponse,
@@ -78,13 +77,6 @@ export const customerService = {
     const { data } = await apiClient.delete<{ message: string }>(
       ENDPOINTS.ADMIN.USER_DETAIL(userId),
     );
-    return data;
-  },
-};
-
-export const auditLogService = {
-  list: async (params: { user_id?: string; page?: number; limit?: number }): Promise<AuditLogsResponse> => {
-    const { data } = await apiClient.get<AuditLogsResponse>(ENDPOINTS.ADMIN.AUDIT_LOGS, { params });
     return data;
   },
 };

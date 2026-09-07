@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { EmptyState, Header, Pagination, Pressable, SkeletonList } from '@/components/ui';
+import { EmptyState, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
 import {
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
@@ -118,6 +118,7 @@ export default function NotificationsScreen() {
   const { contentMaxWidth } = useResponsive();
   const { user } = useAuth();
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
 
   const params = useMemo(
     () => ({ page, limit: LIMIT, type: notificationTypeFilterForRole(user?.role) }),
@@ -134,7 +135,16 @@ export default function NotificationsScreen() {
   // under routine order-update chatter - same flat list/card UI, just
   // resorted client-side rather than a separate section list.
   const notifications = useMemo(() => {
-    const raw = data?.notifications ?? [];
+    let raw = data?.notifications ?? [];
+    const q = search.trim().toLowerCase();
+    // GET /notifications has no `search` param on the backend - filter
+    // client-side over the current page, same pattern as the Support inbox's
+    // Conversations tab.
+    if (q) {
+      raw = raw.filter(
+        (n) => n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q),
+      );
+    }
     if (attentionTypes.length === 0) return raw;
     const attention: NotificationItem[] = [];
     const rest: NotificationItem[] = [];
@@ -142,7 +152,7 @@ export default function NotificationsScreen() {
       (attentionTypes.includes(n.type) ? attention : rest).push(n);
     }
     return [...attention, ...rest];
-  }, [data?.notifications, attentionTypes]);
+  }, [data?.notifications, attentionTypes, search]);
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / LIMIT));
 
   const handlePress = (item: NotificationItem) => {
@@ -231,6 +241,7 @@ export default function NotificationsScreen() {
       />
 
       <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
+        <SearchBar value={search} onChangeText={setSearch} placeholder="Search title or body..." />
         {isLoading ? (
           <SkeletonList count={6} />
         ) : isError ? (

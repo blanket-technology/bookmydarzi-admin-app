@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { authService } from '@/services/authService';
-import { auditLogService, customerService, userPhotoService } from '@/services/customerService';
+import { customerService, userPhotoService } from '@/services/customerService';
 import type { UserStatusUpdateRequest } from '@/types/users';
 import { toast } from '@/store/toastStore';
 import { getMutationError } from '@/utils/errors';
@@ -68,13 +68,6 @@ export const useCustomerFullDetail = (userId: string, enabled = true) =>
     queryKey: QUERY_KEYS.CUSTOMER_FULL_DETAIL(userId),
     queryFn: () => customerService.getFullDetail(userId),
     enabled: enabled && !!userId,
-  });
-
-export const useAuditLogs = (params: { user_id?: string; page?: number; limit?: number }, enabled = true) =>
-  useQuery({
-    queryKey: QUERY_KEYS.AUDIT_LOGS(params),
-    queryFn: () => auditLogService.list(params),
-    enabled,
   });
 
 // Real reset flow, not a fake alert - triggers the same "send OTP/reset

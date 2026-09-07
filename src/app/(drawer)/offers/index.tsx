@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { ScrollView, Switch, Text, View } from 'react-native';
-import { Badge, BottomSheet, Button, ConfirmModal, EmptyState, Header, Input, Loader, Pressable } from '@/components/ui';
+import { Badge, BottomSheet, Button, ConfirmModal, DateField, EmptyState, Header, Input, Loader, Pressable } from '@/components/ui';
 import {
   useCreateOfferMutation,
   useDeleteOfferMutation,
@@ -14,7 +14,25 @@ import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { toast } from '@/store/toastStore';
 import type { OfferItem } from '@/types/offers';
-import { formatApiErrorDetail, formatDate } from '@/utils/errors';
+import { formatApiErrorDetail, formatCurrency, formatDate } from '@/utils/errors';
+
+// The backend stores ValidFrom/ValidUntil as full datetimes (see
+// app/schemas/home_admin.py), but DateField only picks a calendar date -
+// this trims a loaded "2026-12-31T23:59:59" down to "2026-12-31" for the
+// picker, and isoDateToStartOfDay/isoDateToEndOfDay expand it back out when
+// saving (Valid from = start of that day, Valid until = end of that day,
+// matching the exact instant this form previously asked the admin to type
+// by hand as e.g. "2026-12-31T23:59:59").
+function toDateOnly(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  return iso.slice(0, 10);
+}
+function isoDateToStartOfDay(dateOnly: string): string {
+  return `${dateOnly}T00:00:00`;
+}
+function isoDateToEndOfDay(dateOnly: string): string {
+  return `${dateOnly}T23:59:59`;
+}
 
 const EMPTY_FORM = {
   title: '',
@@ -61,8 +79,8 @@ export default function OffersScreen() {
       discount_amount: item.DiscountAmount != null ? String(item.DiscountAmount) : '',
       coupon_code: item.CouponCode ?? '',
       image_url: item.ImageUrl ?? '',
-      valid_from: item.ValidFrom ?? '',
-      valid_until: item.ValidUntil ?? '',
+      valid_from: toDateOnly(item.ValidFrom) ?? '',
+      valid_until: toDateOnly(item.ValidUntil) ?? '',
       is_active: item.IsActive,
     });
     setSheetVisible(true);
@@ -83,20 +101,28 @@ export default function OffersScreen() {
     );
   };
 
+  // Backend rejects <=0 / >100 (app/schemas/home_admin.py) but only after a
+  // round-trip 422 - clamp here so an admin can't even submit an invalid
+  // value, matching web's <input min="0" max="100"> (OfferFormModal.jsx).
+  const clampedDiscountPercent = Math.min(100, Math.max(0, Number(form.discount_percent) || 0));
+  const isDiscountPercentInvalid =
+    form.discount_type === 'percentage' &&
+    (Number(form.discount_percent) <= 0 || Number(form.discount_percent) > 100 || Number.isNaN(Number(form.discount_percent)));
+
   const buildPayload = () => ({
     title: form.title.trim() || undefined,
     description: form.description.trim() || undefined,
     discount_type: form.discount_type,
-    discount_percent: form.discount_type === 'percentage' ? Number(form.discount_percent) || 0 : undefined,
-    discount_amount: form.discount_type === 'flat' ? Number(form.discount_amount) || undefined : undefined,
+    discount_percent: form.discount_type === 'percentage' ? clampedDiscountPercent : undefined,
+    discount_amount: form.discount_type === 'flat' ? Math.max(0, Number(form.discount_amount) || 0) || undefined : undefined,
     coupon_code: form.coupon_code.trim() || undefined,
     image_url: form.image_url.trim() || undefined,
-    valid_from: form.valid_from.trim() || undefined,
-    valid_until: form.valid_until.trim() || undefined,
+    valid_from: form.valid_from ? isoDateToStartOfDay(form.valid_from) : undefined,
+    valid_until: form.valid_until ? isoDateToEndOfDay(form.valid_until) : undefined,
   });
 
   const handleSave = () => {
-    if (!form.title.trim()) return;
+    if (!form.title.trim() || isDiscountPercentInvalid) return;
     if (editingItem) {
       updateMutation.mutate(
         { id: editingItem.Id, payload: { ...buildPayload(), title: form.title.trim(), is_active: form.is_active } },
@@ -156,7 +182,7 @@ export default function OffersScreen() {
                 </View>
                 <Text className="text-sm mt-2 font-semibold" style={{ color: colors.textSecondary }}>
                   {item.DiscountType === 'flat'
-                    ? `₹${item.DiscountAmount ?? 0} off`
+                    ? `${formatCurrency(item.DiscountAmount ?? 0)} off`
                     : `${item.DiscountPercent}% off`}
                 </Text>
                 {item.ValidUntil ? (
@@ -221,6 +247,7 @@ export default function OffersScreen() {
             value={form.discount_percent}
             onChangeText={(t) => setForm((f) => ({ ...f, discount_percent: t }))}
             keyboardType="number-pad"
+            error={isDiscountPercentInvalid ? 'Enter a value between 1 and 100' : undefined}
           />
         ) : (
           <Input
@@ -231,11 +258,20 @@ export default function OffersScreen() {
           />
         )}
 
-        <Input
-          label="Valid until (ISO date, optional)"
-          value={form.valid_until}
-          onChangeText={(t) => setForm((f) => ({ ...f, valid_until: t }))}
-          placeholder="2026-12-31T23:59:59"
+        <DateField
+          label="Valid from (optional)"
+          value={form.valid_from || null}
+          onChange={(d) => setForm((f) => ({ ...f, valid_from: d }))}
+          maximumDate={form.valid_until ? new Date(`${form.valid_until}T00:00:00`) : undefined}
+          placeholder="Starts immediately"
+        />
+
+        <DateField
+          label="Valid until (optional)"
+          value={form.valid_until || null}
+          onChange={(d) => setForm((f) => ({ ...f, valid_until: d }))}
+          minimumDate={form.valid_from ? new Date(`${form.valid_from}T00:00:00`) : undefined}
+          placeholder="No expiry"
         />
 
         {editingItem ? (
@@ -255,7 +291,7 @@ export default function OffersScreen() {
           title={editingItem ? 'Save Changes' : 'Create Offer'}
           onPress={handleSave}
           loading={createMutation.isPending || updateMutation.isPending}
-          disabled={!form.title.trim()}
+          disabled={!form.title.trim() || isDiscountPercentInvalid}
           fullWidth
         />
       </BottomSheet>

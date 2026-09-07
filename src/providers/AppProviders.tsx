@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Toast } from '@/components/ui/Toast';
 import { SessionExpired } from '@/components/ui/SessionExpired';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
+import { ConnectionStatusBanner } from '@/components/ui/ConnectionStatusBanner';
 import { AuthProvider } from '@/contexts/authContext';
 import { OfferAlerts } from '@/features/pickups/components/OfferAlerts';
 import { useAppSocket } from '@/hooks/useAppSocket';
@@ -90,6 +91,7 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
             <AutoOnlineConnection />
             <OfferAlerts />
             <OfflineBanner />
+            <ConnectionStatusBanner />
             <Toast />
             <SessionExpired />
           </AuthProvider>

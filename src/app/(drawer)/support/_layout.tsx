@@ -11,6 +11,7 @@ export default function SupportStackLayout() {
       <Stack.Screen name="chat/[sessionId]" />
       <Stack.Screen name="tickets/[id]" />
       <Stack.Screen name="tickets/new" />
+      <Stack.Screen name="analytics" />
     </Stack>
   );
 }

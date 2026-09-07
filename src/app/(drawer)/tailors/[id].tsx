@@ -33,6 +33,7 @@ import { toast } from '@/store/toastStore';
 import type { UpdateTailorRequest } from '@/types/tailors';
 import { resolveDocUrl, isPdfUrl } from '@/utils/documents';
 import { formatDate } from '@/utils/errors';
+import { isValidEmail, isValidMobile } from '@/utils/validation';
 
 const TABS: TabItem[] = [
   { id: 'overview', label: 'Overview', icon: 'grid-outline' },
@@ -163,6 +164,8 @@ export default function TailorDetailsScreen() {
 
   const handleSave = () => {
     if (!editForm) return;
+    if (editForm.email.trim() && !isValidEmail(editForm.email)) return;
+    if (editForm.mobile.trim() && !isValidMobile(editForm.mobile)) return;
     // is_approved is deliberately never sent here - verification is a
     // separate review action (handleToggleVerification below), matching
     // web's handleSave/toggleVerification split.
@@ -336,12 +339,14 @@ export default function TailorDetailsScreen() {
               autoCapitalize="none"
               keyboardType="email-address"
               onChangeText={(v) => setEditForm((p) => (p ? { ...p, email: v } : p))}
+              error={editForm.email.trim() && !isValidEmail(editForm.email) ? 'Enter a valid email' : undefined}
             />
             <Input
               label="Mobile"
               value={editForm.mobile}
               keyboardType="phone-pad"
               onChangeText={(v) => setEditForm((p) => (p ? { ...p, mobile: v } : p))}
+              error={editForm.mobile.trim() && !isValidMobile(editForm.mobile) ? 'Enter a valid 10-digit mobile number' : undefined}
             />
             <Input
               label="Specialization"

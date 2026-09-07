@@ -116,7 +116,7 @@ export default function CatalogScreen() {
       name: categoryForm.name.trim(),
       description: categoryForm.description || undefined,
       image_url: categoryForm.image_url || undefined,
-      display_order: Number(categoryForm.display_order) || 0,
+      display_order: Math.max(0, Number(categoryForm.display_order) || 0),
       is_active: categoryForm.is_active,
     };
     if (editingCategory) {
@@ -152,7 +152,7 @@ export default function CatalogScreen() {
       category_id: lineParentCategoryId,
       description: lineForm.description || undefined,
       image_url: lineForm.image_url || undefined,
-      display_order: Number(lineForm.display_order) || 0,
+      display_order: Math.max(0, Number(lineForm.display_order) || 0),
       is_active: lineForm.is_active,
     };
     if (editingLine) {
@@ -194,9 +194,9 @@ export default function CatalogScreen() {
       service_line_id: serviceParentLineId ?? undefined,
       description: serviceForm.description || undefined,
       image_url: serviceForm.image_url || undefined,
-      base_price: Number(serviceForm.base_price) || 0,
-      estimated_delivery_days: Number(serviceForm.estimated_delivery_days) || 7,
-      display_order: Number(serviceForm.display_order) || 0,
+      base_price: Math.max(0, Number(serviceForm.base_price) || 0),
+      estimated_delivery_days: Math.max(1, Number(serviceForm.estimated_delivery_days) || 7),
+      display_order: Math.max(0, Number(serviceForm.display_order) || 0),
       is_premium: serviceForm.is_premium,
       is_active: serviceForm.is_active,
     };

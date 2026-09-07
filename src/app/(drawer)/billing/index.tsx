@@ -3,13 +3,16 @@ import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { Button, Card, EmptyState, Header, Input, Loader, ScreenContent } from '@/components/ui';
 import { useBillingSettings, useUpdateBillingSettingsMutation } from '@/features/billing/hooks/useBilling';
+import { useClearHomepageCacheMutation } from '@/features/homepage/hooks/useHomepage';
 import { useTheme } from '@/hooks/useTheme';
 import { formatApiErrorDetail } from '@/utils/errors';
+import { toast } from '@/store/toastStore';
 
 export default function BillingScreen() {
   const { colors } = useTheme();
   const { data, isLoading, isError, error, refetch } = useBillingSettings();
   const updateMutation = useUpdateBillingSettingsMutation();
+  const clearCacheMutation = useClearHomepageCacheMutation();
 
   const [platformFee, setPlatformFee] = useState('');
   const [gstPercent, setGstPercent] = useState('');
@@ -74,6 +77,23 @@ export default function BillingScreen() {
                 loading={updateMutation.isPending}
                 disabled={!isDirty}
                 fullWidth
+              />
+            </Card>
+
+            <Card className="mb-4 flex-row items-center justify-between">
+              <View className="flex-1 mr-3">
+                <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+                  Clear Homepage Cache
+                </Text>
+                <Text className="text-xs mt-0.5" style={{ color: colors.textSecondary }}>
+                  Force-refresh the homepage data served to the customer app
+                </Text>
+              </View>
+              <Button
+                title="Clear"
+                variant="outline"
+                loading={clearCacheMutation.isPending}
+                onPress={() => clearCacheMutation.mutate(undefined, { onSuccess: () => toast.success('Homepage cache cleared') })}
               />
             </Card>
           </>

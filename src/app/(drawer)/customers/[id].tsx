@@ -4,9 +4,9 @@ import { useMemo, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import { Avatar, Badge, Button, Card, ConfirmModal, EmptyState, Header, Loader, Pagination, Pressable, ScreenContent, SkeletonList, Tabs, type TabItem } from '@/components/ui';
 import { ORDER_STATUS_COLORS, orderStatusLabel } from '@/constants/orderStatus';
+import { useAuditLogs } from '@/features/auditLog/hooks/useAuditLog';
 import { useOrders } from '@/features/orders/hooks/useOrders';
 import {
-  useAuditLogs,
   useCustomerFullDetail,
   useDeleteCustomerMutation,
   useResetCustomerPasswordMutation,
@@ -103,7 +103,7 @@ export default function CustomerDetailsScreen() {
   const ordersTotalPages = Math.max(1, Math.ceil(ordersTotal / ORDERS_LIMIT));
 
   const { data: auditData, isLoading: auditLoading } = useAuditLogs(
-    { user_id: id, page: 1, limit: AUDIT_LIMIT },
+    { user_id: id ? Number(id) : undefined, page: 1, limit: AUDIT_LIMIT },
     !!id,
   );
 

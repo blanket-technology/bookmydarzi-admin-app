@@ -6,6 +6,7 @@ import { Card, ConfirmModal, EmptyState, Header, Pressable, SkeletonList } from 
 import {
   useAcceptPickupBroadcastMutation,
   useDeclinePickupBroadcastMutation,
+  useEmployeeOnlineStatus,
   usePickupBroadcastOffers,
   useSetPickupOnlineStatusMutation,
 } from '@/features/pickups/hooks/usePickups';
@@ -14,6 +15,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { PickupBroadcastOffer } from '@/types/pickups';
 import { formatApiErrorDetail, formatDate } from '@/utils/errors';
+import { formatDistanceKm, haversineDistanceKm } from '@/utils/geo';
 
 const useCountdown = (expiresAt?: string | null) => {
   const [label, setLabel] = useState('');
@@ -51,6 +53,7 @@ const OfferCard = ({
   onPress,
   accepting,
   declining,
+  myCoords,
 }: {
   offer: PickupBroadcastOffer;
   onAccept: () => void;
@@ -58,6 +61,7 @@ const OfferCard = ({
   onPress: () => void;
   accepting: boolean;
   declining: boolean;
+  myCoords: { latitude: number; longitude: number } | null;
 }) => {
   const { colors } = useTheme();
   const countdown = useCountdown(offer.expires_at);
@@ -68,6 +72,19 @@ const OfferCard = ({
         .filter(Boolean)
         .join(', ')
     : null;
+
+  // Client-side, unlike the tailor broadcast feed's server-computed
+  // distance_km - staff already receive exact pickup coordinates (this is a
+  // job already offered to vetted staff, not a pre-accept customer-privacy
+  // situation), and the employee's own GPS is already tracked locally via
+  // useLocation for the online-status heartbeat, so no backend round trip
+  // is needed to show it.
+  const distanceLabel =
+    myCoords && offer.pickup?.latitude != null && offer.pickup?.longitude != null
+      ? formatDistanceKm(
+          haversineDistanceKm(myCoords.latitude, myCoords.longitude, offer.pickup.latitude, offer.pickup.longitude),
+        )
+      : null;
 
   return (
     <Pressable
@@ -84,13 +101,22 @@ const OfferCard = ({
             {offer.order_code ?? `Order #${offer.order_id}`}
           </Text>
         </View>
-        {offer.broadcast_round ? (
-          <View className="px-2.5 py-1 rounded-full" style={{ backgroundColor: colors.surface }}>
-            <Text className="text-xs font-semibold" style={{ color: colors.textSecondary }}>
-              Round {offer.broadcast_round}
-            </Text>
-          </View>
-        ) : null}
+        <View className="items-end" style={{ gap: 4 }}>
+          {distanceLabel ? (
+            <View className="px-2.5 py-1 rounded-full" style={{ backgroundColor: colors.primaryLight }}>
+              <Text className="text-xs font-bold" style={{ color: colors.primary }}>
+                {distanceLabel}
+              </Text>
+            </View>
+          ) : null}
+          {offer.broadcast_round ? (
+            <View className="px-2.5 py-1 rounded-full" style={{ backgroundColor: colors.surface }}>
+              <Text className="text-xs font-semibold" style={{ color: colors.textSecondary }}>
+                Round {offer.broadcast_round}
+              </Text>
+            </View>
+          ) : null}
+        </View>
       </View>
 
       <View className="rounded-2xl p-3 mt-1" style={{ backgroundColor: colors.background }}>
@@ -172,8 +198,22 @@ export default function PickupsScreen() {
   const { contentMaxWidth } = useResponsive();
   const location = useLocation();
   const setOnlineStatus = useSetPickupOnlineStatusMutation();
+  // Local UI toggle, but SEEDED from real server state below - previously
+  // this started at a hardcoded false on every mount, so an employee who
+  // was already online server-side (via the manual toggle in a prior
+  // session, or via useAutoOnline) still saw "You're offline" and the
+  // offers query stayed disabled until they toggled again. That silently
+  // hid every pending broadcast from a genuinely-online employee.
   const [isOnline, setIsOnline] = useState(false);
   const [togglingOnline, setTogglingOnline] = useState(false);
+  const { data: serverOnlineStatus, isSuccess: hasServerOnlineStatus } = useEmployeeOnlineStatus();
+
+  useEffect(() => {
+    if (hasServerOnlineStatus && serverOnlineStatus) {
+      setIsOnline(serverOnlineStatus.is_online);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasServerOnlineStatus, serverOnlineStatus?.is_online]);
 
   const { data, isLoading, isError, error, refetch, isRefetching } = usePickupBroadcastOffers(isOnline);
   const acceptMutation = useAcceptPickupBroadcastMutation();
@@ -182,6 +222,19 @@ export default function PickupsScreen() {
   const [actingOrderId, setActingOrderId] = useState<string | null>(null);
 
   const offers = data?.broadcasts ?? [];
+
+  // If seeded online from server state (above), this screen's own GPS
+  // watch was never started - handleToggleOnline is the only other place
+  // that calls location.start(). Without this, an already-online employee
+  // opening the screen shows "Online" but silently never refreshes their
+  // location server-side (location.coords stays null, so the effect below
+  // never fires either).
+  useEffect(() => {
+    if (isOnline && !location.isWatching) {
+      location.start();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline]);
 
   // Keep the backend's last-known location fresh while online — same
   // "stay findable" guarantee the delivery/tailor sides get.
@@ -293,6 +346,7 @@ export default function PickupsScreen() {
                 onPress={() => router.push(`/(drawer)/orders/${item.order_id}`)}
                 accepting={acceptMutation.isPending && actingOrderId === item.order_id}
                 declining={declineMutation.isPending && actingOrderId === item.order_id}
+                myCoords={location.coords}
               />
             )}
             refreshControl={

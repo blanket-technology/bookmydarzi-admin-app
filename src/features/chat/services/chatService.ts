@@ -2,6 +2,7 @@ import apiClient from '@/config/axios';
 import { ENDPOINTS } from '@/services/endpoints';
 import type {
   AgentPresenceStatus,
+  ChatAnalytics,
   ChatAssignmentHistoryResponse,
   ChatMessagesResponse,
   ChatQuickRepliesResponse,
@@ -75,6 +76,11 @@ export const chatService = {
     const { data } = await apiClient.patch(ENDPOINTS.CHAT.AGENT_STATUS(agentId), null, {
       params: { status },
     });
+    return data;
+  },
+
+  getAnalytics: async (): Promise<ChatAnalytics> => {
+    const { data } = await apiClient.get<ChatAnalytics>(ENDPOINTS.CHAT.ANALYTICS);
     return data;
   },
 };

@@ -1,7 +1,10 @@
-// Mirrors app/schemas/home_admin.py. Banners/offers here are the actual
-// distinct "homepage content" concept — categories/sub-categories are the
-// same ServiceCategory/ServiceSubCategory tables the Catalog screen manages,
-// so they're not duplicated here; manage them from Catalog instead.
+// Mirrors app/schemas/home_admin.py. Banners here are the actual distinct
+// "homepage content" concept — categories/sub-categories are the same
+// ServiceCategory/ServiceSubCategory tables the Catalog screen manages, so
+// they're not duplicated here; manage them from Catalog instead. Offer
+// types live in types/offers.ts (the Offers & Coupons screen's own module)
+// - this file used to duplicate them for a redundant homepage Offers tab
+// that hit the identical backend endpoints; that tab is gone now.
 export interface Banner {
   Id: string;
   Title: string;
@@ -24,38 +27,3 @@ export interface BannerCreateRequest {
 }
 
 export type BannerUpdateRequest = Partial<BannerCreateRequest>;
-
-export type DiscountType = 'percentage' | 'flat';
-
-export interface Offer {
-  Id: string;
-  TailorId?: string | null;
-  Title: string;
-  Description?: string | null;
-  DiscountType: DiscountType;
-  DiscountPercent: number;
-  DiscountAmount?: number | null;
-  CouponCode?: string | null;
-  ImageUrl?: string | null;
-  ValidFrom?: string | null;
-  ValidUntil?: string | null;
-  IsActive: boolean;
-  CreatedAt: string;
-}
-
-export interface OfferCreateRequest {
-  title: string;
-  description?: string;
-  discount_type?: DiscountType;
-  discount_percent?: number;
-  discount_amount?: number;
-  coupon_code?: string;
-  image_url?: string;
-  tailor_id?: string;
-  valid_from?: string;
-  valid_until?: string;
-}
-
-export interface OfferUpdateRequest extends Partial<OfferCreateRequest> {
-  is_active?: boolean;
-}

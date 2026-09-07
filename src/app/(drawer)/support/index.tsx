@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native';
-import { Badge, EmptyState, FilterSheet, Header, Pagination, Pressable, SkeletonList } from '@/components/ui';
+import { Badge, EmptyState, FilterSheet, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
 import { useChatSessions, useMyAgentStatus, useSetAgentStatusMutation } from '@/features/chat/hooks/useChat';
 import { useSupportTickets } from '@/features/support/hooks/useSupportTickets';
 import { useAuth } from '@/hooks/useAuth';
@@ -54,6 +54,7 @@ function ConversationsTab() {
   const { contentMaxWidth } = useResponsive();
   const { user } = useAuth();
   const [status, setStatus] = useState('');
+  const [search, setSearch] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
@@ -76,8 +77,23 @@ function ConversationsTab() {
   );
   const { data, isLoading, isError, error, refetch, isRefetching } = useChatSessions(params);
 
-  const sessions = data?.sessions ?? [];
-  const hasMore = sessions.length >= visibleCount;
+  // GET /admin/chat/sessions has no `search` param on the backend
+  // (chat_v2.py:admin_list_sessions) - filter client-side over the fetched
+  // page rather than silently ignoring the search box or waiting on a
+  // backend change.
+  const allSessions = data?.sessions ?? [];
+  const sessions = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return allSessions;
+    return allSessions.filter(
+      (s) =>
+        (s.customer_name ?? '').toLowerCase().includes(q) ||
+        (s.order_code ?? '').toLowerCase().includes(q) ||
+        String(s.order_id ?? '').includes(q) ||
+        String(s.user_id).includes(q),
+    );
+  }, [allSessions, search]);
+  const hasMore = allSessions.length >= visibleCount;
 
   const renderItem = ({ item }: { item: ChatSession }) => {
     const statusColor = CHAT_STATUS_COLORS[item.status] ?? colors.primary;
@@ -143,6 +159,7 @@ function ConversationsTab() {
         </Pressable>
       </View>
       <View className="px-5 flex-1 mt-2 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
+        <SearchBar value={search} onChangeText={setSearch} placeholder="Search by customer or order..." />
         {isLoading ? (
           <SkeletonList count={5} />
         ) : isError ? (
@@ -229,10 +246,12 @@ function TicketsTab() {
   const normalizedRole = String(user?.role ?? '').toLowerCase();
   const isStaff = ['admin', 'superadmin', 'employee'].includes(normalizedRole);
   const [status, setStatus] = useState<TicketStatus | ''>('');
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useSupportTickets({
     status: status || undefined,
+    search: search || undefined,
     page,
     limit: TICKET_LIMIT,
   });
@@ -290,6 +309,14 @@ function TicketsTab() {
         ))}
       </View>
       <View className="px-5 flex-1 mt-3 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
+        <SearchBar
+          value={search}
+          onChangeText={(text) => {
+            setSearch(text);
+            setPage(1);
+          }}
+          placeholder="Search ticket code or subject..."
+        />
         {isLoading ? (
           <SkeletonList count={5} />
         ) : isError ? (
@@ -409,6 +436,14 @@ export default function SupportScreen() {
               style={{ backgroundColor: colors.primary }}
             >
               <Text className="text-white text-xl font-bold">+</Text>
+            </Pressable>
+          ) : activeTab === 'conversations' && canSeeConversations ? (
+            <Pressable
+              onPress={() => router.push('/(drawer)/support/analytics')}
+              className="w-10 h-10 rounded-xl items-center justify-center"
+              style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }}
+            >
+              <Ionicons name="stats-chart-outline" size={19} color={colors.text} />
             </Pressable>
           ) : undefined
         }

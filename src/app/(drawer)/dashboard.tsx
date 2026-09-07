@@ -472,7 +472,7 @@ export default function DashboardScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title="Dashboard" subtitle={`Welcome back, ${firstName ?? 'Admin'}`} />
+      <Header title="Dashboard" />
 
       {isLoading ? (
         <View className="px-5">
@@ -493,55 +493,42 @@ export default function DashboardScreen() {
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
           }
         >
-         <View
-  style={{
-    borderRadius: 20,
-    overflow: 'hidden',
-  }}
->
-  <LinearGradient
-    colors={[colors.drawer, colors.primary]}
-    style={{
-      borderRadius: 20,
-      padding: 20,
-      marginBottom: 10,
-    }}
-  >
-
-
-  
-            <Text className="text-sm" style={{ color: colors.drawerText, opacity: 0.75 }}>
-              {dashboard.welcome?.greeting ?? "Here's your business at a glance"}
-            </Text>
-            <Text className="text-2xl font-bold mt-1" style={{ color: colors.drawerText }}>
-              {dashboard.welcome?.admin_name ?? user?.full_name ?? 'Admin'}
-            </Text>
-            <View className="flex-row mt-4 gap-3">
-              <Pressable
-                onPress={() => router.push('/(drawer)/orders')}
-                className="bg-white/15 rounded-2xl px-4 py-3 flex-1"
-              >
-                <Text className="text-xs" style={{ color: colors.drawerText, opacity: 0.7 }}>
-                  Needs Attention
-                </Text>
-                <Text className="font-bold text-lg mt-1" style={{ color: colors.drawerText }}>
-                  {formatDashboardCount(pendingCount, 'orders')}
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => router.push('/(drawer)/tailors')}
-                className="bg-white/15 rounded-2xl px-4 py-3 flex-1"
-              >
-                <Text className="text-xs" style={{ color: colors.drawerText, opacity: 0.8 }}>
-                  Active Tailors
-                </Text>
-                <Text className="font-bold text-lg mt-1" style={{ color: colors.drawerText, opacity: 0.9  }}>
-                  {formatDashboardCount(activeTailorsCount)}
-                </Text>
-              </Pressable>
-            </View>
-
-          </LinearGradient>
+          <View style={{ borderRadius: 20, overflow: 'hidden' }}>
+            <LinearGradient
+              colors={[colors.drawer, colors.primary]}
+              style={{ borderRadius: 20, padding: 20, marginBottom: 10 }}
+            >
+              <Text className="text-sm" style={{ color: colors.drawerText, opacity: 0.75 }}>
+                {dashboard.welcome?.greeting ?? "Here's your business at a glance"}
+              </Text>
+              <Text className="text-2xl font-bold mt-1" style={{ color: colors.drawerText }}>
+                {dashboard.welcome?.admin_name ?? user?.full_name ?? 'Admin'}
+              </Text>
+              <View className="flex-row mt-4 gap-3">
+                <Pressable
+                  onPress={() => router.push('/(drawer)/orders')}
+                  className="bg-white/15 rounded-2xl px-4 py-3 flex-1"
+                >
+                  <Text className="text-xs" style={{ color: colors.drawerText, opacity: 0.7 }}>
+                    Needs Attention
+                  </Text>
+                  <Text className="font-bold text-lg mt-1" style={{ color: colors.drawerText }}>
+                    {formatDashboardCount(pendingCount, 'orders')}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => router.push('/(drawer)/tailors')}
+                  className="bg-white/15 rounded-2xl px-4 py-3 flex-1"
+                >
+                  <Text className="text-xs" style={{ color: colors.drawerText, opacity: 0.8 }}>
+                    Active Tailors
+                  </Text>
+                  <Text className="font-bold text-lg mt-1" style={{ color: colors.drawerText, opacity: 0.9 }}>
+                    {formatDashboardCount(activeTailorsCount)}
+                  </Text>
+                </Pressable>
+              </View>
+            </LinearGradient>
           </View>
           <View className="flex-row flex-wrap" style={{ gap: 10, marginBottom: 5 }}>
             {statCards.map((stat) => (

@@ -6,6 +6,7 @@ import { ENDPOINTS } from '@/services/endpoints';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
+import { wsStatus } from '@/store/wsStatusStore';
 import type { NotificationItem, NotificationListResponse } from '@/types/notifications';
 
 // App-wide persistent WebSocket, distinct from useChatSocket (one socket per
@@ -41,6 +42,7 @@ export function useAppSocket() {
   useEffect(() => {
     mountedRef.current = true;
     shouldConnectRef.current = isAuthenticated;
+    if (!isAuthenticated) wsStatus.setConnecting();
 
     const clearReconnectTimer = () => {
       if (reconnectTimerRef.current) {
@@ -65,7 +67,16 @@ export function useAppSocket() {
       queryClient.setQueriesData<NotificationListResponse>(
         { queryKey: ['notifications'] },
         (prev) => {
-          if (!prev) return prev;
+          // ['notifications'] prefix-matches BOTH the list query
+          // (QUERY_KEYS.NOTIFICATIONS, shaped NotificationListResponse) and
+          // the separate unread-count query (QUERY_KEYS.NOTIFICATIONS_
+          // UNREAD_COUNT = ['notifications', 'unread-count'], shaped as a
+          // plain number). Without this shape guard, this updater ran
+          // against the unread-count cache too - `prev` was a truthy
+          // number, so it passed the `!prev` check, then `prev.notifications`
+          // was undefined on a number and `.some()` threw
+          // "Cannot read property 'some' of undefined".
+          if (!prev || !Array.isArray(prev.notifications)) return prev;
           if (prev.notifications.some((n) => n.id === notification.id)) return prev;
           return {
             ...prev,
@@ -99,6 +110,36 @@ export function useAppSocket() {
       } else if (notification.type === 'broadcast_offer') {
         queryClient.invalidateQueries({ queryKey: ['broadcasts'] });
       }
+
+      // Every order-lifecycle event (tailor assigned, status changed, pickup
+      // confirmed, etc.) is sent as the generic "order_update" type - see
+      // app/services/notifications/policy.py, which has no dedicated type
+      // per event. Without this, a tailor who gets manually assigned an
+      // order (Admin_Web's "Assign" button, not the broadcast flow) never
+      // sees it appear: the Orders list query has a 60s staleTime and
+      // refetchOnWindowFocus is off (AppProviders.tsx), so nothing ever
+      // told the cache it was stale until a manual pull-to-refresh.
+      if (notification.type === 'order_update') {
+        queryClient.invalidateQueries({ queryKey: ['orders'] });
+        if (notification.data?.order_id) {
+          queryClient.invalidateQueries({ queryKey: ['order', String(notification.data.order_id)] });
+        }
+      }
+
+      // Admin/Superadmin live-ops visibility: the dashboard's stat cards
+      // (active orders, broadcasts in progress, etc.) previously never
+      // reacted to ANY of these events - only the 20s poll fallback
+      // (useDashboard.ts) kept them from going stale forever. Any
+      // order-lifecycle or broadcast-offer event is a real signal the
+      // dashboard's counts may have changed, so it's invalidated here too.
+      if (
+        notification.type === 'order_update' ||
+        notification.type === 'pickup_broadcast_offer' ||
+        notification.type === 'delivery_broadcast_offer' ||
+        notification.type === 'broadcast_offer'
+      ) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD, refetchType: 'none' });
+      }
     };
 
     const connect = () => {
@@ -106,6 +147,7 @@ export function useAppSocket() {
       const token = useAuthStore.getState().accessToken;
       if (!token) return;
 
+      wsStatus.setConnecting();
       const socket = new WebSocket(wsUrl());
       wsRef.current = socket;
 
@@ -116,6 +158,7 @@ export function useAppSocket() {
           // socket will surface the failure via onerror/onclose
         }
         reconnectAttemptRef.current = 0;
+        wsStatus.setConnected();
       };
 
       socket.onmessage = (event) => {
@@ -132,6 +175,7 @@ export function useAppSocket() {
 
       socket.onclose = () => {
         if (wsRef.current === socket) wsRef.current = null;
+        if (shouldConnectRef.current) wsStatus.setDisconnected();
         scheduleReconnect();
       };
 

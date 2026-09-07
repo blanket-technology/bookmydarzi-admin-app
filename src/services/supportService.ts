@@ -12,6 +12,7 @@ import type {
 export const supportService = {
   list: async (params?: {
     status?: string;
+    search?: string;
     page?: number;
     limit?: number;
   }): Promise<SupportTicketListResponse> => {

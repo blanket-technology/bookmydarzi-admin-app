@@ -48,6 +48,13 @@ export interface OrderAction {
   isLoading: boolean;
   /** Executes the action. For requiresInput actions, callers must collect the payload themselves and call the corresponding mutation directly. */
   run: () => void;
+  /** When set, the action should render disabled (not omitted) with this
+   * explanation visible - mirrors web's disabledReason (orderActions.js),
+   * e.g. "Assign a tailor first" for hand_to_tailor, or a balance-due
+   * message for complete_order. Distinct from simply not pushing the
+   * action at all: the button stays visible so staff understand what's
+   * blocking the next step instead of it silently vanishing. */
+  disabledReason?: string;
 }
 
 interface UseOrderActionsArgs {
@@ -102,8 +109,24 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
   const remainingAmount = order?.remaining_amount ?? 0;
   const isCodCollectionRequired = remainingAmount > 0 && status === ORDER_STATUS.OUT_FOR_DELIVERY;
 
+  // Mirrors web's TERMINAL_STATUSES early-return (orderActions.js:97-99) -
+  // no role gets any action on a completed/cancelled/rejected order.
+  // Previously only `cancel` and `correct_status` checked a terminal set
+  // client-side here, so assign_tailor/update_measurement/view_payment
+  // still rendered (and stayed clickable) on terminal orders.
+  const terminalStatuses = useMemo(
+    () =>
+      new Set<OrderStatus>([
+        ORDER_STATUS.COMPLETED,
+        ORDER_STATUS.CANCELLED,
+        ORDER_STATUS.ORDER_REJECTED,
+      ]),
+    [],
+  );
+  const isTerminal = terminalStatuses.has(status);
+
   const actions = useMemo<OrderAction[]>(() => {
-    if (!orderId) return [];
+    if (!orderId || isTerminal) return [];
     const list: OrderAction[] = [];
 
     if (canUseEmployeeActions) {
@@ -149,7 +172,13 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
         });
       }
 
-      if (status === ORDER_STATUS.ORDER_ACCEPTED) {
+      // Also offered from TAILOR_ASSIGNED, matching web (orderActions.js
+      // lines 122-173) - schedule_pickup_employee_order accepts both
+      // statuses server-side, since a tailor can be found before pickup was
+      // ever scheduled at order_accepted time. Previously mobile only
+      // checked ORDER_ACCEPTED, so an order that reached TAILOR_ASSIGNED
+      // without a scheduled pickup had no way to trigger one from here.
+      if (status === ORDER_STATUS.ORDER_ACCEPTED || status === ORDER_STATUS.TAILOR_ASSIGNED) {
         list.push({
           id: 'schedule_pickup',
           label: 'Schedule Pickup',
@@ -157,7 +186,10 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
           requiresInput: true,
           requiresConfirmation: false,
           isLoading: schedulePickupMutation.isPending,
-          run: () => schedulePickupMutation.mutate({ orderId, payload: undefined }),
+          run: () => {
+            // Caller opens SchedulePickupSheet to choose instant vs
+            // scheduled (+ date/time slot for scheduled) - see [id].tsx.
+          },
         });
       }
 
@@ -182,6 +214,10 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
           requiresConfirmation: false,
           isLoading: handToTailorMutation.isPending,
           run: () => handToTailorMutation.mutate({ orderId, payload: undefined }),
+          // Matches web (orderActions.js:197) - previously this button was
+          // just enabled unconditionally even with no tailor on the order,
+          // so tapping it would fail server-side with no explanation of why.
+          disabledReason: !order?.tailor_id ? 'Assign a tailor first' : undefined,
         });
       }
 
@@ -324,29 +360,30 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
     }
 
     if (isAdmin) {
-      const cancellableStatuses = new Set<OrderStatus>([
-        ORDER_STATUS.PENDING_PAYMENT,
-        ORDER_STATUS.ORDER_PLACED,
-        ORDER_STATUS.ORDER_ACCEPTED,
-        ORDER_STATUS.SEARCHING_TAILOR,
-        ORDER_STATUS.BROADCASTED,
-        ORDER_STATUS.TAILOR_ASSIGNED,
-        ORDER_STATUS.PICKUP_SCHEDULED,
-        ORDER_STATUS.PICKUP_PENDING,
-        ORDER_STATUS.PICKED_UP,
-      ]);
-
-      list.push({
-        id: 'assign_tailor',
-        label: 'Assign Tailor',
-        tone: 'secondary',
-        requiresInput: true,
-        requiresConfirmation: false,
-        isLoading: assignTailorMutation.isPending,
-        run: () => {
-          // Caller supplies { tailor_id } — see AssignTailorSheet.
-        },
-      });
+      // Only offer assignment while no tailor is on the order yet - this
+      // was previously pushed unconditionally, so "Assign Tailor" kept
+      // showing (and stayed clickable) even after a tailor was already
+      // assigned, right alongside whatever action should follow it.
+      // Also excludes pending_payment/payment_failed, matching web
+      // (orderActions.js:293-297) - assigning a tailor before payment even
+      // succeeds doesn't make sense and the order may never proceed.
+      if (
+        !order?.tailor_id &&
+        status !== ORDER_STATUS.PENDING_PAYMENT &&
+        status !== ORDER_STATUS.PAYMENT_FAILED
+      ) {
+        list.push({
+          id: 'assign_tailor',
+          label: 'Assign Tailor',
+          tone: 'secondary',
+          requiresInput: true,
+          requiresConfirmation: false,
+          isLoading: assignTailorMutation.isPending,
+          run: () => {
+            // Caller supplies { tailor_id } — see AssignTailorSheet.
+          },
+        });
+      }
 
       list.push({
         id: 'update_measurement',
@@ -372,19 +409,19 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
         },
       });
 
-      if (cancellableStatuses.has(status)) {
-        list.push({
-          id: 'cancel',
-          label: 'Cancel Order',
-          tone: 'destructive',
-          requiresInput: true,
-          requiresConfirmation: true,
-          isLoading: cancelMutation.isPending,
-          run: () => {
-            // Caller supplies { reason } — see CancelOrderSheet.
-          },
-        });
-      }
+      // No terminal-status check needed here - the whole hook already
+      // returns [] up front for completed/cancelled/rejected orders.
+      list.push({
+        id: 'cancel',
+        label: 'Cancel Order',
+        tone: 'destructive',
+        requiresInput: true,
+        requiresConfirmation: true,
+        isLoading: cancelMutation.isPending,
+        run: () => {
+          // Caller supplies { reason } — see CancelOrderSheet.
+        },
+      });
 
       list.push({
         id: 'correct_status',
@@ -402,7 +439,9 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
     return list;
   }, [
     orderId,
+    order,
     status,
+    isTerminal,
     canUseEmployeeActions,
     isTailor,
     isAdmin,

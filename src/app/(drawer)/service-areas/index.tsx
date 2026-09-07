@@ -47,11 +47,18 @@ export default function ServiceAreasScreen() {
     setSheetVisible(true);
   };
 
+  // Mirrors backend bounds (app/schemas/location.py) and web's AreaModal.jsx
+  // min/max attrs - validate here instead of only after a raw 422 comes back.
   const handleSave = () => {
     const latitude = Number(form.latitude);
     const longitude = Number(form.longitude);
     const radius_km = Number(form.radius_km);
-    if (!form.name.trim() || Number.isNaN(latitude) || Number.isNaN(longitude) || Number.isNaN(radius_km)) return;
+    if (
+      !form.name.trim() ||
+      Number.isNaN(latitude) || latitude < -90 || latitude > 90 ||
+      Number.isNaN(longitude) || longitude < -180 || longitude > 180 ||
+      Number.isNaN(radius_km) || radius_km < 1 || radius_km > 200
+    ) return;
 
     if (editingItem) {
       updateMutation.mutate(
@@ -121,9 +128,27 @@ export default function ServiceAreasScreen() {
         title={editingItem ? 'Edit Service Area' : 'New Service Area'}
       >
         <Input label="Name" value={form.name} onChangeText={(t) => setForm((f) => ({ ...f, name: t }))} />
-        <Input label="Latitude" value={form.latitude} onChangeText={(t) => setForm((f) => ({ ...f, latitude: t }))} keyboardType="numbers-and-punctuation" />
-        <Input label="Longitude" value={form.longitude} onChangeText={(t) => setForm((f) => ({ ...f, longitude: t }))} keyboardType="numbers-and-punctuation" />
-        <Input label="Radius (km)" value={form.radius_km} onChangeText={(t) => setForm((f) => ({ ...f, radius_km: t }))} keyboardType="number-pad" />
+        <Input
+          label="Latitude"
+          value={form.latitude}
+          onChangeText={(t) => setForm((f) => ({ ...f, latitude: t }))}
+          keyboardType="numbers-and-punctuation"
+          error={form.latitude && (Number.isNaN(Number(form.latitude)) || Number(form.latitude) < -90 || Number(form.latitude) > 90) ? 'Must be between -90 and 90' : undefined}
+        />
+        <Input
+          label="Longitude"
+          value={form.longitude}
+          onChangeText={(t) => setForm((f) => ({ ...f, longitude: t }))}
+          keyboardType="numbers-and-punctuation"
+          error={form.longitude && (Number.isNaN(Number(form.longitude)) || Number(form.longitude) < -180 || Number(form.longitude) > 180) ? 'Must be between -180 and 180' : undefined}
+        />
+        <Input
+          label="Radius (km)"
+          value={form.radius_km}
+          onChangeText={(t) => setForm((f) => ({ ...f, radius_km: t }))}
+          keyboardType="number-pad"
+          error={form.radius_km && (Number.isNaN(Number(form.radius_km)) || Number(form.radius_km) < 1 || Number(form.radius_km) > 200) ? 'Must be between 1 and 200' : undefined}
+        />
         {editingItem ? (
           <View className="flex-row items-center justify-between mb-4">
             <Text style={{ color: colors.text }}>Active</Text>
@@ -141,7 +166,12 @@ export default function ServiceAreasScreen() {
           title={editingItem ? 'Save Changes' : 'Create Service Area'}
           onPress={handleSave}
           loading={createMutation.isPending || updateMutation.isPending}
-          disabled={!form.name.trim() || !form.latitude || !form.longitude}
+          disabled={
+            !form.name.trim() ||
+            !form.latitude || Number.isNaN(Number(form.latitude)) || Number(form.latitude) < -90 || Number(form.latitude) > 90 ||
+            !form.longitude || Number.isNaN(Number(form.longitude)) || Number(form.longitude) < -180 || Number(form.longitude) > 180 ||
+            !form.radius_km || Number.isNaN(Number(form.radius_km)) || Number(form.radius_km) < 1 || Number(form.radius_km) > 200
+          }
           fullWidth
         />
       </BottomSheet>
