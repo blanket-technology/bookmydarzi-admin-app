@@ -1,6 +1,19 @@
 // Mirrors app/schemas/service_catalog.py's admin write schemas + tree read
 // shape. 3-level hierarchy: ServiceCategory -> ServiceLine -> Service
 // (aka ServiceSubCategory server-side — the bookable leaf item).
+// GET /catalog/services/{id}/addons - optional, separately-priced extras
+// scoped to one specific service (e.g. Shirt Repair's own Button
+// Replacement/Shoulder Adjustment/Length Shortening).
+export interface ServiceAddon {
+  id: number;
+  service_id: number;
+  name: string;
+  description?: string | null;
+  price: number;
+  display_order: number;
+  is_active: boolean;
+}
+
 export interface StitchingTypeSummary {
   service_id: string;
   name: string;

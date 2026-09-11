@@ -267,6 +267,16 @@ export interface CollectPaymentRequest {
   notes?: string;
 }
 
+/** Bridge/employee adds an add-on to an already-placed order at pickup
+ * (e.g. noticing the shirt also needs a button replaced) - increases the
+ * order's balance due; collecting that extra amount is a separate
+ * CollectPaymentRequest call. See POST /employee/orders/{id}/addons. */
+export interface EmployeeAddOrderAddonRequest {
+  order_item_id?: number;
+  addon_id: number;
+  note?: string;
+}
+
 export interface CollectPaymentResponse {
   message: string;
   order_id: number;

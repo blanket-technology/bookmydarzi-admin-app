@@ -12,10 +12,16 @@ export const OrderItemsCard = ({
   order,
   canManageMeasurements,
   onManageMeasurement,
+  canAddAddon,
+  onAddAddon,
 }: {
   order: AdminOrderItem;
   canManageMeasurements: boolean;
   onManageMeasurement: (item: { id?: number; label?: string }) => void;
+  /** Employee-only, same gate as canManageMeasurements' caller passes for
+   * that prop - see useOrderActions.ts's add_addon action. */
+  canAddAddon?: boolean;
+  onAddAddon?: (item: { id?: number; label?: string; serviceId?: number }) => void;
 }) => {
   const { colors } = useTheme();
 
@@ -52,26 +58,45 @@ export const OrderItemsCard = ({
               </View>
             ) : null}
           </View>
-          {canManageMeasurements && !['delivered', 'cancelled', 'order_rejected'].includes(order.status) ? (
-            <Pressable
-              onPress={() =>
-                onManageMeasurement({
-                  id: item.order_item_id ?? undefined,
-                  label: `${item.service_name ?? 'Item'}${item.person_name ? ` for ${item.person_name}` : ''}`,
-                })
-              }
-              className="px-3 py-2 rounded-xl"
-              style={{
-                backgroundColor: item.has_measurement ? colors.surface : colors.primary,
-                borderWidth: item.has_measurement ? 1 : 0,
-                borderColor: colors.border,
-              }}
-            >
-              <Text className="text-xs font-bold" style={{ color: item.has_measurement ? colors.text : '#fff' }}>
-                {item.has_measurement ? 'Update' : 'Fill'}
-              </Text>
-            </Pressable>
-          ) : null}
+          <View className="flex-row" style={{ gap: 6 }}>
+            {canAddAddon && !['delivered', 'cancelled', 'order_rejected'].includes(order.status) ? (
+              <Pressable
+                onPress={() =>
+                  onAddAddon?.({
+                    id: item.order_item_id ?? undefined,
+                    label: `${item.service_name ?? 'Item'}${item.person_name ? ` for ${item.person_name}` : ''}`,
+                    serviceId: item.service_id ?? undefined,
+                  })
+                }
+                className="px-3 py-2 rounded-xl border"
+                style={{ borderColor: colors.border, backgroundColor: colors.surface }}
+              >
+                <Text className="text-xs font-bold" style={{ color: colors.text }}>
+                  + Extra
+                </Text>
+              </Pressable>
+            ) : null}
+            {canManageMeasurements && !['delivered', 'cancelled', 'order_rejected'].includes(order.status) ? (
+              <Pressable
+                onPress={() =>
+                  onManageMeasurement({
+                    id: item.order_item_id ?? undefined,
+                    label: `${item.service_name ?? 'Item'}${item.person_name ? ` for ${item.person_name}` : ''}`,
+                  })
+                }
+                className="px-3 py-2 rounded-xl"
+                style={{
+                  backgroundColor: item.has_measurement ? colors.surface : colors.primary,
+                  borderWidth: item.has_measurement ? 1 : 0,
+                  borderColor: colors.border,
+                }}
+              >
+                <Text className="text-xs font-bold" style={{ color: item.has_measurement ? colors.text : '#fff' }}>
+                  {item.has_measurement ? 'Update' : 'Fill'}
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
         </View>
       ))}
     </Card>

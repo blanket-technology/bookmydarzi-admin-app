@@ -3,6 +3,7 @@ import { ENDPOINTS } from '@/services/endpoints';
 import type {
   CatalogTreeResponse,
   CategoryPayload,
+  ServiceAddon,
   ServiceLinePayload,
   ServicePayload,
 } from '@/types/catalog';
@@ -70,6 +71,13 @@ export const catalogService = {
   },
   deleteService: async (id: string) => {
     const { data } = await apiClient.delete(ENDPOINTS.CATALOG.SERVICE_DETAIL(id));
+    return data;
+  },
+
+  // Public, active-only add-ons for one service - used by the employee's
+  // "Add Extra Service" sheet at pickup (AddOrderAddonSheet.tsx).
+  getServiceAddons: async (serviceId: string | number): Promise<ServiceAddon[]> => {
+    const { data } = await apiClient.get<ServiceAddon[]>(ENDPOINTS.CATALOG.SERVICE_ADDONS(serviceId));
     return data;
   },
 };

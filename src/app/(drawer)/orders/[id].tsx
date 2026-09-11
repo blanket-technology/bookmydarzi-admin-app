@@ -17,6 +17,7 @@ import { useOrderActions, type OrderAction } from '@/features/orders/hooks/useOr
 import { usePickupBroadcastOffers, useAcceptPickupBroadcastMutation } from '@/features/pickups/hooks/usePickups';
 import { useDeliveryBroadcastOffers, useAcceptDeliveryBroadcastMutation } from '@/features/deliveries/hooks/useDeliveries';
 import { MeasurementManageSheet } from '@/features/orders/components/MeasurementManageSheet';
+import { AddOrderAddonSheet } from '@/features/orders/components/AddOrderAddonSheet';
 import { ProgressPhotosSection } from '@/features/orders/components/ProgressPhotosSection';
 import { PendingOfferCard } from '@/features/orders/components/PendingOfferCard';
 import { OrderSummaryCard } from '@/features/orders/components/OrderSummaryCard';
@@ -66,6 +67,10 @@ export default function OrderDetailsScreen() {
   // Which line item the measurement sheet is targeting - undefined for
   // single-item orders (backend accepts omitted order_item_id there).
   const [measurementTargetItem, setMeasurementTargetItem] = useState<{ id?: number; label?: string } | null>(null);
+  const [addAddonSheetVisible, setAddAddonSheetVisible] = useState(false);
+  // Same "which item" targeting as measurementTargetItem, plus the
+  // service_id needed to fetch that item's own add-on catalog.
+  const [addAddonTargetItem, setAddAddonTargetItem] = useState<{ id?: number; label?: string; serviceId?: number } | null>(null);
   const [rejectSheetVisible, setRejectSheetVisible] = useState(false);
   const [cancelSheetVisible, setCancelSheetVisible] = useState(false);
   const [collectSheetVisible, setCollectSheetVisible] = useState(false);
@@ -158,6 +163,14 @@ export default function OrderDetailsScreen() {
         setMeasurementManageSheetIsAdmin(false);
         setMeasurementTargetItem(order?.items.length === 1 ? { id: order.items[0].order_item_id ?? undefined } : null);
         setMeasurementManageSheetVisible(true);
+        return;
+      case 'add_addon':
+        setAddAddonTargetItem(
+          order?.items.length === 1
+            ? { id: order.items[0].order_item_id ?? undefined, serviceId: order.items[0].service_id ?? undefined }
+            : null,
+        );
+        setAddAddonSheetVisible(true);
         return;
       case 'correct_status':
         setStatusSheetVisible(true);
@@ -306,6 +319,11 @@ export default function OrderDetailsScreen() {
               setMeasurementTargetItem(item);
               setMeasurementManageSheetVisible(true);
             }}
+            canAddAddon={isEmployeeRole}
+            onAddAddon={(item) => {
+              setAddAddonTargetItem(item);
+              setAddAddonSheetVisible(true);
+            }}
           />
         ) : null}
 
@@ -316,7 +334,11 @@ export default function OrderDetailsScreen() {
             </Text>
             {actions
               .filter((action) =>
-                order.items.length > 1 ? action.id !== 'update_measurement' && action.id !== 'manage_measurement' : true,
+                order.items.length > 1
+                  ? action.id !== 'update_measurement' &&
+                    action.id !== 'manage_measurement' &&
+                    action.id !== 'add_addon'
+                  : true,
               )
               .map((action) => (
                 <View key={action.id} className="mb-3">
@@ -412,6 +434,18 @@ export default function OrderDetailsScreen() {
         useAdminEndpoint={measurementManageSheetIsAdmin}
         orderItemId={measurementTargetItem?.id}
         itemLabel={measurementTargetItem?.label}
+      />
+
+      <AddOrderAddonSheet
+        visible={addAddonSheetVisible}
+        onClose={() => {
+          setAddAddonSheetVisible(false);
+          setAddAddonTargetItem(null);
+        }}
+        orderId={order.order_id}
+        serviceId={addAddonTargetItem?.serviceId ?? (order.items.length === 1 ? order.items[0]?.service_id ?? undefined : undefined)}
+        orderItemId={addAddonTargetItem?.id}
+        itemLabel={addAddonTargetItem?.label}
       />
     </View>
   );

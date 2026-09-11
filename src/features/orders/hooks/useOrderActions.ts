@@ -34,6 +34,7 @@ export type OrderActionId =
   | 'correct_status'
   | 'update_measurement'
   | 'manage_measurement'
+  | 'add_addon'
   | 'view_payment';
 
 export interface OrderAction {
@@ -277,6 +278,23 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
           run: () => {
             // Opens the measurement management sheet (view saved profiles,
             // pick one, or add new) — see MeasurementManageSheet.
+          },
+        });
+
+        // Same gate as manage_measurement above (any non-excluded status,
+        // while assigned to this employee) - the natural moment to notice
+        // "customer also wants a button fixed" is the same pickup visit
+        // where measurements are collected. See AddOrderAddonSheet /
+        // POST /employee/orders/{id}/addons.
+        list.push({
+          id: 'add_addon',
+          label: 'Add Extra Service',
+          tone: 'secondary',
+          requiresInput: true,
+          requiresConfirmation: false,
+          isLoading: false,
+          run: () => {
+            // Opens AddOrderAddonSheet.
           },
         });
       }

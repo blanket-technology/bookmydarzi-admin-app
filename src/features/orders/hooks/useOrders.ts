@@ -3,12 +3,14 @@ import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { orderService } from '@/services/orderService';
+import { catalogService } from '@/services/catalogService';
 import { useAuth } from '@/hooks/useAuth';
 import type {
   AdminCancelOrderRequest,
   AdminOrderMeasurementRequest,
   AssignTailorRequest,
   CollectPaymentRequest,
+  EmployeeAddOrderAddonRequest,
   OrderNotesRequest,
   OrderStatusUpdateRequest,
   OrdersQueryParams,
@@ -60,6 +62,18 @@ export const useOrder = (orderId: string, enabled = true) =>
     queryKey: QUERY_KEYS.ORDER(orderId),
     queryFn: () => orderService.getOrderById(orderId),
     enabled: enabled && !!orderId,
+  });
+
+// Active add-ons available for the specific service booked on this order
+// item - used by AddOrderAddonSheet so the employee picks from the real
+// catalog for that service, not a free-text guess. Public endpoint (no
+// auth requirement server-side), but still gated on `enabled` so it only
+// fires once the sheet is actually open with a resolved service id.
+export const useServiceAddons = (serviceId: string | number | undefined, enabled = true) =>
+  useQuery({
+    queryKey: QUERY_KEYS.SERVICE_ADDONS(serviceId ?? ''),
+    queryFn: () => catalogService.getServiceAddons(serviceId as string | number),
+    enabled: enabled && serviceId != null,
   });
 
 export const useAssignTailorMutation = () => {
@@ -282,6 +296,16 @@ export const useCollectPaymentMutation = () =>
   useEmployeeActionMutation<CollectPaymentRequest>(
     (orderId, payload) => orderService.collectPayment(orderId, payload),
     'Payment collected',
+  );
+
+// Employee notices at pickup that the customer also wants an extra (e.g.
+// a button replaced) that wasn't selected online - see orderService.
+// addOrderAddon. Increases the order's balance due; collecting it is a
+// separate useCollectPaymentMutation call, same as any other COD balance.
+export const useAddOrderAddonMutation = () =>
+  useEmployeeActionMutation<EmployeeAddOrderAddonRequest>(
+    (orderId, payload) => orderService.addOrderAddon(orderId, payload),
+    'Add-on added to order',
   );
 
 // Employee-side measurement collection — see orderService.collectMeasurement.

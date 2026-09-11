@@ -31,6 +31,7 @@ export const QUERY_KEYS = {
   HOMEPAGE_BANNERS: ['homepage-banners'] as const,
   HOMEPAGE_OFFERS: ['homepage-offers'] as const,
   CATALOG_TREE: ['catalog-tree'] as const,
+  SERVICE_ADDONS: (serviceId: string | number) => ['service-addons', serviceId] as const,
   INVENTORY: ['inventory'] as const,
   LOOKBOOK: (category?: string) => ['lookbook', category] as const,
   BROADCASTS: (params?: Record<string, unknown>) => ['broadcasts', params] as const,

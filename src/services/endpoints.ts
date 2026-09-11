@@ -103,6 +103,7 @@ export const ENDPOINTS = {
       `/api/v1/employee/orders/${orderId}/collect-payment`,
     ORDER_MEASUREMENT: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/measurement`,
+    ORDER_ADD_ADDON: (orderId: string) => `/api/v1/employee/orders/${orderId}/addons`,
     TAILORS: '/api/v1/employee/tailors',
     ONLINE_STATUS: '/api/v1/employee/me/online',
     DELIVERY_BROADCASTS: '/api/v1/employee/delivery-broadcasts',
@@ -184,6 +185,7 @@ export const ENDPOINTS = {
     SERVICE_LINE_DETAIL: (lineId: string) => `/api/v1/catalog/service-lines/${lineId}`,
     SERVICES: '/api/v1/catalog/services',
     SERVICE_DETAIL: (serviceId: string) => `/api/v1/catalog/services/${serviceId}`,
+    SERVICE_ADDONS: (serviceId: string | number) => `/api/v1/catalog/services/${serviceId}/addons`,
   },
   NOTIFICATIONS: {
     LIST: '/api/v1/notifications',

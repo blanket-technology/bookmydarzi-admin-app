@@ -8,6 +8,7 @@ import type {
   AssignTailorRequest,
   CollectPaymentRequest,
   CollectPaymentResponse,
+  EmployeeAddOrderAddonRequest,
   EmployeeOrderActionResponse,
   MyOrderItem,
   MyOrdersResponse,
@@ -231,6 +232,19 @@ export const orderService = {
 
   completeOrder: async (orderId: string): Promise<EmployeeOrderActionResponse> => {
     const { data } = await apiClient.patch(ENDPOINTS.EMPLOYEE.ORDER_COMPLETE(orderId));
+    return data;
+  },
+
+  // Employee notices at pickup that the customer also wants an extra (e.g.
+  // a button replaced) that wasn't selected online - adds the add-on's
+  // GST-inclusive price to the order's balance due. Collecting that extra
+  // amount is a separate step via collectPayment below, same COD-balance
+  // flow as any other outstanding balance.
+  addOrderAddon: async (
+    orderId: string,
+    payload: EmployeeAddOrderAddonRequest,
+  ): Promise<EmployeeOrderActionResponse> => {
+    const { data } = await apiClient.post(ENDPOINTS.EMPLOYEE.ORDER_ADD_ADDON(orderId), payload);
     return data;
   },
 
