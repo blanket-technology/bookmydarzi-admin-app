@@ -40,6 +40,7 @@ const EMPTY_FORM = {
   discount_type: 'percentage' as 'percentage' | 'flat',
   discount_percent: '10',
   discount_amount: '',
+  min_order_value: '',
   coupon_code: '',
   image_url: '',
   valid_from: '',
@@ -77,6 +78,7 @@ export default function OffersScreen() {
       discount_type: item.DiscountType,
       discount_percent: String(item.DiscountPercent ?? 0),
       discount_amount: item.DiscountAmount != null ? String(item.DiscountAmount) : '',
+      min_order_value: item.MinOrderValue ? String(item.MinOrderValue) : '',
       coupon_code: item.CouponCode ?? '',
       image_url: item.ImageUrl ?? '',
       valid_from: toDateOnly(item.ValidFrom) ?? '',
@@ -115,6 +117,7 @@ export default function OffersScreen() {
     discount_type: form.discount_type,
     discount_percent: form.discount_type === 'percentage' ? clampedDiscountPercent : undefined,
     discount_amount: form.discount_type === 'flat' ? Math.max(0, Number(form.discount_amount) || 0) || undefined : undefined,
+    min_order_value: Math.max(0, Number(form.min_order_value) || 0),
     coupon_code: form.coupon_code.trim() || undefined,
     image_url: form.image_url.trim() || undefined,
     valid_from: form.valid_from ? isoDateToStartOfDay(form.valid_from) : undefined,
@@ -185,6 +188,11 @@ export default function OffersScreen() {
                     ? `${formatCurrency(item.DiscountAmount ?? 0)} off`
                     : `${item.DiscountPercent}% off`}
                 </Text>
+                {item.MinOrderValue ? (
+                  <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
+                    Min order {formatCurrency(item.MinOrderValue)}
+                  </Text>
+                ) : null}
                 {item.ValidUntil ? (
                   <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
                     Valid until {formatDate(item.ValidUntil)}
@@ -257,6 +265,14 @@ export default function OffersScreen() {
             keyboardType="number-pad"
           />
         )}
+
+        <Input
+          label="Minimum order value (₹, optional)"
+          value={form.min_order_value}
+          onChangeText={(t) => setForm((f) => ({ ...f, min_order_value: t }))}
+          keyboardType="number-pad"
+          placeholder="No minimum"
+        />
 
         <DateField
           label="Valid from (optional)"

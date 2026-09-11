@@ -7,6 +7,7 @@ export interface OfferItem {
   DiscountType: 'percentage' | 'flat';
   DiscountPercent: number;
   DiscountAmount?: number | null;
+  MinOrderValue?: number | null;
   CouponCode?: string | null;
   ImageUrl?: string | null;
   ValidFrom?: string | null;
@@ -21,6 +22,7 @@ export interface OfferCreateRequest {
   discount_type: 'percentage' | 'flat';
   discount_percent?: number;
   discount_amount?: number;
+  min_order_value?: number;
   coupon_code?: string;
   image_url?: string;
   tailor_id?: number;
@@ -34,6 +36,7 @@ export interface OfferUpdateRequest {
   discount_type?: 'percentage' | 'flat';
   discount_percent?: number;
   discount_amount?: number;
+  min_order_value?: number;
   coupon_code?: string;
   image_url?: string;
   tailor_id?: number;
