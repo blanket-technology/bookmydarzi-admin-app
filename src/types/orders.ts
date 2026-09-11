@@ -48,6 +48,13 @@ export interface OrderMeasurement extends Omit<RawOrderMeasurement, 'id'> {
 }
 
 /** Normalized (snake_case) per-line-item summary - see RawOrderItemSummary. */
+export interface OrderItemAddon {
+  addon_id: number | null;
+  name: string;
+  price: number;
+  note?: string | null;
+}
+
 export interface OrderLineItem {
   order_item_id: number | null;
   service_id: number | null;
@@ -59,6 +66,10 @@ export interface OrderLineItem {
   person_name: string | null;
   gender: string | null;
   has_measurement: boolean;
+  /** Optional extras selected at booking time (e.g. Button Replacement,
+   * Shoulder Adjustment) - already folded into `price` above, listed here
+   * so the tailor/bridge actually knows what extra work to do. */
+  addons?: OrderItemAddon[];
 }
 
 export interface AdminOrderItem {
@@ -135,6 +146,7 @@ export interface RawOrderItemSummary {
   person_name?: string | null;
   gender?: string | null;
   has_measurement: boolean;
+  addons?: OrderItemAddon[];
 }
 
 export interface MyOrderItem {

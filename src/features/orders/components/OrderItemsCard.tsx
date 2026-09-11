@@ -41,6 +41,16 @@ export const OrderItemsCard = ({
               {' · '}
               {item.has_measurement ? 'Measured' : 'Not measured'}
             </Text>
+            {item.addons && item.addons.length > 0 ? (
+              <View className="mt-1.5">
+                {item.addons.map((addon, aIdx) => (
+                  <Text key={addon.addon_id ?? aIdx} className="text-xs" style={{ color: colors.primary }}>
+                    + {addon.name}
+                    {addon.note ? ` (${addon.note})` : ''}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
           </View>
           {canManageMeasurements && !['delivered', 'cancelled', 'order_rejected'].includes(order.status) ? (
             <Pressable
