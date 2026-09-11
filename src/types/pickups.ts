@@ -15,6 +15,12 @@ export interface PickupAddressInfo {
   longitude?: number | null;
 }
 
+export interface PickupBroadcastItem {
+  service_name?: string | null;
+  category_name?: string | null;
+  quantity: number;
+}
+
 export interface PickupBroadcastOffer {
   broadcast_id: string;
   order_id: string;
@@ -24,6 +30,7 @@ export interface PickupBroadcastOffer {
   notified_at?: string | null;
   expires_at?: string | null;
   pickup?: PickupAddressInfo | null;
+  items?: PickupBroadcastItem[];
 }
 
 export interface PickupBroadcastOffersResponse {

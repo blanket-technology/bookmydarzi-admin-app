@@ -22,13 +22,16 @@ export const DrawerItem = ({
 }: DrawerItemProps) => {
   const { colors } = useTheme();
 
-  const contentColor = danger ? '#dc2626' : active ? colors.primary : colors.text;
+  const contentColor = danger ? colors.error : active ? colors.primary : colors.text;
 
   return (
     <Pressable
       onPress={onPress}
       pressScale={0.98}
       haptic="selection"
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: active }}
       className="flex-row items-center px-4 py-3.5 mx-3 rounded-2xl mb-1"
       style={{
         backgroundColor: active ? colors.primaryLight : 'transparent',
@@ -48,7 +51,7 @@ export const DrawerItem = ({
       {badgeCount && badgeCount > 0 ? (
         <View
           className="min-w-[20px] h-5 rounded-full items-center justify-center px-1.5 mr-1"
-          style={{ backgroundColor: '#ef4444' }}
+          style={{ backgroundColor: colors.error }}
         >
           <Text className="text-white text-xs font-bold">
             {badgeCount > 99 ? '99+' : badgeCount}

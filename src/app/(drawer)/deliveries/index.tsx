@@ -49,11 +49,28 @@ const openMap = (latitude?: number | null, longitude?: number | null, label?: st
   );
 };
 
+const callNumber = (mobile?: string | null) => {
+  if (!mobile) return;
+  Linking.openURL(`tel:${mobile}`).catch(() => {});
+};
+
+const itemsLabel = (items?: { service_name?: string | null; category_name?: string | null; quantity: number }[]) => {
+  if (!items || items.length === 0) return null;
+  return items
+    .map((it) => {
+      const name = it.service_name ?? it.category_name ?? 'Item';
+      return it.quantity > 1 ? `${name} × ${it.quantity}` : name;
+    })
+    .join(', ');
+};
+
 const LocationRow = ({
   icon,
   iconColor,
   label,
   addressLine,
+  personName,
+  mobile,
   onPress,
   colors,
 }: {
@@ -61,25 +78,45 @@ const LocationRow = ({
   iconColor: string;
   label: string;
   addressLine: string;
+  personName?: string | null;
+  mobile?: string | null;
   onPress?: () => void;
   colors: ReturnType<typeof useTheme>['colors'];
 }) => (
-  <Pressable
-    onPress={onPress}
-    disabled={!onPress}
-    className="flex-row items-start py-1.5"
-  >
-    <Ionicons name={icon} size={15} color={iconColor} style={{ marginTop: 1 }} />
-    <View className="flex-1 ml-2">
-      <Text className="text-[11px] font-semibold uppercase" style={{ color: colors.textMuted }}>
-        {label}
-      </Text>
-      <Text className="text-sm mt-0.5" style={{ color: colors.text }} numberOfLines={2}>
-        {addressLine}
-      </Text>
-    </View>
-    {onPress ? <Ionicons name="navigate-outline" size={16} color={colors.primary} style={{ marginTop: 2 }} /> : null}
-  </Pressable>
+  <View className="py-1.5">
+    <Pressable onPress={onPress} disabled={!onPress} className="flex-row items-start">
+      <Ionicons name={icon} size={15} color={iconColor} style={{ marginTop: 1 }} />
+      <View className="flex-1 ml-2">
+        <Text className="text-[11px] font-semibold uppercase" style={{ color: colors.textMuted }}>
+          {label}
+        </Text>
+        <Text className="text-sm mt-0.5" style={{ color: colors.text }} numberOfLines={2}>
+          {addressLine}
+        </Text>
+        {personName ? (
+          <Text className="text-xs mt-0.5" style={{ color: colors.textSecondary }}>
+            {personName}
+          </Text>
+        ) : null}
+      </View>
+      {onPress ? <Ionicons name="navigate-outline" size={16} color={colors.primary} style={{ marginTop: 2 }} /> : null}
+    </Pressable>
+    {mobile ? (
+      <Pressable
+        onPress={(e) => {
+          e.stopPropagation();
+          callNumber(mobile);
+        }}
+        className="flex-row items-center self-start mt-1.5 ml-6 px-3 py-1.5 rounded-full"
+        style={{ backgroundColor: colors.primaryLight }}
+      >
+        <Ionicons name="call-outline" size={13} color={colors.primary} />
+        <Text className="text-xs font-semibold ml-1.5" style={{ color: colors.primary }}>
+          Call {mobile}
+        </Text>
+      </Pressable>
+    ) : null}
+  </View>
 );
 
 const OfferCard = ({
@@ -158,6 +195,8 @@ const OfferCard = ({
           iconColor={colors.primary}
           label="Pickup — tailor"
           addressLine={offer.pickup?.location ?? 'Location not available'}
+          personName={offer.pickup?.tailor_name}
+          mobile={offer.pickup?.tailor_mobile}
           onPress={
             offer.pickup?.latitude != null
               ? () => openMap(offer.pickup?.latitude, offer.pickup?.longitude, offer.pickup?.location ?? undefined)
@@ -171,6 +210,8 @@ const OfferCard = ({
           iconColor={colors.error}
           label="Drop — customer"
           addressLine={dropLine || 'Address not available'}
+          personName={offer.drop?.full_name}
+          mobile={offer.drop?.mobile}
           onPress={
             offer.drop?.latitude != null
               ? () => openMap(offer.drop?.latitude, offer.drop?.longitude, dropLine ?? undefined)
@@ -179,6 +220,15 @@ const OfferCard = ({
           colors={colors}
         />
       </View>
+
+      {itemsLabel(offer.items) ? (
+        <View className="flex-row items-start mt-2">
+          <Ionicons name="shirt-outline" size={14} color={colors.textSecondary} style={{ marginTop: 1 }} />
+          <Text className="text-xs ml-1.5 flex-1" style={{ color: colors.textSecondary }} numberOfLines={2}>
+            {itemsLabel(offer.items)}
+          </Text>
+        </View>
+      ) : null}
 
       {offer.notified_at ? (
         <View className="flex-row items-center mt-2">

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { Header, Tabs, type TabItem } from '@/components/ui';
+import { Header, ScreenContent, Tabs, type TabItem } from '@/components/ui';
 import { AdminAccessPanel } from '@/features/rbac/components/AdminAccessPanel';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
@@ -53,6 +53,15 @@ const MODULE_KEYS = Object.keys(MODULE_LABELS) as (keyof AppPermissions)[];
 
 function RolesMatrixPanel({ myRole }: { myRole: string | undefined }) {
   const { colors } = useTheme();
+  const { isLargeScreen } = useResponsive();
+  // On phones the table is horizontally scrollable at its natural (compact)
+  // column widths; on tablet/desktop there's room to let the role columns
+  // flex-grow and fill the wider content column instead of leaving dead
+  // space to the right of a table stuck at its phone-sized width.
+  const roleColClass = isLargeScreen ? 'flex-1 py-2.5 px-2 items-center' : 'w-24 py-2.5 px-2 items-center';
+  const moduleColWidthClass = isLargeScreen ? 'w-56' : 'w-40';
+  const moduleColClass = `${moduleColWidthClass} py-2.5 px-2 justify-center`;
+
   return (
     <>
       <View
@@ -66,16 +75,16 @@ function RolesMatrixPanel({ myRole }: { myRole: string | undefined }) {
         </Text>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View>
+      <ScrollView horizontal={!isLargeScreen} showsHorizontalScrollIndicator={false}>
+        <View style={isLargeScreen ? { width: '100%' } : undefined}>
           <View className="flex-row border-b" style={{ borderColor: colors.border }}>
-            <View className="w-40 py-2.5 px-2">
+            <View className={`${moduleColWidthClass} py-2.5 px-2`}>
               <Text className="text-xs font-bold" style={{ color: colors.textSecondary }}>
                 Module
               </Text>
             </View>
             {ROLES.map((role) => (
-              <View key={role} className="w-24 py-2.5 px-2 items-center">
+              <View key={role} className={roleColClass}>
                 <Text
                   className="text-xs font-bold text-center"
                   style={{ color: role === myRole ? colors.primary : colors.textSecondary }}
@@ -97,7 +106,7 @@ function RolesMatrixPanel({ myRole }: { myRole: string | undefined }) {
               className="flex-row border-b"
               style={{ borderColor: colors.border, backgroundColor: i % 2 === 1 ? colors.surface : 'transparent' }}
             >
-              <View className="w-40 py-2.5 px-2 justify-center">
+              <View className={moduleColClass}>
                 <Text className="text-xs font-semibold" style={{ color: colors.text }} numberOfLines={2}>
                   {MODULE_LABELS[moduleKey]}
                 </Text>
@@ -105,7 +114,7 @@ function RolesMatrixPanel({ myRole }: { myRole: string | undefined }) {
               {ROLES.map((role) => {
                 const granted = Boolean(resolvePermissions(role, role)[moduleKey]);
                 return (
-                  <View key={role} className="w-24 py-2.5 px-2 items-center justify-center">
+                  <View key={role} className={roleColClass}>
                     {granted ? (
                       <Ionicons name="checkmark-circle" size={16} color={colors.success} />
                     ) : (
@@ -131,7 +140,6 @@ const TABS: TabItem[] = [
 
 export default function RolesPermissionsScreen() {
   const { colors } = useTheme();
-  const { contentMaxWidth } = useResponsive();
   const { user } = useAuth();
   const myRole = user?.role?.toLowerCase();
   // Per-account grant/revoke/lockout is superadmin-only server-side (see
@@ -149,16 +157,12 @@ export default function RolesPermissionsScreen() {
         subtitle={activeTab === 'roles' ? 'Read-only access matrix' : 'Per-account overrides'}
       />
       {isSuperadmin ? <Tabs tabs={TABS} activeTab={activeTab} onChange={(id) => setTab(id as RolesTab)} /> : null}
-      <ScrollView
-        className="px-5 flex-1 w-full self-center"
-        style={{ maxWidth: contentMaxWidth }}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScreenContent showsVerticalScrollIndicator={false}>
         <View className="pt-4">
           {activeTab === 'roles' ? <RolesMatrixPanel myRole={myRole} /> : <AdminAccessPanel />}
         </View>
         <View className="mb-6" />
-      </ScrollView>
+      </ScreenContent>
     </View>
   );
 }

@@ -292,7 +292,12 @@ export default function TailorDetailsScreen() {
         title="Tailor Details"
         showMenu={false}
         rightAction={
-          <Pressable onPress={() => router.back()}>
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="Close tailor details"
+          >
             <Ionicons name="close" size={24} color={colors.text} />
           </Pressable>
         }

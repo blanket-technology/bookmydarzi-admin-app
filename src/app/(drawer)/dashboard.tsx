@@ -364,18 +364,6 @@ export default function DashboardScreen() {
     [tailorOrdersData],
   );
 
-  useEffect(() => {
-    if (__DEV__) {
-      console.log('[DashboardScreen] state', {
-        isLoading,
-        isError,
-        error: apiErrorDetail,
-        hasRawData: data != null,
-        statistics: dashboard.statistics,
-      });
-    }
-  }, [apiErrorDetail, dashboard.statistics, data, isError, isLoading]);
-
   const statCards = parseDashboardStats(dashboard, isSuperadmin);
   const revenueData = dashboard.revenue_chart ?? [];
   const pendingOrders = livePendingOrders;

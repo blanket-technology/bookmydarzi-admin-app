@@ -33,7 +33,10 @@ export const Header = ({
           <Pressable
             onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
             pressScale={0.92}
-            className="w-10 h-10 rounded-xl items-center justify-center mr-3"
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Open navigation menu"
+            className="w-11 h-11 rounded-xl items-center justify-center mr-3"
             style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }}
           >
             <Ionicons name="menu" size={22} color={colors.text} />

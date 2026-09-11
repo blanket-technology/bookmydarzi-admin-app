@@ -76,7 +76,7 @@ export function AddStaffForm({ lockedRole, title, subtitle }: AddStaffFormProps)
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
-        <ScreenContent keyboardShouldPersistTaps="handled">
+        <ScreenContent keyboardShouldPersistTaps="handled" avoidKeyboard={false}>
           <Controller
             control={control}
             name="firstName"

@@ -205,7 +205,12 @@ export default function CustomerDetailsScreen() {
         title="Customer Details"
         showMenu={false}
         rightAction={
-          <Pressable onPress={() => router.back()}>
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="Close customer details"
+          >
             <Ionicons name="close" size={24} color={colors.text} />
           </Pressable>
         }
@@ -485,14 +490,14 @@ export default function CustomerDetailsScreen() {
                         }
                       >
                         <View className="flex-row items-center justify-between">
-                          <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+                          <Text className="text-sm font-semibold flex-1 mr-2" style={{ color: colors.text }} numberOfLines={1}>
                             {a.full_name ?? 'Address'}
                           </Text>
                           {a.is_default ? (
                             <Badge label="Default" backgroundColor={colors.primaryLight} color={colors.primary} />
                           ) : null}
                         </View>
-                        <Text className="text-xs mt-0.5" style={{ color: colors.textSecondary }}>
+                        <Text className="text-xs mt-0.5" style={{ color: colors.textSecondary }} numberOfLines={3}>
                           {[a.address_line_1, a.address_line_2, a.city, a.state, a.pincode]
                             .filter(Boolean)
                             .join(', ')}

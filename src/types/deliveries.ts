@@ -2,6 +2,8 @@
 // response shape and EmployeeOnlineStatusResponse schema.
 export interface DeliveryPickupInfo {
   tailor_id?: number | null;
+  tailor_name?: string | null;
+  tailor_mobile?: string | null;
   location?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -20,6 +22,12 @@ export interface DeliveryDropInfo {
   longitude?: number | null;
 }
 
+export interface DeliveryBroadcastItem {
+  service_name?: string | null;
+  category_name?: string | null;
+  quantity: number;
+}
+
 export interface DeliveryBroadcastOffer {
   broadcast_id: string;
   order_id: string;
@@ -30,6 +38,7 @@ export interface DeliveryBroadcastOffer {
   expires_at?: string | null;
   pickup?: DeliveryPickupInfo | null;
   drop?: DeliveryDropInfo | null;
+  items?: DeliveryBroadcastItem[];
 }
 
 export interface DeliveryBroadcastOffersResponse {

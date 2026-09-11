@@ -46,6 +46,21 @@ const openMap = (latitude?: number | null, longitude?: number | null) => {
   Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`).catch(() => {});
 };
 
+const callNumber = (mobile?: string | null) => {
+  if (!mobile) return;
+  Linking.openURL(`tel:${mobile}`).catch(() => {});
+};
+
+const itemsLabel = (items?: { service_name?: string | null; category_name?: string | null; quantity: number }[]) => {
+  if (!items || items.length === 0) return null;
+  return items
+    .map((it) => {
+      const name = it.service_name ?? it.category_name ?? 'Item';
+      return it.quantity > 1 ? `${name} × ${it.quantity}` : name;
+    })
+    .join(', ');
+};
+
 const OfferCard = ({
   offer,
   onAccept,
@@ -137,9 +152,9 @@ const OfferCard = ({
             <Text className="text-sm mt-0.5" style={{ color: colors.text }} numberOfLines={2}>
               {pickupLine || 'Address not available'}
             </Text>
-            {offer.pickup?.full_name || offer.pickup?.mobile ? (
+            {offer.pickup?.full_name ? (
               <Text className="text-xs mt-0.5" style={{ color: colors.textSecondary }}>
-                {[offer.pickup?.full_name, offer.pickup?.mobile].filter(Boolean).join(' · ')}
+                {offer.pickup.full_name}
               </Text>
             ) : null}
           </View>
@@ -147,7 +162,31 @@ const OfferCard = ({
             <Ionicons name="navigate-outline" size={16} color={colors.primary} style={{ marginTop: 2 }} />
           ) : null}
         </Pressable>
+        {offer.pickup?.mobile ? (
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation();
+              callNumber(offer.pickup?.mobile);
+            }}
+            className="flex-row items-center self-start mt-2 px-3 py-1.5 rounded-full"
+            style={{ backgroundColor: colors.primaryLight }}
+          >
+            <Ionicons name="call-outline" size={13} color={colors.primary} />
+            <Text className="text-xs font-semibold ml-1.5" style={{ color: colors.primary }}>
+              Call {offer.pickup.mobile}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
+
+      {itemsLabel(offer.items) ? (
+        <View className="flex-row items-start mt-2">
+          <Ionicons name="shirt-outline" size={14} color={colors.textSecondary} style={{ marginTop: 1 }} />
+          <Text className="text-xs ml-1.5 flex-1" style={{ color: colors.textSecondary }} numberOfLines={2}>
+            {itemsLabel(offer.items)}
+          </Text>
+        </View>
+      ) : null}
 
       {offer.notified_at ? (
         <View className="flex-row items-center mt-2">

@@ -241,7 +241,12 @@ export default function OrderDetailsScreen() {
                 <Ionicons name="download-outline" size={22} color={colors.text} />
               )}
             </Pressable>
-            <Pressable onPress={() => router.back()}>
+            <Pressable
+              onPress={() => router.back()}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Close order details"
+            >
               <Ionicons name="close" size={24} color={colors.text} />
             </Pressable>
           </View>
