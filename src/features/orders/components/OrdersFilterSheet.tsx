@@ -18,6 +18,13 @@ interface OrdersFilterSheetProps {
   onClose: () => void;
   filters: OrdersFilters;
   onApply: (filters: OrdersFilters) => void;
+  /** Payment-status/Tailor/Date-range are admin+employee concepts - a tailor
+   * only ever queries GET /orders/my-orders, which doesn't accept any of
+   * them (see useOrders.ts), and the Tailor section specifically would
+   * otherwise call the admin-only GET /admin/tailors for a tailor caller.
+   * Defaults true so every existing (admin/employee) call site keeps its
+   * current behavior unless it opts out. */
+  showAdminFilters?: boolean;
 }
 
 const Chip = ({
@@ -72,9 +79,10 @@ export const OrdersFilterSheet = ({
   onClose,
   filters,
   onApply,
+  showAdminFilters = true,
 }: OrdersFilterSheetProps) => {
   const { colors } = useTheme();
-  const { data: tailorsData } = useTailors(undefined, visible);
+  const { data: tailorsData } = useTailors(undefined, visible && showAdminFilters);
   const tailors = tailorsData?.tailors ?? tailorsData?.items ?? [];
 
   const setField = <K extends keyof OrdersFilters>(key: K, value: OrdersFilters[K]) =>
@@ -103,59 +111,63 @@ export const OrdersFilterSheet = ({
           ))}
         </View>
 
-        <SectionLabel>Payment Status</SectionLabel>
-        <View className="flex-row flex-wrap">
-          <Chip
-            label="All"
-            selected={!filters.paymentStatus}
-            onPress={() => setField('paymentStatus', '')}
-          />
-          {ORDER_PAYMENT_STATUS_OPTIONS.map((option) => (
-            <Chip
-              key={option.value}
-              label={option.label}
-              selected={filters.paymentStatus === option.value}
-              onPress={() => setField('paymentStatus', option.value)}
-            />
-          ))}
-        </View>
+        {showAdminFilters ? (
+          <>
+            <SectionLabel>Payment Status</SectionLabel>
+            <View className="flex-row flex-wrap">
+              <Chip
+                label="All"
+                selected={!filters.paymentStatus}
+                onPress={() => setField('paymentStatus', '')}
+              />
+              {ORDER_PAYMENT_STATUS_OPTIONS.map((option) => (
+                <Chip
+                  key={option.value}
+                  label={option.label}
+                  selected={filters.paymentStatus === option.value}
+                  onPress={() => setField('paymentStatus', option.value)}
+                />
+              ))}
+            </View>
 
-        <SectionLabel>Tailor</SectionLabel>
-        <View className="flex-row flex-wrap">
-          <Chip
-            label="All"
-            selected={!filters.tailorId}
-            onPress={() => setField('tailorId', '')}
-          />
-          {tailors.map((tailor) => (
-            <Chip
-              key={tailor.tailor_id}
-              label={tailor.full_name ?? `Tailor #${tailor.tailor_id}`}
-              selected={filters.tailorId === tailor.tailor_id}
-              onPress={() => setField('tailorId', tailor.tailor_id)}
-            />
-          ))}
-        </View>
+            <SectionLabel>Tailor</SectionLabel>
+            <View className="flex-row flex-wrap">
+              <Chip
+                label="All"
+                selected={!filters.tailorId}
+                onPress={() => setField('tailorId', '')}
+              />
+              {tailors.map((tailor) => (
+                <Chip
+                  key={tailor.tailor_id}
+                  label={tailor.full_name ?? `Tailor #${tailor.tailor_id}`}
+                  selected={filters.tailorId === tailor.tailor_id}
+                  onPress={() => setField('tailorId', tailor.tailor_id)}
+                />
+              ))}
+            </View>
 
-        <SectionLabel>Date Range</SectionLabel>
-        <View className="flex-row" style={{ gap: 12 }}>
-          <View className="flex-1">
-            <DateField
-              value={filters.dateFrom || null}
-              onChange={(d) => setField('dateFrom', d)}
-              placeholder="From"
-              maximumDate={filters.dateTo ? new Date(`${filters.dateTo}T00:00:00`) : undefined}
-            />
-          </View>
-          <View className="flex-1">
-            <DateField
-              value={filters.dateTo || null}
-              onChange={(d) => setField('dateTo', d)}
-              placeholder="To"
-              minimumDate={filters.dateFrom ? new Date(`${filters.dateFrom}T00:00:00`) : undefined}
-            />
-          </View>
-        </View>
+            <SectionLabel>Date Range</SectionLabel>
+            <View className="flex-row" style={{ gap: 12 }}>
+              <View className="flex-1">
+                <DateField
+                  value={filters.dateFrom || null}
+                  onChange={(d) => setField('dateFrom', d)}
+                  placeholder="From"
+                  maximumDate={filters.dateTo ? new Date(`${filters.dateTo}T00:00:00`) : undefined}
+                />
+              </View>
+              <View className="flex-1">
+                <DateField
+                  value={filters.dateTo || null}
+                  onChange={(d) => setField('dateTo', d)}
+                  placeholder="To"
+                  minimumDate={filters.dateFrom ? new Date(`${filters.dateFrom}T00:00:00`) : undefined}
+                />
+              </View>
+            </View>
+          </>
+        ) : null}
       </ScrollView>
 
       <View className="flex-row mt-2" style={{ gap: 12 }}>

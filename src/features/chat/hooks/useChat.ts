@@ -131,3 +131,21 @@ export const useSetAgentStatusMutation = () => {
     onError: (error) => toast.error(formatApiErrorDetail(error)),
   });
 };
+
+// No cache to invalidate - the uploaded url is handed straight to
+// useChatSocket's sendMessage as the outgoing frame's attachment_id, same
+// as how the message itself only ever arrives back over the socket
+// (message_created), never via a query.
+export const useUploadChatAttachmentMutation = () =>
+  useMutation({
+    mutationFn: ({
+      uri,
+      fileName,
+      mimeType,
+    }: {
+      uri: string;
+      fileName?: string;
+      mimeType?: string;
+    }) => chatService.uploadAttachment(uri, fileName, mimeType),
+    onError: (error) => toast.error(formatApiErrorDetail(error)),
+  });

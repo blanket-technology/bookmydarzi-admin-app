@@ -83,4 +83,29 @@ export const chatService = {
     const { data } = await apiClient.get<ChatAnalytics>(ENDPOINTS.CHAT.ANALYTICS);
     return data;
   },
+
+  // POST /chat/v2/upload — same multipart pattern as catalogService/
+  // kycService. Returns the ImageKit url that must be sent as the WS
+  // send_message frame's attachment_id (chat_ws.py stores that value
+  // verbatim into metadata.attachment_id, which the message list then
+  // renders directly as an Image uri - sending file_id instead would
+  // produce a broken image).
+  uploadAttachment: async (
+    uri: string,
+    fileName?: string,
+    mimeType?: string,
+  ): Promise<{ url: string; file_id: string; mime_type: string }> => {
+    const form = new FormData();
+    form.append('file', {
+      uri,
+      name: fileName ?? `chat-attachment-${Date.now()}.jpg`,
+      type: mimeType ?? 'image/jpeg',
+    } as unknown as Blob);
+    const { data } = await apiClient.post<{ url: string; file_id: string; mime_type: string }>(
+      ENDPOINTS.CHAT.UPLOAD,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    return data;
+  },
 };

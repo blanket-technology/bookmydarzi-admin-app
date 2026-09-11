@@ -53,6 +53,14 @@ export const useUpdateUserStatusMutation = () => {
     }) => customerService.updateStatus(userId, payload),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      // The list screen works around this with its own manual refetch(), but
+      // the customer detail screen (customers/[id].tsx) reads useUser/
+      // useCustomerFullDetail directly and has no such workaround - without
+      // these, the Active/Inactive badge and button label there stayed
+      // stale after a successful activate/deactivate until the screen was
+      // unmounted and remounted.
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER(variables.userId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CUSTOMER_FULL_DETAIL(variables.userId) });
       toast.success(
         variables.payload.action === 'activate'
           ? 'User activated successfully'

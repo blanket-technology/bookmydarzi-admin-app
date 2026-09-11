@@ -107,7 +107,13 @@ export interface ChatAnalytics {
 
 // WebSocket frame contract — app/api/v1/endpoints/chat_ws.py.
 export type ChatWsOutgoingFrame =
-  | { event: 'send_message'; body: string; client_id: string; message_type?: string }
+  | {
+      event: 'send_message';
+      body: string;
+      client_id: string;
+      message_type?: string;
+      attachment_id?: string;
+    }
   | { event: 'typing_start' }
   | { event: 'typing_stop' }
   | { event: 'read_receipt'; last_read_seq: number }

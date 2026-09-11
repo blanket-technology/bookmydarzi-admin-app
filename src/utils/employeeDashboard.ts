@@ -96,13 +96,28 @@ export const computeTailorDashboardStats = (
   let completedEarnings = 0;
 
   for (const order of orders) {
-    if (order.status === ORDER_STATUS.CLOTH_RECEIVED_BY_TAILOR) {
+    // TAILOR_ASSIGNED - order is with this tailor but the cloth hasn't
+    // physically arrived yet (Bridge hasn't handed it over) - still real,
+    // currently-relevant work, so it belongs in "Assigned" alongside
+    // CLOTH_RECEIVED_BY_TAILOR rather than falling through uncounted.
+    if (
+      order.status === ORDER_STATUS.TAILOR_ASSIGNED ||
+      order.status === ORDER_STATUS.CLOTH_RECEIVED_BY_TAILOR
+    ) {
       assigned += 1;
     } else if (STITCHING_STATUSES.has(order.status)) {
       stitching += 1;
     } else if (order.status === ORDER_STATUS.READY_FOR_DISPATCH) {
       ready += 1;
-    } else if (order.status === ORDER_STATUS.COMPLETED) {
+    } else if (
+      order.status === ORDER_STATUS.COMPLETED ||
+      order.status === ORDER_STATUS.DELIVERED
+    ) {
+      // DELIVERED and COMPLETED are both "done" from the tailor's
+      // perspective (their stitching work is finished either way) -
+      // previously only COMPLETED counted, so a DELIVERED order was
+      // invisible on the dashboard and excluded from earnings until some
+      // later transition to COMPLETED.
       completed += 1;
       completedEarnings += order.final_amount ?? order.amount ?? 0;
     }

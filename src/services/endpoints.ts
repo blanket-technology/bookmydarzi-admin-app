@@ -133,6 +133,11 @@ export const ENDPOINTS = {
     LIST_MY: '/api/v1/leave-requests/my',
     CREATE: '/api/v1/leave-requests',
     CANCEL: (requestId: string) => `/api/v1/leave-requests/${requestId}/cancel`,
+    // Admin/superadmin review - require_admin_permission(ADMIN, SUPERADMIN,
+    // screen="leave_requests") (app/api/v1/endpoints/leave_request.py).
+    ADMIN_LIST: '/api/v1/admin/leave-requests',
+    ADMIN_APPROVE: (requestId: string) => `/api/v1/admin/leave-requests/${requestId}/approve`,
+    ADMIN_REJECT: (requestId: string) => `/api/v1/admin/leave-requests/${requestId}/reject`,
   },
   ORDERS: {
     MY_ORDERS: '/api/v1/orders/my-orders',
@@ -197,6 +202,7 @@ export const ENDPOINTS = {
     ASSIGNMENT_HISTORY: (sessionUuid: string) =>
       `/api/v1/admin/chat/sessions/${sessionUuid}/assignment-history`,
     QUICK_REPLIES: '/api/v1/admin/chat/quick-replies',
+    UPLOAD: '/api/v1/chat/v2/upload',
     WS: (sessionUuid: string) => `/api/v1/ws/chat/${sessionUuid}`,
     MY_AGENT_STATUS: '/api/v1/admin/agents/me/status',
     AGENT_STATUS: (agentId: number) => `/api/v1/admin/agents/${agentId}/status`,

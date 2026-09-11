@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Badge, BottomSheet, Button, ConfirmModal, EmptyState, Header, Input, Loader, Pressable } from '@/components/ui';
 import {
@@ -13,6 +14,7 @@ import {
   useEscalateSessionMutation,
   useQuickReplies,
   useResolveSessionMutation,
+  useUploadChatAttachmentMutation,
 } from '@/features/chat/hooks/useChat';
 import { useChatSocket, type ChatSocketSessionEvent } from '@/features/chat/hooks/useChatSocket';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,6 +22,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/queryKeys';
+import { toast } from '@/store/toastStore';
 import type { ChatMessage, ChatSessionStatus } from '@/types/chat';
 import { formatDateTime } from '@/utils/errors';
 
@@ -50,6 +53,7 @@ export default function ChatThreadScreen() {
   const assignMutation = useAssignSessionMutation();
   const resolveMutation = useResolveSessionMutation();
   const escalateMutation = useEscalateSessionMutation();
+  const uploadAttachmentMutation = useUploadChatAttachmentMutation();
 
   useEffect(() => {
     if (data?.messages) setLocalMessages(data.messages);
@@ -97,9 +101,41 @@ export default function ChatThreadScreen() {
   const handleSend = () => {
     const body = draft.trim();
     if (!body) return;
-    sendMessage(body);
+    // sendMessage returns null when the socket isn't actually open (e.g.
+    // reconnecting) — previously the draft was cleared unconditionally here,
+    // so the agent saw an empty composer as if the message sent while it was
+    // silently dropped. Keep the draft and tell them, instead.
+    const clientId = sendMessage(body);
+    if (!clientId) {
+      toast.error('Not connected — message not sent. Try again in a moment.');
+      return;
+    }
     setDraft('');
     sendTyping(false);
+  };
+
+  const handleAttachImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      toast.error('Photo library permission is required');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    uploadAttachmentMutation.mutate(
+      { uri: asset.uri, fileName: asset.fileName ?? undefined, mimeType: asset.mimeType ?? 'image/jpeg' },
+      {
+        onSuccess: (res) => {
+          // No caption required for an image send - matches the backend's
+          // own "body OR attachment_id" rule (chat_ws.py's _handle_send_message).
+          const clientId = sendMessage('', res.url);
+          if (!clientId) {
+            toast.error('Not connected — image not sent. Try again in a moment.');
+          }
+        },
+      },
+    );
   };
 
   const handleAssignToMe = () => {
@@ -266,6 +302,24 @@ export default function ChatThreadScreen() {
                 style={{ borderColor: colors.border, backgroundColor: colors.surface }}
               >
                 <Ionicons name="flash-outline" size={18} color={colors.text} />
+              </Pressable>
+              <Pressable
+                onPress={handleAttachImage}
+                disabled={uploadAttachmentMutation.isPending}
+                accessibilityRole="button"
+                accessibilityLabel="Attach image"
+                className="w-11 h-11 rounded-full items-center justify-center border"
+                style={{
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
+                  opacity: uploadAttachmentMutation.isPending ? 0.6 : 1,
+                }}
+              >
+                {uploadAttachmentMutation.isPending ? (
+                  <ActivityIndicator size="small" color={colors.text} />
+                ) : (
+                  <Ionicons name="image-outline" size={18} color={colors.text} />
+                )}
               </Pressable>
               <View className="flex-1">
                 <Input

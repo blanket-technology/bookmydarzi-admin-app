@@ -6,6 +6,7 @@ import { Badge, EmptyState, Header, Pagination, Pressable, SearchBar, SkeletonLi
 import { ORDER_STATUS_COLORS, orderStatusLabel } from '@/constants/orderStatus';
 import { useOrders } from '@/features/orders/hooks/useOrders';
 import { OrdersFilterSheet, type OrdersFilters } from '@/features/orders/components/OrdersFilterSheet';
+import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { AdminOrderItem } from '@/types/orders';
@@ -23,6 +24,17 @@ const EMPTY_FILTERS: OrdersFilters = {
 export default function OrdersScreen() {
   const { colors } = useTheme();
   const { contentMaxWidth } = useResponsive();
+  const { user, selectedRole } = useAuth();
+  const role = String(user?.role ?? selectedRole ?? '').toLowerCase();
+  const isTailorRole = role === 'tailor';
+  // A tailor only ever sees their own orders via GET /orders/my-orders (see
+  // useOrders.ts), which only forwards page/limit/status - the
+  // Tailor/payment-status/date-range filters and the "Needs Tailor" toggle
+  // below are all admin/employee-only concepts that would otherwise
+  // silently do nothing for a tailor (or, for the Tailor filter
+  // specifically, trigger a call to the admin-only GET /admin/tailors and
+  // likely 403).
+  const showAdminFilters = !isTailorRole;
   // Optional deep-link filter: dashboard KPI cards navigate here with
   // ?status=<order_status> so each card lands on a pre-filtered list instead
   // of the same unfiltered Orders screen. Only `status` is honored to keep the
@@ -78,9 +90,11 @@ export default function OrdersScreen() {
             <Text className="text-sm mt-1" style={{ color: colors.textSecondary }}>
               {item.customer_name ?? 'Customer'} · {item.service_name ?? 'Service'}
             </Text>
-            <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
-              Tailor: {item.tailor_name ?? 'Unassigned'}
-            </Text>
+            {!isTailorRole ? (
+              <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
+                Tailor: {item.tailor_name ?? 'Unassigned'}
+              </Text>
+            ) : null}
             {item.needs_manual_assignment ? (
               <View className="flex-row items-center gap-1 mt-1">
                 <Ionicons name="warning" size={12} color={colors.error} />
@@ -147,25 +161,27 @@ export default function OrdersScreen() {
           placeholder="Search orders..."
         />
 
-        <Pressable
-          onPress={() => {
-            setNeedsManualAssignment((prev) => !prev);
-            setPage(1);
-          }}
-          className="flex-row items-center gap-1.5 self-start px-3 py-1.5 rounded-full border mb-3"
-          style={{
-            backgroundColor: needsManualAssignment ? colors.error : colors.surface,
-            borderColor: needsManualAssignment ? colors.error : colors.border,
-          }}
-        >
-          <Ionicons name="warning" size={14} color={needsManualAssignment ? '#fff' : colors.text} />
-          <Text
-            className="text-xs font-bold"
-            style={{ color: needsManualAssignment ? '#fff' : colors.text }}
+        {showAdminFilters ? (
+          <Pressable
+            onPress={() => {
+              setNeedsManualAssignment((prev) => !prev);
+              setPage(1);
+            }}
+            className="flex-row items-center gap-1.5 self-start px-3 py-1.5 rounded-full border mb-3"
+            style={{
+              backgroundColor: needsManualAssignment ? colors.error : colors.surface,
+              borderColor: needsManualAssignment ? colors.error : colors.border,
+            }}
           >
-            Needs Tailor
-          </Text>
-        </Pressable>
+            <Ionicons name="warning" size={14} color={needsManualAssignment ? '#fff' : colors.text} />
+            <Text
+              className="text-xs font-bold"
+              style={{ color: needsManualAssignment ? '#fff' : colors.text }}
+            >
+              Needs Tailor
+            </Text>
+          </Pressable>
+        ) : null}
 
         {isLoading ? (
           <SkeletonList count={5} />
@@ -203,6 +219,7 @@ export default function OrdersScreen() {
         visible={filterVisible}
         onClose={() => setFilterVisible(false)}
         filters={filters}
+        showAdminFilters={showAdminFilters}
         onApply={(next) => {
           setFilters(next);
           setPage(1);

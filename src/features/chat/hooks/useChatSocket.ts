@@ -21,7 +21,13 @@ function wsUrl(sessionUuid: string): string {
 export interface UseChatSocketResult {
   isConnected: boolean;
   peerTyping: boolean;
-  sendMessage: (body: string) => string;
+  /** Returns the generated client_id if the frame was actually sent over an
+   * open socket, or null if the socket wasn't connected (nothing was sent -
+   * callers must not treat this as delivered, e.g. must not clear a draft).
+   * Pass attachmentUrl (the ImageKit url from useUploadChatAttachmentMutation)
+   * to send an image message - body may be empty in that case, matching the
+   * backend's own "body OR attachment_id" requirement (chat_ws.py). */
+  sendMessage: (body: string, attachmentUrl?: string) => string | null;
   sendTyping: (isTyping: boolean) => void;
   sendReadReceipt: (lastSeq: number) => void;
 }
@@ -50,10 +56,12 @@ export function useChatSocket(
   onSendFailedRef.current = onSendFailed;
   onSessionEventRef.current = onSessionEvent;
 
-  const send = useCallback((frame: ChatWsOutgoingFrame) => {
+  const send = useCallback((frame: ChatWsOutgoingFrame): boolean => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(frame));
+      return true;
     }
+    return false;
   }, []);
 
   useEffect(() => {
@@ -119,10 +127,15 @@ export function useChatSocket(
   }, [sessionUuid]);
 
   const sendMessage = useCallback(
-    (body: string): string => {
+    (body: string, attachmentUrl?: string): string | null => {
       const clientId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      send({ event: 'send_message', body, client_id: clientId });
-      return clientId;
+      const sent = send({
+        event: 'send_message',
+        body,
+        client_id: clientId,
+        ...(attachmentUrl ? { message_type: 'image', attachment_id: attachmentUrl } : {}),
+      });
+      return sent ? clientId : null;
     },
     [send],
   );
