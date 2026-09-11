@@ -37,6 +37,7 @@ interface AuthContextValue {
     user: AuthUser;
     accessToken: string;
     refreshToken: string;
+    mustChangePassword?: boolean;
   }) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
@@ -79,6 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       user: AuthUser;
       accessToken: string;
       refreshToken: string;
+      mustChangePassword?: boolean;
     }) => {
       await tokenStorage.setTokens(payload.accessToken, payload.refreshToken);
       // There's no role selector to trust — selectedRole is derived from the

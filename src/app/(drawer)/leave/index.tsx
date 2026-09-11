@@ -2,11 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { Badge, BottomSheet, Button, Card, DateField, EmptyState, Header, Input, Pressable, SkeletonList } from '@/components/ui';
+import { AdminLeaveReviewPanel } from '@/features/leave/components/AdminLeaveReviewPanel';
 import {
   useCancelLeaveRequestMutation,
   useCreateLeaveRequestMutation,
   useMyLeaveRequests,
 } from '@/features/leave/hooks/useLeave';
+import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { LeaveRequest } from '@/types/leave';
@@ -76,7 +78,9 @@ function RequestCard({ item, onWithdraw, withdrawing }: { item: LeaveRequest; on
   );
 }
 
-export default function LeaveScreen() {
+// Tailor/Bridge self-service: apply for leave, see own history, withdraw a
+// pending request. Rendered only for those two roles - see LeaveScreen below.
+function MyLeaveScreen() {
   const { colors } = useTheme();
   const { contentMaxWidth } = useResponsive();
   const { data, isLoading, isError, error, refetch, isRefetching } = useMyLeaveRequests();
@@ -215,4 +219,25 @@ export default function LeaveScreen() {
       </BottomSheet>
     </View>
   );
+}
+
+// Admin/superadmin: review, approve, or reject any staff member's leave
+// request. Same drawer route/permission key as MyLeaveScreen above, but a
+// completely different screen for this role (mirrors web's admin-only
+// LeaveRequestsPage.jsx).
+function AdminLeaveScreen() {
+  const { colors } = useTheme();
+  return (
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
+      <Header title="Leave Requests" subtitle="Review staff leave" />
+      <AdminLeaveReviewPanel />
+    </View>
+  );
+}
+
+export default function LeaveScreen() {
+  const { user } = useAuth();
+  const normalizedRole = String(user?.role ?? '').toLowerCase();
+  const isAdminRole = normalizedRole === 'admin' || normalizedRole === 'superadmin';
+  return isAdminRole ? <AdminLeaveScreen /> : <MyLeaveScreen />;
 }

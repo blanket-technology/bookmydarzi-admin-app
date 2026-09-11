@@ -5,6 +5,8 @@ import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { Badge, EmptyState, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
 import { ORDER_PAYMENT_STATUS_OPTIONS, PAYMENT_STATUS_COLORS, paymentStatusLabel } from '@/constants/paymentStatus';
 import { useOrders } from '@/features/orders/hooks/useOrders';
+import { PaymentDetailsSheet } from '@/features/orders/components/PaymentDetailsSheet';
+import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { AdminOrderItem } from '@/types/orders';
@@ -61,10 +63,20 @@ function KpiChip({
 export default function PaymentsScreen() {
   const { colors } = useTheme();
   const { contentMaxWidth } = useResponsive();
+  const { user } = useAuth();
+  const normalizedRole = String(user?.role ?? '').toLowerCase();
+  const isSuperadmin = normalizedRole === 'superadmin';
+  const isAdminRole = isSuperadmin || normalizedRole === 'admin';
+  const isStaffRole = isAdminRole || normalizedRole === 'employee';
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [filterVisible, setFilterVisible] = useState(false);
+  // Opens PaymentDetailsSheet directly from the list — previously the only
+  // way to reach refund/status-override was list row -> order detail ->
+  // Payment Details sub-sheet, an extra hop for a screen whose whole purpose
+  // is payments. Same sheet/mutations as orders/[id].tsx, just triggered here.
+  const [paymentSheetOrderId, setPaymentSheetOrderId] = useState<string | null>(null);
 
   const params = useMemo(
     () => ({
@@ -127,6 +139,21 @@ export default function PaymentsScreen() {
           <Text className="text-xs mt-2" style={{ color: colors.error }}>
             Balance due: {formatCurrency(item.remaining_amount)}
           </Text>
+        ) : null}
+        {isStaffRole ? (
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation?.();
+              setPaymentSheetOrderId(item.order_id);
+            }}
+            className="flex-row items-center justify-center mt-3 pt-3 border-t"
+            style={{ borderColor: colors.border, gap: 6 }}
+          >
+            <Ionicons name="wallet-outline" size={14} color={colors.primary} />
+            <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
+              View payment details
+            </Text>
+          </Pressable>
         ) : null}
       </Pressable>
     );
@@ -202,6 +229,17 @@ export default function PaymentsScreen() {
           />
         )}
       </View>
+
+      {paymentSheetOrderId ? (
+        <PaymentDetailsSheet
+          visible
+          onClose={() => setPaymentSheetOrderId(null)}
+          orderId={paymentSheetOrderId}
+          isAdminRole={isAdminRole}
+          isSuperadmin={isSuperadmin}
+          isStaffRole={isStaffRole}
+        />
+      ) : null}
     </View>
   );
 }

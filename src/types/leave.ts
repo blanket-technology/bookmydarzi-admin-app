@@ -20,3 +20,33 @@ export interface CreateLeaveRequestPayload {
   end_date: string;
   reason?: string;
 }
+
+// Mirrors app/schemas/leave_request.py's LeaveRequestListItemOut - the
+// admin-review list adds the requester's display name/mobile since an admin
+// reviewing everyone's requests has no other way to identify whose row this is.
+export interface LeaveRequestListItem extends LeaveRequest {
+  UserName?: string | null;
+  UserMobile?: string | null;
+}
+
+export interface LeaveRequestListResponse {
+  items: LeaveRequestListItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface LeaveRequestListParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  role?: 'tailor' | 'employee';
+}
+
+export interface ApproveLeaveRequestPayload {
+  admin_notes?: string;
+}
+
+export interface RejectLeaveRequestPayload {
+  admin_notes: string;
+}

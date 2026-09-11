@@ -52,10 +52,11 @@ export interface AppPermissions {
    * employee's online/offline toggle + FCFS delivery-offer accept/decline
    * screen, mirrors "broadcasts" (the tailor equivalent). */
   deliveries: boolean;
-  /** Leave requests — app/api/v1/endpoints/leave_request.py's
-   * /leave-requests routes (require_roles(TAILOR, EMPLOYEE)). Tailor/Bridge
-   * apply for leave and see their own request history here; admin review of
-   * submitted requests lives on Admin_Web, not this app. */
+  /** Leave requests — app/api/v1/endpoints/leave_request.py. Tailor/Bridge
+   * (require_roles(TAILOR, EMPLOYEE)) apply for leave and see their own
+   * request history; Admin/Superadmin (require_admin_permission's
+   * "leave_requests" screen) review, approve, or reject any staff member's
+   * request. Same permission key, different screen content by role. */
   leave: boolean;
   /** Offers & coupons — app/api/v1/endpoints/home_admin.py's /offers routes,
    * require_admin_permission(ADMIN, SUPERADMIN, screen="cms"). Matches
@@ -105,7 +106,11 @@ const ADMIN_PERMISSIONS: AppPermissions = {
   lookbook: true,
   broadcasts: false,
   deliveries: false,
-  leave: false,
+  // GET/PATCH /admin/leave-requests* is ADMIN/SUPERADMIN-only server-side
+  // (require_admin_permission(ADMIN, SUPERADMIN, screen="leave_requests")).
+  // The Leave screen renders a review UI for this role instead of the
+  // tailor/employee self-service apply/withdraw UI - see leave/index.tsx.
+  leave: true,
   offers: true,
   serviceAreas: true,
   auditLog: true,
@@ -192,8 +197,12 @@ const TAILOR_PERMISSIONS: AppPermissions = {
   supportTickets: true,
   catalog: false,
   homepage: false,
-  // Tailors have no inventory access on Admin_Web either (web + app parity).
-  inventory: false,
+  // Backend explicitly allows TAILOR to GET /inventory and /inventory/{id}
+  // (app/api/v1/endpoints/inventory.py: "TAILOR can also view inventory" —
+  // read-only, writes stay ADMIN/SUPERADMIN/EMPLOYEE). The screen already
+  // gates write controls behind canWrite (excludes tailor), so granting this
+  // just makes the existing read-only path reachable.
+  inventory: true,
   lookbook: false,
   broadcasts: true,
   deliveries: false,

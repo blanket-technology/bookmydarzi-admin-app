@@ -19,6 +19,11 @@ export interface AuthTokenResponse {
   refresh_token: string;
   token_type?: string;
   is_new_user?: boolean;
+  // True when this account is still on an admin-assigned default password
+  // (e.g. a tailor/employee account the admin created without setting a
+  // password, so it got "Tailor@123"/"Bridge@123"). The client must force a
+  // password-change screen before letting the user reach the app shell.
+  must_change_password?: boolean;
   user?: AuthUser;
 }
 

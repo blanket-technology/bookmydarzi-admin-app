@@ -3,10 +3,12 @@ import { useEffect } from 'react';
 import { Loader } from '@/components/ui';
 import { getDefaultRouteForRole, resolvePermissions } from '@/constants/permissions';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
 
 export default function AuthLayout() {
   const { isAuthenticated, isInitialized, isHydrated, user, selectedRole, logout } = useAuth();
+  const mustChangePassword = useAuthStore((s) => s.mustChangePassword);
 
   // A session can be validly authenticated (real tokens) but belong to a
   // role this app has no screens for at all — e.g. a plain customer account
@@ -46,6 +48,17 @@ export default function AuthLayout() {
       // logout() is in flight (see effect above) — show a loader instead of
       // computing a redirect target that doesn't exist for this role.
       return <Loader fullScreen message="Signing out..." />;
+    }
+    // Still on an admin-assigned default password (Tailor@123/Bridge@123) -
+    // block the drawer shell entirely until it's changed. This screen lives
+    // inside the (auth) stack (not the drawer) specifically so it's reachable
+    // while authenticated but before hasNoAccess/role routing takes over.
+    if (mustChangePassword) {
+      return (
+        <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+          <Stack.Screen name="force-change-password" />
+        </Stack>
+      );
     }
     return <Redirect href={getDefaultRouteForRole(user?.role, selectedRole) as never} />;
   }

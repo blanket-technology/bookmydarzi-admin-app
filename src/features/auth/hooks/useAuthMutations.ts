@@ -29,6 +29,7 @@ const completeAuthSession = async (
   data: {
     access_token: string;
     refresh_token: string;
+    must_change_password?: boolean;
     user?: Record<string, unknown>;
   },
   login: ReturnType<typeof useAuthContext>['login'],
@@ -45,6 +46,7 @@ const completeAuthSession = async (
     user,
     accessToken: data.access_token,
     refreshToken: data.refresh_token,
+    mustChangePassword: data.must_change_password,
   });
 
   // Per-account RBAC overrides (Settings/Admin Access) only ever apply to
@@ -66,6 +68,10 @@ const completeAuthSession = async (
   }
 
   toast.success(`Welcome back, ${user.full_name ?? user.email ?? 'User'}!`);
+  if (useAuthStore.getState().mustChangePassword) {
+    router.replace('/(auth)/force-change-password' as never);
+    return;
+  }
   router.replace(getDefaultRouteForRole(user.role) as never);
 };
 
@@ -96,6 +102,7 @@ export const useLoginMutation = () => {
         {
           access_token: data.access_token,
           refresh_token: data.refresh_token,
+          must_change_password: data.must_change_password,
           user: data.user as unknown as Record<string, unknown> | undefined,
         },
         login,
@@ -115,6 +122,7 @@ export const useLoginVerifyOtpMutation = () => {
         {
           access_token: data.access_token,
           refresh_token: data.refresh_token,
+          must_change_password: data.must_change_password,
           user: data.user as unknown as Record<string, unknown> | undefined,
         },
         login,
