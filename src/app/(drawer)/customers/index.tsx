@@ -10,27 +10,35 @@ import { formatApiErrorDetail, formatDate } from '@/utils/errors';
 
 const LIMIT = 15;
 
+const ACTIVE_FILTERS: { value: '' | 'true' | 'false'; label: string }[] = [
+  { value: '', label: 'All' },
+  { value: 'true', label: 'Active' },
+  { value: 'false', label: 'Inactive' },
+];
+
 export default function CustomersScreen() {
   const { colors } = useTheme();
   const { contentMaxWidth } = useResponsive();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [activeFilter, setActiveFilter] = useState<'' | 'true' | 'false'>('');
   const [confirmUser, setConfirmUser] = useState<AdminUserItem | null>(null);
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useUsers({
     search: search || undefined,
     page,
     limit: LIMIT,
+    // Filtered server-side now, not client-side after fetch - previously
+    // this screen fetched the unfiltered /admin/users page and dropped
+    // non-customer rows locally, which made the displayed list shorter than
+    // data.total (a page could render fewer than LIMIT rows, or even come
+    // back empty, despite more matching customers existing on later pages).
+    role: 'user',
+    is_active: activeFilter === '' ? undefined : activeFilter === 'true',
   });
   const statusMutation = useUpdateUserStatusMutation();
 
-  const users = useMemo(
-    () =>
-      (data?.users ?? data?.items ?? []).filter(
-        (user) => user.role === 'user' || !user.role,
-      ),
-    [data],
-  );
+  const users = useMemo(() => data?.users ?? data?.items ?? [], [data]);
 
   const totalPages = Math.max(1, Math.ceil((data?.total ?? users.length) / LIMIT));
 
@@ -87,6 +95,29 @@ export default function CustomersScreen() {
           }}
           placeholder="Search customers..."
         />
+        <View className="flex-row gap-2 mb-3">
+          {ACTIVE_FILTERS.map((f) => (
+            <Pressable
+              key={f.value}
+              onPress={() => {
+                setActiveFilter(f.value);
+                setPage(1);
+              }}
+              className="px-3.5 py-1.5 rounded-full border"
+              style={{
+                backgroundColor: activeFilter === f.value ? colors.primary : colors.surface,
+                borderColor: activeFilter === f.value ? colors.primary : colors.border,
+              }}
+            >
+              <Text
+                className="text-xs font-semibold"
+                style={{ color: activeFilter === f.value ? '#fff' : colors.text }}
+              >
+                {f.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
         {isLoading ? (
           <SkeletonList count={5} />
         ) : isError ? (

@@ -13,6 +13,8 @@ export interface CustomersQueryParams {
   search?: string;
   page?: number;
   limit?: number;
+  role?: string;
+  is_active?: boolean;
 }
 
 // GET /admin/users and GET /admin/users/{id} both return the backend's raw

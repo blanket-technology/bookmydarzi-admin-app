@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { authService } from '@/services/authService';
-import { customerService, userPhotoService } from '@/services/customerService';
+import { customerService, userPhotoService, type CustomersQueryParams } from '@/services/customerService';
 import type { UserStatusUpdateRequest } from '@/types/users';
 import { toast } from '@/store/toastStore';
 import { getMutationError } from '@/utils/errors';
@@ -25,11 +25,11 @@ export const useUploadUserPhotoMutation = (userId: string, invalidateKeys: reado
 };
 
 export const useUsers = (
-  params?: { search?: string; page?: number; limit?: number },
+  params?: CustomersQueryParams,
   enabled = true,
 ) =>
   useQuery({
-    queryKey: QUERY_KEYS.USERS(params),
+    queryKey: QUERY_KEYS.USERS(params as Record<string, unknown> | undefined),
     queryFn: () => customerService.getCustomers(params),
     enabled,
   });

@@ -1,10 +1,23 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
-import { Badge, ConfirmModal, EmptyState, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
+import {
+  Badge,
+  BottomSheet,
+  Button,
+  ConfirmModal,
+  EmptyState,
+  Header,
+  Input,
+  Pagination,
+  Pressable,
+  SearchBar,
+  SkeletonList,
+} from '@/components/ui';
 import {
   useApplications,
   useApproveApplicationMutation,
+  useRejectApplicationMutation,
 } from '@/features/applications/hooks/useApplications';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useTheme } from '@/hooks/useTheme';
@@ -40,12 +53,15 @@ export default function ApplicationsScreen() {
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [approveTarget, setApproveTarget] = useState<TailorApplicationListItem | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<TailorApplicationListItem | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useApplications(
     { page, limit: LIMIT, search: search || undefined, status: statusFilter || undefined },
     permissions.applications,
   );
   const approveMutation = useApproveApplicationMutation();
+  const rejectMutation = useRejectApplicationMutation();
 
   const applications = useMemo(
     () => data?.applications ?? data?.items ?? [],
@@ -59,6 +75,24 @@ export default function ApplicationsScreen() {
     approveMutation.mutate(
       { applicationId: String(approveTarget.id) },
       { onSuccess: () => setApproveTarget(null), onError: () => setApproveTarget(null) },
+    );
+  };
+
+  const openReject = (item: TailorApplicationListItem) => {
+    setRejectTarget(item);
+    setRejectReason('');
+  };
+
+  const handleConfirmReject = () => {
+    if (!rejectTarget || rejectReason.trim().length < 5) return;
+    rejectMutation.mutate(
+      { applicationId: String(rejectTarget.id), payload: { reason: rejectReason.trim() } },
+      {
+        onSuccess: () => {
+          setRejectTarget(null);
+          setRejectReason('');
+        },
+      },
     );
   };
 
@@ -105,7 +139,7 @@ export default function ApplicationsScreen() {
               <Text className="text-xs font-bold text-white">Approve</Text>
             </Pressable>
             <Pressable
-              onPress={() => router.push(`/(drawer)/applications/${item.id}` as never)}
+              onPress={() => openReject(item)}
               className="flex-1 items-center py-2 rounded-xl border"
               style={{ borderColor: colors.border }}
             >
@@ -198,6 +232,30 @@ export default function ApplicationsScreen() {
         onConfirm={handleConfirmApprove}
         onCancel={() => setApproveTarget(null)}
       />
+
+      {rejectTarget ? (
+        <BottomSheet
+          visible={!!rejectTarget}
+          onClose={() => setRejectTarget(null)}
+          title="Reject Application"
+        >
+          <Input
+            label="Rejection Reason"
+            value={rejectReason}
+            onChangeText={setRejectReason}
+            placeholder="Minimum 5 characters"
+            multiline
+          />
+          <Button
+            title="Confirm Reject"
+            variant="danger"
+            onPress={handleConfirmReject}
+            loading={rejectMutation.isPending}
+            disabled={rejectReason.trim().length < 5}
+            fullWidth
+          />
+        </BottomSheet>
+      ) : null}
     </View>
   );
 }
