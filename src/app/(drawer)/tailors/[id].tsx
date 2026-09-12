@@ -477,6 +477,26 @@ export default function TailorDetailsScreen() {
 
         {activeTab === 'documents' ? (
           <View className="mt-4 mb-8">
+            {tailor.pan_waived ? (
+              <Card className="mb-3" style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca' }}>
+                <View className="flex-row items-start gap-2.5">
+                  <Ionicons name="warning-outline" size={18} color="#dc2626" style={{ marginTop: 1 }} />
+                  <View className="flex-1">
+                    <Text className="text-xs font-bold" style={{ color: '#991b1b' }}>
+                      This tailor was approved without a PAN card on file.
+                    </Text>
+                    {tailor.pan_waiver_reason ? (
+                      <Text className="text-xs mt-0.5" style={{ color: '#b91c1c' }}>
+                        Reason: {tailor.pan_waiver_reason}
+                      </Text>
+                    ) : null}
+                    <Text className="text-xs mt-0.5" style={{ color: '#dc2626' }}>
+                      Verify identity and collect a PAN before large or repeated payouts.
+                    </Text>
+                  </View>
+                </View>
+              </Card>
+            ) : null}
             <StaffKycCard
               documents={tailor}
               uploading={uploadKycMutation.isPending}

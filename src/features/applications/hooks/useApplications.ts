@@ -28,10 +28,12 @@ export const useApproveApplicationMutation = () => {
     mutationFn: ({
       applicationId,
       overridePanRequirement,
+      panWaiverReason,
     }: {
       applicationId: string;
       overridePanRequirement?: boolean;
-    }) => applicationService.approveApplication(applicationId, { overridePanRequirement }),
+      panWaiverReason?: string;
+    }) => applicationService.approveApplication(applicationId, { overridePanRequirement, panWaiverReason }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });

@@ -17,12 +17,18 @@ import { capitalize, formatApiErrorDetail, formatDate } from '@/utils/errors';
 export default function ApplicationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
-  const { permissions } = usePermissions();
+  const { permissions, role } = usePermissions();
   const [rejectSheetVisible, setRejectSheetVisible] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [confirmApprove, setConfirmApprove] = useState(false);
   const [overridePan, setOverridePan] = useState(false);
+  const [panWaiverReason, setPanWaiverReason] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  // Waiving PAN is Superadmin-only server-side (see
+  // approve_tailor_application) - hidden for a plain Admin rather than
+  // shown-then-rejected with a 422, since there's nothing they can do about
+  // it anyway.
+  const isSuperadmin = role === 'superadmin';
 
   const { data: application, isLoading, isError, error, refetch } = useApplication(
     id,
@@ -50,7 +56,11 @@ export default function ApplicationDetailScreen() {
 
   const handleApprove = () => {
     approveMutation.mutate(
-      { applicationId: String(application.id), overridePanRequirement: overridePan },
+      {
+        applicationId: String(application.id),
+        overridePanRequirement: overridePan,
+        ...(overridePan ? { panWaiverReason: panWaiverReason.trim() } : {}),
+      },
       {
         onSuccess: () => {
           setConfirmApprove(false);
@@ -141,6 +151,13 @@ export default function ApplicationDetailScreen() {
           {application.rejection_reason ? (
             <InfoRow label="Rejection Reason" value={application.rejection_reason} colors={colors} />
           ) : null}
+          {application.pan_waived ? (
+            <InfoRow
+              label="PAN Waived"
+              value={application.pan_waiver_reason ?? 'Approved without a PAN card on file'}
+              colors={colors}
+            />
+          ) : null}
         </Card>
 
         <Card className="mb-4">
@@ -221,7 +238,9 @@ export default function ApplicationDetailScreen() {
               >
                 <Ionicons name="warning-outline" size={18} color="#d97706" />
                 <Text className="text-xs ml-2 flex-1" style={{ color: '#92400e' }}>
-                  No PAN card uploaded — approving requires waiving this requirement.
+                  {isSuperadmin
+                    ? 'No PAN card uploaded — approving requires waiving this requirement.'
+                    : 'No PAN card uploaded — only a Superadmin can approve without one.'}
                 </Text>
               </View>
             ) : null}
@@ -229,9 +248,11 @@ export default function ApplicationDetailScreen() {
               title="Approve Application"
               onPress={() => {
                 setOverridePan(false);
+                setPanWaiverReason('');
                 setConfirmApprove(true);
               }}
               loading={approveMutation.isPending}
+              disabled={!application.pan_card_url && !isSuperadmin}
               fullWidth
             />
             <Button
@@ -263,17 +284,27 @@ export default function ApplicationDetailScreen() {
         >
           <Text className="text-sm mb-4" style={{ color: colors.textSecondary }}>
             {application.full_name} has not uploaded a PAN card. Approving anyway waives this
-            requirement for their account — this is recorded against your review.
+            requirement for their account — this is logged to the audit trail and stays visible
+            on their tailor profile as a payout-risk flag.
           </Text>
-          <View className="flex-row items-center justify-between mb-5">
+          <View className="flex-row items-center justify-between mb-4">
             <Text style={{ color: colors.text }}>Waive PAN requirement</Text>
             <Switch value={overridePan} onValueChange={setOverridePan} trackColor={{ true: colors.primary }} />
           </View>
+          {overridePan ? (
+            <Input
+              label="Reason"
+              value={panWaiverReason}
+              onChangeText={setPanWaiverReason}
+              placeholder="Minimum 5 characters, e.g. 'PAN pending, following up separately'"
+              multiline
+            />
+          ) : null}
           <Button
             title="Approve Application"
             onPress={handleApprove}
             loading={approveMutation.isPending}
-            disabled={!overridePan}
+            disabled={!overridePan || panWaiverReason.trim().length < 5}
             fullWidth
           />
         </BottomSheet>

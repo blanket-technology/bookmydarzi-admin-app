@@ -21,6 +21,8 @@ export interface AdminTailorListItem {
   aadhar_url?: string | null;
   pan_card_url?: string | null;
   other_doc_url?: string | null;
+  pan_waived?: boolean;
+  pan_waiver_reason?: string | null;
   created_at?: string;
   profile_image_url?: string | null;
 }

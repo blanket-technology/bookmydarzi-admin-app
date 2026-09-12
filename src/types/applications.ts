@@ -35,6 +35,8 @@ export interface TailorApplicationDetail extends TailorApplicationListItem {
   reviewed_at?: string | null;
   reviewed_by?: number | null;
   created_user_id?: number | null;
+  pan_waived?: boolean;
+  pan_waiver_reason?: string | null;
 }
 
 export interface TailorApplicationsResponse {

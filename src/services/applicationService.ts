@@ -42,11 +42,15 @@ export const applicationService = {
 
   approveApplication: async (
     applicationId: string,
-    options?: { overridePanRequirement?: boolean },
+    options?: { overridePanRequirement?: boolean; panWaiverReason?: string },
   ): Promise<ApplicationActionResponse> => {
+    const overridePanRequirement = options?.overridePanRequirement ?? false;
     const { data } = await apiClient.patch<ApplicationActionResponse>(
       ENDPOINTS.ADMIN.TAILOR_APPLICATION_APPROVE(applicationId),
-      { override_pan_requirement: options?.overridePanRequirement ?? false },
+      {
+        override_pan_requirement: overridePanRequirement,
+        ...(overridePanRequirement ? { pan_waiver_reason: options?.panWaiverReason } : {}),
+      },
     );
     return data;
   },
