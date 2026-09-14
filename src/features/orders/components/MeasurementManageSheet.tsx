@@ -11,6 +11,7 @@ import {
   useUpdateOrderMeasurementMutation,
 } from '@/features/orders/hooks/useOrders';
 import { resolveMeasurementFields, type MeasurementGender } from '@/features/orders/utils/measurementFieldSets';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import type { MeasurementProfile } from '@/types/measurements';
 
@@ -37,10 +38,10 @@ interface MeasurementManageSheetProps {
   itemLabel?: string;
 }
 
-const GENDER_OPTIONS: { value: MeasurementGender; label: string }[] = [
-  { value: 'male', label: 'Male' },
-  { value: 'female', label: 'Female' },
-  { value: 'unisex', label: 'Unisex' },
+const GENDER_OPTIONS: { value: MeasurementGender; labelKey: string }[] = [
+  { value: 'male', labelKey: 'measurementManage.male' },
+  { value: 'female', labelKey: 'measurementManage.female' },
+  { value: 'unisex', labelKey: 'measurementManage.unisex' },
 ];
 
 const EMPTY_VALUES: Record<string, string> = {
@@ -91,6 +92,7 @@ export const MeasurementManageSheet = ({
   itemLabel,
 }: MeasurementManageSheetProps) => {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const [mode, setMode] = useState<'list' | 'new' | 'edit'>('list');
   const [editingProfile, setEditingProfile] = useState<MeasurementProfile | null>(null);
   const [gender, setGender] = useState<MeasurementGender | null>(null);
@@ -168,11 +170,11 @@ export const MeasurementManageSheet = ({
   const requestClose = () => {
     if (hasUnsavedInput) {
       Alert.alert(
-        'Discard measurement?',
-        'The values you entered haven’t been saved yet.',
+        t('measurementManage.discardTitle'),
+        t('measurementManage.discardBody'),
         [
-          { text: 'Keep Editing', style: 'cancel' },
-          { text: 'Discard', style: 'destructive', onPress: handleClose },
+          { text: t('measurementManage.keepEditing'), style: 'cancel' },
+          { text: t('measurementManage.discard'), style: 'destructive', onPress: handleClose },
         ],
       );
       return;
@@ -251,10 +253,10 @@ export const MeasurementManageSheet = ({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={requestClose} title="Measurements">
+    <BottomSheet visible={visible} onClose={requestClose} title={t('measurement.title')}>
       {itemLabel ? (
         <Text className="text-xs font-semibold mb-3 -mt-1" style={{ color: colors.textSecondary }}>
-          For: {itemLabel}
+          {t('measurementManage.forItem', { item: itemLabel })}
         </Text>
       ) : null}
       {mode === 'list' ? (
@@ -263,7 +265,7 @@ export const MeasurementManageSheet = ({
             <SkeletonList count={3} />
           ) : profiles.length === 0 ? (
             <Text className="text-sm py-4 text-center" style={{ color: colors.textMuted }}>
-              No saved measurement profiles for this customer yet.
+              {t('measurementManage.noSavedProfiles')}
             </Text>
           ) : (
             <ScrollView style={{ maxHeight: 360 }} showsVerticalScrollIndicator={false}>
@@ -279,26 +281,26 @@ export const MeasurementManageSheet = ({
                         {profile.profile_name}
                       </Text>
                       {profile.is_default ? (
-                        <Badge label="Default" backgroundColor={colors.primaryLight} color={colors.primary} />
+                        <Badge label={t('measurementManage.default')} backgroundColor={colors.primaryLight} color={colors.primary} />
                       ) : null}
                     </View>
                     <Text className="text-xs" style={{ color: colors.textSecondary }}>
                       {(
                         [
-                          ['Chest', profile.chest],
-                          ['Waist', profile.waist],
-                          ['Hips', profile.hips],
-                          ['Shoulder', profile.shoulder],
-                          ['Neck', profile.neck],
-                          ['Sleeve', profile.sleeve_length],
-                          ['Inseam', profile.inseam],
-                          ['Height', profile.height],
+                          [t('measurement.chest'), profile.chest],
+                          [t('measurement.waist'), profile.waist],
+                          [t('measurement.hips'), profile.hips],
+                          [t('measurement.shoulder'), profile.shoulder],
+                          [t('measurement.neck'), profile.neck],
+                          [t('measurementManage.sleeve'), profile.sleeve_length],
+                          [t('measurement.inseam'), profile.inseam],
+                          [t('measurement.height'), profile.height],
                         ] as const
                       )
                         .filter(([, v]) => v != null)
                         .map(([label, v]) => `${label} ${v}"`)
-                        .join(' · ') || 'No measurements on file'}
-                      {profile.fit_preference ? ` · Fit ${profile.fit_preference}` : ''}
+                        .join(' · ') || t('measurementManage.noMeasurementsOnFile')}
+                      {profile.fit_preference ? ` · ${t('measurementManage.fitLabel', { fit: profile.fit_preference })}` : ''}
                     </Text>
                   </Pressable>
                   <Pressable
@@ -308,7 +310,7 @@ export const MeasurementManageSheet = ({
                   >
                     <Ionicons name="create-outline" size={14} color={colors.primary} />
                     <Text className="ml-1 text-xs font-semibold" style={{ color: colors.primary }}>
-                      Edit values
+                      {t('measurementManage.editValues')}
                     </Text>
                   </Pressable>
                 </View>
@@ -316,7 +318,7 @@ export const MeasurementManageSheet = ({
             </ScrollView>
           )}
           <Button
-            title="Add New Measurement"
+            title={t('measurementManage.addNew')}
             variant="outline"
             onPress={() => setMode('new')}
             className="mt-3"
@@ -328,22 +330,22 @@ export const MeasurementManageSheet = ({
           <Pressable onPress={() => { setMode('list'); setEditingProfile(null); }} className="flex-row items-center mb-1">
             <Ionicons name="arrow-back" size={16} color={colors.primary} />
             <Text className="ml-1 text-sm font-semibold" style={{ color: colors.primary }}>
-              Back to saved profiles
+              {t('measurementManage.backToSaved')}
             </Text>
           </Pressable>
           <Text className="text-xs font-semibold mb-3" style={{ color: colors.textMuted }}>
-            {mode === 'edit' ? `Editing "${editingProfile?.profile_name}"` : 'New profile'}
+            {mode === 'edit' ? t('measurementManage.editingProfile', { name: editingProfile?.profile_name ?? '' }) : t('measurementManage.newProfile')}
           </Text>
 
           <Input
-            label="Profile Name *"
+            label={t('measurementManage.profileName')}
             value={profileName}
             onChangeText={setProfileName}
-            placeholder="e.g. Wedding Suit"
+            placeholder={t('measurementManage.profileNamePlaceholder')}
           />
 
           <Text className="text-xs font-semibold mb-2" style={{ color: colors.textSecondary }}>
-            Gender *
+            {t('measurementManage.genderRequired')}
           </Text>
           <View className="flex-row mb-4" style={{ gap: 8 }}>
             {GENDER_OPTIONS.map((opt) => (
@@ -360,7 +362,7 @@ export const MeasurementManageSheet = ({
                   className="text-sm font-semibold"
                   style={{ color: gender === opt.value ? '#fff' : colors.text }}
                 >
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </Text>
               </Pressable>
             ))}
@@ -368,7 +370,7 @@ export const MeasurementManageSheet = ({
 
           {!gender ? (
             <Text className="text-xs mb-2" style={{ color: colors.textMuted }}>
-              Select a gender to show the right measurement fields for this garment.
+              {t('measurementManage.selectGenderHint')}
             </Text>
           ) : (
             <>
@@ -383,7 +385,7 @@ export const MeasurementManageSheet = ({
                           value={values[field.key]}
                           onChangeText={(text) => setValues((v) => ({ ...v, [field.key]: text }))}
                           keyboardType="decimal-pad"
-                          error={isValidMeasurement(values[field.key]) ? undefined : 'Invalid'}
+                          error={isValidMeasurement(values[field.key]) ? undefined : t('measurementManage.invalid')}
                         />
                       </View>
                       {next ? (
@@ -393,7 +395,7 @@ export const MeasurementManageSheet = ({
                             value={values[next.key]}
                             onChangeText={(text) => setValues((v) => ({ ...v, [next.key]: text }))}
                             keyboardType="decimal-pad"
-                            error={isValidMeasurement(values[next.key]) ? undefined : 'Invalid'}
+                            error={isValidMeasurement(values[next.key]) ? undefined : t('measurementManage.invalid')}
                           />
                         </View>
                       ) : (
@@ -406,20 +408,20 @@ export const MeasurementManageSheet = ({
               }, [])}
 
               <Input
-                label="Fit Preference"
+                label={t('measurement.fitPreference')}
                 value={fitPreference}
                 onChangeText={setFitPreference}
-                placeholder="slim / regular / loose"
+                placeholder={t('measurementManage.fitPreferencePlaceholder')}
               />
               <Input
-                label="Notes"
+                label={t('measurement.notes')}
                 value={notes}
                 onChangeText={setNotes}
-                placeholder="Optional"
+                placeholder={t('measurementManage.optional')}
               />
 
               <Button
-                title={mode === 'edit' ? 'Save Changes' : 'Save Measurement'}
+                title={mode === 'edit' ? t('profile.saveChanges') : t('measurementManage.saveMeasurement')}
                 onPress={mode === 'edit' ? handleSaveEdit : handleCreateNew}
                 loading={mode === 'edit' ? updateProfileMutation.isPending || collectMutation.isPending : collectMutation.isPending}
                 disabled={!profileName.trim() || hasInvalidValue}

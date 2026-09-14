@@ -336,5 +336,44 @@
     "failureReasonUsed": "Failure Reason (used when marking Failed)",
     "amountBlankForFull": "Amount (leave blank for full refund)",
     "confirmRefund": "Confirm Refund"
+  },
+  "measurementManage": {
+    "male": "Male",
+    "female": "Female",
+    "unisex": "Unisex",
+    "discardTitle": "Discard measurement?",
+    "discardBody": "The values you entered haven't been saved yet.",
+    "keepEditing": "Keep Editing",
+    "discard": "Discard",
+    "forItem": "For: {{item}}",
+    "noSavedProfiles": "No saved measurement profiles for this customer yet.",
+    "default": "Default",
+    "sleeve": "Sleeve",
+    "noMeasurementsOnFile": "No measurements on file",
+    "fitLabel": "Fit {{fit}}",
+    "editValues": "Edit values",
+    "addNew": "Add New Measurement",
+    "backToSaved": "Back to saved profiles",
+    "editingProfile": "Editing \"{{name}}\"",
+    "newProfile": "New profile",
+    "profileName": "Profile Name *",
+    "profileNamePlaceholder": "e.g. Wedding Suit",
+    "genderRequired": "Gender *",
+    "selectGenderHint": "Select a gender to show the right measurement fields for this garment.",
+    "invalid": "Invalid",
+    "fitPreferencePlaceholder": "slim / regular / loose",
+    "optional": "Optional",
+    "saveMeasurement": "Save Measurement"
+  },
+  "addAddon": {
+    "title": "Add Extra Service",
+    "noExtraServices": "No extra services are configured for this item's service.",
+    "noteOptional": "Note (optional)",
+    "notePlaceholder": "e.g. exact spot, size, preference",
+    "addToOrder": "Add to Order"
+  },
+  "orderNotesEdit": {
+    "title": "Edit Order Notes",
+    "saveNotes": "Save Notes"
   }
 }

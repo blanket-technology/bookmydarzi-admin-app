@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BottomSheet, Button, Input } from '@/components/ui';
 import { useUpdateOrderNotesMutation } from '@/features/orders/hooks/useOrders';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import type { AdminOrderItem } from '@/types/orders';
 
 /** Admin-only order-notes editor. Seeds its form from `order` every time it
@@ -15,6 +16,7 @@ export const OrderNotesEditSheet = ({
   onClose: () => void;
   order: AdminOrderItem;
 }) => {
+  const { t } = useAppLanguage();
   const [form, setForm] = useState({
     description: '',
     fabric_notes: '',
@@ -50,17 +52,17 @@ export const OrderNotesEditSheet = ({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Edit Order Notes">
-      <Input label="Description" value={form.description} onChangeText={(text) => setForm((f) => ({ ...f, description: text }))} multiline />
-      <Input label="Fabric Notes" value={form.fabric_notes} onChangeText={(text) => setForm((f) => ({ ...f, fabric_notes: text }))} multiline />
+    <BottomSheet visible={visible} onClose={onClose} title={t('orderNotesEdit.title')}>
+      <Input label={t('orderNotes.description')} value={form.description} onChangeText={(text) => setForm((f) => ({ ...f, description: text }))} multiline />
+      <Input label={t('orderNotes.fabricNotes')} value={form.fabric_notes} onChangeText={(text) => setForm((f) => ({ ...f, fabric_notes: text }))} multiline />
       <Input
-        label="Customization Notes"
+        label={t('orderNotes.customization')}
         value={form.customization_notes}
         onChangeText={(text) => setForm((f) => ({ ...f, customization_notes: text }))}
         multiline
       />
-      <Input label="Cloth Details" value={form.cloth_details} onChangeText={(text) => setForm((f) => ({ ...f, cloth_details: text }))} multiline />
-      <Button title="Save Notes" onPress={handleSave} loading={updateNotesMutation.isPending} fullWidth />
+      <Input label={t('orderNotes.clothDetails')} value={form.cloth_details} onChangeText={(text) => setForm((f) => ({ ...f, cloth_details: text }))} multiline />
+      <Button title={t('orderNotesEdit.saveNotes')} onPress={handleSave} loading={updateNotesMutation.isPending} fullWidth />
     </BottomSheet>
   );
 };

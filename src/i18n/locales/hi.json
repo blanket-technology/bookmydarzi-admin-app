@@ -336,5 +336,44 @@
     "failureReasonUsed": "विफलता का कारण (Failed मार्क करते समय उपयोग होता है)",
     "amountBlankForFull": "राशि (पूरे रिफंड के लिए खाली छोड़ें)",
     "confirmRefund": "रिफंड की पुष्टि करें"
+  },
+  "measurementManage": {
+    "male": "पुरुष",
+    "female": "महिला",
+    "unisex": "यूनिसेक्स",
+    "discardTitle": "माप हटाएं?",
+    "discardBody": "आपने जो मान दर्ज किए हैं वे अभी सेव नहीं हुए हैं।",
+    "keepEditing": "एडिट करते रहें",
+    "discard": "हटाएं",
+    "forItem": "के लिए: {{item}}",
+    "noSavedProfiles": "इस ग्राहक के लिए अभी तक कोई सेव की गई माप प्रोफ़ाइल नहीं है।",
+    "default": "डिफ़ॉल्ट",
+    "sleeve": "बाजू",
+    "noMeasurementsOnFile": "कोई माप दर्ज नहीं है",
+    "fitLabel": "फिट {{fit}}",
+    "editValues": "मान बदलें",
+    "addNew": "नई माप जोड़ें",
+    "backToSaved": "सेव की गई प्रोफ़ाइलों पर वापस जाएं",
+    "editingProfile": "\"{{name}}\" को बदला जा रहा है",
+    "newProfile": "नई प्रोफ़ाइल",
+    "profileName": "प्रोफ़ाइल नाम *",
+    "profileNamePlaceholder": "जैसे वेडिंग सूट",
+    "genderRequired": "लिंग *",
+    "selectGenderHint": "इस कपड़े के लिए सही माप फ़ील्ड दिखाने के लिए लिंग चुनें।",
+    "invalid": "अमान्य",
+    "fitPreferencePlaceholder": "स्लिम / रेगुलर / लूज़",
+    "optional": "वैकल्पिक",
+    "saveMeasurement": "माप सेव करें"
+  },
+  "addAddon": {
+    "title": "अतिरिक्त सेवा जोड़ें",
+    "noExtraServices": "इस आइटम की सेवा के लिए कोई अतिरिक्त सेवा कॉन्फ़िगर नहीं है।",
+    "noteOptional": "टिप्पणी (वैकल्पिक)",
+    "notePlaceholder": "जैसे सटीक जगह, साइज़, पसंद",
+    "addToOrder": "ऑर्डर में जोड़ें"
+  },
+  "orderNotesEdit": {
+    "title": "ऑर्डर टिप्पणी बदलें",
+    "saveNotes": "टिप्पणी सेव करें"
   }
 }

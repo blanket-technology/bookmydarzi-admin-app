@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { BottomSheet, Button, Input, Pressable, SkeletonList } from '@/components/ui';
 import { useAddOrderAddonMutation, useServiceAddons } from '@/features/orders/hooks/useOrders';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { formatCurrency } from '@/utils/errors';
 
@@ -38,6 +39,7 @@ export const AddOrderAddonSheet = ({
   itemLabel,
 }: AddOrderAddonSheetProps) => {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [note, setNote] = useState('');
 
@@ -66,10 +68,10 @@ export const AddOrderAddonSheet = ({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={handleClose} title="Add Extra Service">
+    <BottomSheet visible={visible} onClose={handleClose} title={t('addAddon.title')}>
       {itemLabel ? (
         <Text className="text-xs font-semibold mb-3 -mt-1" style={{ color: colors.textSecondary }}>
-          For: {itemLabel}
+          {t('measurementManage.forItem', { item: itemLabel })}
         </Text>
       ) : null}
 
@@ -77,7 +79,7 @@ export const AddOrderAddonSheet = ({
         <SkeletonList count={3} />
       ) : !addons || addons.length === 0 ? (
         <Text className="text-sm py-4 text-center" style={{ color: colors.textMuted }}>
-          No extra services are configured for this item's service.
+          {t('addAddon.noExtraServices')}
         </Text>
       ) : (
         <View className="mb-2">
@@ -125,16 +127,16 @@ export const AddOrderAddonSheet = ({
 
       {selectedId ? (
         <Input
-          label="Note (optional)"
+          label={t('addAddon.noteOptional')}
           value={note}
           onChangeText={setNote}
-          placeholder="e.g. exact spot, size, preference"
+          placeholder={t('addAddon.notePlaceholder')}
           multiline
         />
       ) : null}
 
       <Button
-        title="Add to Order"
+        title={t('addAddon.addToOrder')}
         onPress={handleSubmit}
         loading={addMutation.isPending}
         disabled={!selectedId}
