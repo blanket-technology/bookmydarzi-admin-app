@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { BottomSheet, Button, Input, Pressable } from '@/components/ui';
-import { useAdminCancellationPreview, useCancelOrderMutation } from '@/features/orders/hooks/useOrders';
+import { useAdminCancellationPreview, useCancelOrderMutation, useOrderCancellationRecord } from '@/features/orders/hooks/useOrders';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { formatCurrency } from '@/utils/errors';
@@ -31,6 +31,9 @@ export const CancelOrderSheet = ({
     waivePenalty,
     visible,
   );
+  // Existing customer-initiated cancellation request for this order, if
+  // any - warns before confirming a separate, independent cancellation.
+  const { data: existingCancellation } = useOrderCancellationRecord(orderId, visible);
 
   const reset = () => {
     setReason('');
@@ -47,6 +50,21 @@ export const CancelOrderSheet = ({
 
   return (
     <BottomSheet visible={visible} onClose={onClose} title={t('cancelOrder.title')}>
+      {existingCancellation && ['pending', 'approved'].includes(existingCancellation.Status) ? (
+        <View
+          className="flex-row items-start rounded-2xl p-3 mb-3 border"
+          style={{ borderColor: '#FDE68A', backgroundColor: '#FFFBEB' }}
+        >
+          <Ionicons name="warning-outline" size={16} color="#D97706" style={{ marginTop: 1 }} />
+          <Text className="text-xs font-semibold ml-2 flex-1" style={{ color: '#92400E' }}>
+            {t('cancelOrder.existingRequestWarning', {
+              code: existingCancellation.CancellationCode ?? `#${existingCancellation.Id}`,
+              status: existingCancellation.Status,
+            })}
+          </Text>
+        </View>
+      ) : null}
+
       {loadingPreview ? (
         <View className="flex-row items-center justify-center py-6 mb-3">
           <ActivityIndicator size="small" color={colors.primary} />

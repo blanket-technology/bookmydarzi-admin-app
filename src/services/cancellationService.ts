@@ -32,6 +32,17 @@ export const cancellationService = {
     return data;
   },
 
+  // Existing cancellation record for this order (customer-initiated request
+  // still pending/approved/rejected/refunded), or null if none - lets the
+  // Cancel Order sheet warn before an admin confirms a separate, independent
+  // cancellation on an order that already has one in the review queue.
+  getRecordForOrder: async (orderId: string): Promise<OrderCancellationDetail | null> => {
+    const { data } = await apiClient.get<OrderCancellationDetail | null>(
+      ENDPOINTS.ADMIN.ORDER_CANCELLATION_RECORD(orderId),
+    );
+    return data;
+  },
+
   getById: async (id: string): Promise<OrderCancellationDetail> => {
     const { data } = await apiClient.get<OrderCancellationDetail>(
       ENDPOINTS.ADMIN.CANCELLATION_DETAIL(id),

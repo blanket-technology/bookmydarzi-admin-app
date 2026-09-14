@@ -47,6 +47,13 @@ export const OrderSummaryCard = ({ order }: { order: AdminOrderItem }) => {
       <DetailRow label={t('orders.service')} value={order.service_name ?? '—'} colors={colors} />
       <DetailRow label={t('orderSummary.category')} value={order.category_name ?? '—'} colors={colors} />
       <DetailRow label={t('orders.tailorLabel')} value={order.tailor_name ?? t('orders.unassigned')} colors={colors} />
+      {order.return_employee_id ? (
+        <DetailRow
+          label={t('orderSummary.returnHandledBy')}
+          value={order.return_employee_name ?? `#${order.return_employee_id}`}
+          colors={colors}
+        />
+      ) : null}
       <DetailRow label={t('orderSummary.payment')} value={capitalize(order.payment_status ?? '—')} colors={colors} />
       {typeof order.remaining_amount === 'number' && order.remaining_amount > 0 && (
         <DetailRow label={t('orders.balanceDue')} value={formatCurrency(order.remaining_amount)} colors={colors} />

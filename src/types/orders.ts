@@ -107,9 +107,15 @@ export interface AdminOrderItem {
   customization_notes?: string | null;
   cloth_details?: string | null;
   assigned_employee_id?: string;
+  /** Staff-only display name for assigned_employee_id (pickup-leg claim) -
+   * never present on a customer-facing response even when the id is set. */
+  assigned_employee_name?: string | null;
+  delivery_employee_id?: string;
+  delivery_employee_name?: string | null;
   /** Return-leg employee (post-cancellation reverse trip) - only set once an
    * employee has accepted the order's return broadcast. */
   return_employee_id?: string;
+  return_employee_name?: string | null;
   measurement?: OrderMeasurement | null;
   /** True when the tailor broadcast exhausted every round (including the
    * all-tailor fallback) with zero acceptance - needs manual assignment. */
@@ -203,7 +209,11 @@ export interface MyOrderItem {
   CustomizationNotes?: string | null;
   ClothDetails?: string | null;
   AssignedEmployeeId?: number | null;
+  AssignedEmployeeName?: string | null;
+  DeliveryEmployeeId?: number | null;
+  DeliveryEmployeeName?: string | null;
   ReturnEmployeeId?: number | null;
+  ReturnEmployeeName?: string | null;
   Items?: RawOrderItemSummary[] | null;
 }
 

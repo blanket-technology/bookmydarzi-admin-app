@@ -196,7 +196,8 @@
     "payment": "Payment",
     "urgency": "Urgency",
     "created": "Created",
-    "expectedDelivery": "Expected Delivery"
+    "expectedDelivery": "Expected Delivery",
+    "returnHandledBy": "Return Handled By"
   },
   "ordersFilter": {
     "title": "Filter Orders",
@@ -314,7 +315,8 @@
     "refundToCustomer": "Refund to customer",
     "postpaidPenaltyNote": "No upfront payment was collected — this penalty will be applied to the customer's next order.",
     "waivePenalty": "Waive penalty",
-    "waivePenaltyDescription": "Cancel as a goodwill gesture with no penalty charged and a full refund of the amount paid."
+    "waivePenaltyDescription": "Cancel as a goodwill gesture with no penalty charged and a full refund of the amount paid.",
+    "existingRequestWarning": "A customer cancellation request ({{code}}) is already {{status}} in the Cancellations queue. This will start a separate, independent cancellation."
   },
   "collectPayment": {
     "title": "Collect COD Payment",

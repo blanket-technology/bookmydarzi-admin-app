@@ -191,6 +191,15 @@ export const useAdminCancellationPreview = (orderId: string, waivePenalty: boole
     enabled: enabled && !!orderId,
   });
 
+// Existing cancellation-request record for this order, if any - see
+// cancellationService.getRecordForOrder's own comment.
+export const useOrderCancellationRecord = (orderId: string, enabled: boolean) =>
+  useQuery({
+    queryKey: ['order-cancellation-record', orderId],
+    queryFn: () => cancellationService.getRecordForOrder(orderId),
+    enabled: enabled && !!orderId,
+  });
+
 export const useCancelOrderMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
