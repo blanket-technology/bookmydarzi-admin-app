@@ -13,11 +13,14 @@ import { useEffect } from 'react';
 import { View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Loader } from '@/components/ui/Loader';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { AppProviders } from '@/providers/AppProviders';
+import { initSentry } from '@/services/sentryService';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+initSentry();
 
 function RootLayoutNav() {
   const { isDark, colors } = useTheme();
@@ -82,8 +85,10 @@ export default function RootLayout() {
   }
 
   return (
-    <AppProviders>
-      <RootLayoutNav />
-    </AppProviders>
+    <ErrorBoundary>
+      <AppProviders>
+        <RootLayoutNav />
+      </AppProviders>
+    </ErrorBoundary>
   );
 }

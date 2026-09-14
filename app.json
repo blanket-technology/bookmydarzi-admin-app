@@ -11,6 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bookmydarzi.admin",
+      "buildNumber": "1",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true
@@ -26,6 +27,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.bookmydarzi.admin",
+      "versionCode": 1,
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "pan",
       "permissions": [
@@ -79,7 +81,8 @@
       ],
       "@react-native-community/datetimepicker",
       "expo-audio",
-      "expo-asset"
+      "expo-asset",
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true
