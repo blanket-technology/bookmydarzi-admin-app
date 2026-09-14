@@ -5,6 +5,7 @@ import { useEffect, useMemo } from 'react';
 import { RefreshControl, Text, View } from 'react-native';
 import { Avatar, Badge, Card, ChartCard, EmptyState, Header, Pressable, ScreenContent, SkeletonList, StatCard } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { ORDER_STATUS, ORDER_STATUS_COLORS, orderStatusLabel } from '@/constants/orderStatus';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
@@ -153,6 +154,7 @@ const RoleDashboardHero = ({
 // second, potentially-stale toggle duplicating state that screen owns.
 const OnlineStatusPill = ({ isOnline }: { isOnline: boolean }) => {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   return (
     <View
       className="flex-row items-center px-2.5 py-1.5 rounded-full"
@@ -163,7 +165,7 @@ const OnlineStatusPill = ({ isOnline }: { isOnline: boolean }) => {
         style={{ backgroundColor: isOnline ? '#4ade80' : '#f87171' }}
       />
       <Text className="text-xs font-semibold" style={{ color: colors.drawerText }}>
-        {isOnline ? 'Online' : 'Offline'}
+        {isOnline ? t('dashboard.online') : t('dashboard.offline')}
       </Text>
     </View>
   );
@@ -191,6 +193,7 @@ const RoleStatGrid = ({
   sectionTitle?: string;
 }) => {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
 
   if (isLoading) {
     return (
@@ -203,9 +206,9 @@ const RoleStatGrid = ({
     return (
       <EmptyState
         icon="cloud-offline-outline"
-        title="Unable to load dashboard"
+        title={t('dashboard.unableToLoad')}
         description={errorDetail}
-        actionLabel="Retry"
+        actionLabel={t('common.retry')}
         onAction={onRetry}
       />
     );
@@ -240,11 +243,11 @@ const RoleStatGrid = ({
   );
 };
 
-const timeOfDayGreeting = (): string => {
+const timeOfDayGreeting = (t: (key: string) => string): string => {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
+  if (hour < 12) return t('dashboard.greeting.morning');
+  if (hour < 17) return t('dashboard.greeting.afternoon');
+  return t('dashboard.greeting.evening');
 };
 
 // Keyed by parseDashboardStats' exact `title` strings (utils/dashboard.ts).
@@ -263,6 +266,7 @@ const STAT_CARD_ROUTES: Partial<Record<string, string>> = {
 export default function DashboardScreen() {
   const { user, selectedRole } = useAuth();
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const normalizedRole = String(user?.role ?? selectedRole ?? '').toLowerCase();
   const isSuperadmin = normalizedRole === 'superadmin';
   const isAdminRole = normalizedRole === 'admin' || isSuperadmin;
@@ -375,19 +379,19 @@ export default function DashboardScreen() {
   if (isEmployeeRole) {
     return (
       <View className="flex-1" style={{ backgroundColor: colors.background }}>
-        <Header title="Dashboard" showMenu />
+        <Header title={t('dashboard.title')} showMenu />
         <RoleStatGrid
           isLoading={isEmployeeOrdersLoading}
           isError={isEmployeeOrdersError}
           errorDetail={formatApiErrorDetail(employeeOrdersErrorRaw)}
           onRetry={() => refetchEmployeeOrders()}
           refreshing={isEmployeeOrdersRefetching}
-          footnote={`Based on your ${employeeOrdersData?.orders.length ?? 0} most recent assigned orders. Open Orders for the full, filterable list.`}
+          footnote={t('dashboard.employeeFootnote', { count: employeeOrdersData?.orders.length ?? 0 })}
           hero={
             <RoleDashboardHero
-              greeting={timeOfDayGreeting()}
-              name={firstName ?? 'there'}
-              primaryStat={{ label: "Today's Tasks", value: employeeStats.todaysTasks }}
+              greeting={timeOfDayGreeting(t)}
+              name={firstName ?? t('dashboard.thereGreeting')}
+              primaryStat={{ label: t('dashboard.todaysTasks'), value: employeeStats.todaysTasks }}
               onlineBadge={
                 <Pressable onPress={() => router.push('/(drawer)/pickups')}>
                   <OnlineStatusPill isOnline={Boolean(employeeOnlineStatus?.is_online)} />
@@ -395,16 +399,16 @@ export default function DashboardScreen() {
               }
             />
           }
-          sectionTitle="Your Queue"
+          sectionTitle={t('dashboard.yourQueue')}
           stats={[
             // Mirrors Admin_Web EmployeeDashboard.jsx: same 5 cards, each
             // deep-linking to a PRE-FILTERED order list (via ?status=) so no two
             // cards land on the same view. "Assigned"/"Today's Tasks" have no
             // single canonical status, so they open the full Orders list.
-            { title: 'Assigned Orders', value: employeeStats.assigned, icon: 'receipt-outline', color: '#f59e0b', onPress: () => router.push('/(drawer)/orders') },
-            { title: 'Pickup Queue', value: employeeStats.pickupQueue, icon: 'cube-outline', color: '#0ea5e9', onPress: () => router.push({ pathname: '/(drawer)/orders', params: { status: 'pickup_pending' } }) },
-            { title: 'Delivery Queue', value: employeeStats.deliveryQueue, icon: 'bicycle-outline', color: '#3b82f6', onPress: () => router.push({ pathname: '/(drawer)/orders', params: { status: 'out_for_delivery' } }) },
-            { title: 'COD Pending', value: employeeStats.codPending, icon: 'cash-outline', color: '#ef4444', onPress: () => router.push({ pathname: '/(drawer)/orders', params: { status: 'out_for_delivery' } }) },
+            { title: t('dashboard.assignedOrders'), value: employeeStats.assigned, icon: 'receipt-outline', color: '#f59e0b', onPress: () => router.push('/(drawer)/orders') },
+            { title: t('dashboard.pickupQueue'), value: employeeStats.pickupQueue, icon: 'cube-outline', color: '#0ea5e9', onPress: () => router.push({ pathname: '/(drawer)/orders', params: { status: 'pickup_pending' } }) },
+            { title: t('dashboard.deliveryQueue'), value: employeeStats.deliveryQueue, icon: 'bicycle-outline', color: '#3b82f6', onPress: () => router.push({ pathname: '/(drawer)/orders', params: { status: 'out_for_delivery' } }) },
+            { title: t('dashboard.codPending'), value: employeeStats.codPending, icon: 'cash-outline', color: '#ef4444', onPress: () => router.push({ pathname: '/(drawer)/orders', params: { status: 'out_for_delivery' } }) },
           ]}
         />
       </View>
@@ -414,28 +418,28 @@ export default function DashboardScreen() {
   if (isTailorRole) {
     return (
       <View className="flex-1" style={{ backgroundColor: colors.background }}>
-        <Header title="Dashboard" showMenu />
+        <Header title={t('dashboard.title')} showMenu />
         <RoleStatGrid
           isLoading={isTailorOrdersLoading}
           isError={isTailorOrdersError}
           errorDetail={formatApiErrorDetail(tailorOrdersErrorRaw)}
           onRetry={() => refetchTailorOrders()}
           refreshing={isTailorOrdersRefetching}
-          footnote={`Based on your ${tailorOrdersData?.orders.length ?? 0} most recent orders. Open Orders for the full, filterable list.`}
+          footnote={t('dashboard.tailorFootnote', { count: tailorOrdersData?.orders.length ?? 0 })}
           hero={
             <RoleDashboardHero
-              greeting={timeOfDayGreeting()}
-              name={firstName ?? 'there'}
-              primaryStat={{ label: 'Earnings (completed)', value: formatCurrency(tailorStats.completedEarnings) }}
+              greeting={timeOfDayGreeting(t)}
+              name={firstName ?? t('dashboard.thereGreeting')}
+              primaryStat={{ label: t('dashboard.earningsCompleted'), value: formatCurrency(tailorStats.completedEarnings) }}
               onlineBadge={<OnlineStatusPill isOnline={Boolean(tailorProfile?.IsOnline)} />}
             />
           }
-          sectionTitle="Your Work"
+          sectionTitle={t('dashboard.yourWork')}
           stats={[
-            { title: 'Assigned', value: tailorStats.assigned, icon: 'cube-outline', color: '#8b5cf6', onPress: () => router.push('/(drawer)/orders') },
-            { title: 'Stitching', value: tailorStats.stitching, icon: 'cut-outline', color: '#f97316', onPress: () => router.push('/(drawer)/orders') },
-            { title: 'Ready', value: tailorStats.ready, icon: 'checkmark-done-outline', color: '#6366f1', onPress: () => router.push('/(drawer)/orders') },
-            { title: 'Completed', value: tailorStats.completed, icon: 'ribbon-outline', color: '#22c55e', onPress: () => router.push('/(drawer)/orders') },
+            { title: t('dashboard.assigned'), value: tailorStats.assigned, icon: 'cube-outline', color: '#8b5cf6', onPress: () => router.push('/(drawer)/orders') },
+            { title: t('dashboard.stitching'), value: tailorStats.stitching, icon: 'cut-outline', color: '#f97316', onPress: () => router.push('/(drawer)/orders') },
+            { title: t('dashboard.ready'), value: tailorStats.ready, icon: 'checkmark-done-outline', color: '#6366f1', onPress: () => router.push('/(drawer)/orders') },
+            { title: t('dashboard.completed'), value: tailorStats.completed, icon: 'ribbon-outline', color: '#22c55e', onPress: () => router.push('/(drawer)/orders') },
           ]}
         />
       </View>

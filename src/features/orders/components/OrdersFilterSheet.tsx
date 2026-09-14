@@ -1,8 +1,9 @@
 import { ScrollView, Text, View } from 'react-native';
 import { BottomSheet, Button, DateField, Pressable } from '@/components/ui';
-import { ORDER_STATUS_OPTIONS } from '@/constants/orderStatus';
+import { ORDER_STATUS_OPTIONS, orderStatusLabel } from '@/constants/orderStatus';
 import { ORDER_PAYMENT_STATUS_OPTIONS } from '@/constants/paymentStatus';
 import { useTailors } from '@/features/tailors/hooks/useTailors';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 
 export interface OrdersFilters {
@@ -82,6 +83,7 @@ export const OrdersFilterSheet = ({
   showAdminFilters = true,
 }: OrdersFilterSheetProps) => {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const { data: tailorsData } = useTailors(undefined, visible && showAdminFilters);
   const tailors = tailorsData?.tailors ?? tailorsData?.items ?? [];
 
@@ -92,19 +94,19 @@ export const OrdersFilterSheet = ({
     onApply({ status: '', paymentStatus: '', tailorId: '', dateFrom: '', dateTo: '' });
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Filter Orders">
+    <BottomSheet visible={visible} onClose={onClose} title={t('ordersFilter.title')}>
       <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
-        <SectionLabel>Status</SectionLabel>
+        <SectionLabel>{t('ordersFilter.status')}</SectionLabel>
         <View className="flex-row flex-wrap">
           <Chip
-            label="All"
+            label={t('common.all')}
             selected={!filters.status}
             onPress={() => setField('status', '')}
           />
           {ORDER_STATUS_OPTIONS.map((option) => (
             <Chip
               key={option.value}
-              label={option.label}
+              label={orderStatusLabel(option.value)}
               selected={filters.status === option.value}
               onPress={() => setField('status', option.value)}
             />
@@ -113,10 +115,10 @@ export const OrdersFilterSheet = ({
 
         {showAdminFilters ? (
           <>
-            <SectionLabel>Payment Status</SectionLabel>
+            <SectionLabel>{t('ordersFilter.paymentStatus')}</SectionLabel>
             <View className="flex-row flex-wrap">
               <Chip
-                label="All"
+                label={t('common.all')}
                 selected={!filters.paymentStatus}
                 onPress={() => setField('paymentStatus', '')}
               />
@@ -130,30 +132,30 @@ export const OrdersFilterSheet = ({
               ))}
             </View>
 
-            <SectionLabel>Tailor</SectionLabel>
+            <SectionLabel>{t('ordersFilter.tailor')}</SectionLabel>
             <View className="flex-row flex-wrap">
               <Chip
-                label="All"
+                label={t('common.all')}
                 selected={!filters.tailorId}
                 onPress={() => setField('tailorId', '')}
               />
               {tailors.map((tailor) => (
                 <Chip
                   key={tailor.tailor_id}
-                  label={tailor.full_name ?? `Tailor #${tailor.tailor_id}`}
+                  label={tailor.full_name ?? t('ordersFilter.tailorHash', { id: tailor.tailor_id })}
                   selected={filters.tailorId === tailor.tailor_id}
                   onPress={() => setField('tailorId', tailor.tailor_id)}
                 />
               ))}
             </View>
 
-            <SectionLabel>Date Range</SectionLabel>
+            <SectionLabel>{t('ordersFilter.dateRange')}</SectionLabel>
             <View className="flex-row" style={{ gap: 12 }}>
               <View className="flex-1">
                 <DateField
                   value={filters.dateFrom || null}
                   onChange={(d) => setField('dateFrom', d)}
-                  placeholder="From"
+                  placeholder={t('ordersFilter.from')}
                   maximumDate={filters.dateTo ? new Date(`${filters.dateTo}T00:00:00`) : undefined}
                 />
               </View>
@@ -161,7 +163,7 @@ export const OrdersFilterSheet = ({
                 <DateField
                   value={filters.dateTo || null}
                   onChange={(d) => setField('dateTo', d)}
-                  placeholder="To"
+                  placeholder={t('ordersFilter.to')}
                   minimumDate={filters.dateFrom ? new Date(`${filters.dateFrom}T00:00:00`) : undefined}
                 />
               </View>
@@ -177,11 +179,11 @@ export const OrdersFilterSheet = ({
           style={{ borderColor: colors.border }}
         >
           <Text className="font-semibold" style={{ color: colors.text }}>
-            Clear All
+            {t('ordersFilter.clearAll')}
           </Text>
         </Pressable>
         <View className="flex-1">
-          <Button title="Done" onPress={onClose} fullWidth />
+          <Button title={t('ordersFilter.done')} onPress={onClose} fullWidth />
         </View>
       </View>
     </BottomSheet>

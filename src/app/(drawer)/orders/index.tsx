@@ -7,6 +7,7 @@ import { ORDER_STATUS_COLORS, orderStatusLabel } from '@/constants/orderStatus';
 import { useOrders } from '@/features/orders/hooks/useOrders';
 import { OrdersFilterSheet, type OrdersFilters } from '@/features/orders/components/OrdersFilterSheet';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { AdminOrderItem } from '@/types/orders';
@@ -23,6 +24,7 @@ const EMPTY_FILTERS: OrdersFilters = {
 
 export default function OrdersScreen() {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const { contentMaxWidth } = useResponsive();
   const { user, selectedRole } = useAuth();
   const role = String(user?.role ?? selectedRole ?? '').toLowerCase();
@@ -88,18 +90,18 @@ export default function OrdersScreen() {
               {item.order_code ?? item.order_id}
             </Text>
             <Text className="text-sm mt-1" style={{ color: colors.textSecondary }}>
-              {item.customer_name ?? 'Customer'} · {item.service_name ?? 'Service'}
+              {item.customer_name ?? t('orders.customer')} · {item.service_name ?? t('orders.service')}
             </Text>
             {!isTailorRole ? (
               <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
-                Tailor: {item.tailor_name ?? 'Unassigned'}
+                {t('orders.tailorLabel')}: {item.tailor_name ?? t('orders.unassigned')}
               </Text>
             ) : null}
             {item.needs_manual_assignment ? (
               <View className="flex-row items-center gap-1 mt-1">
                 <Ionicons name="warning" size={12} color={colors.error} />
                 <Text className="text-xs font-bold" style={{ color: colors.error }}>
-                  No tailor found — assign manually
+                  {t('orders.noTailorFound')}
                 </Text>
               </View>
             ) : null}
@@ -120,7 +122,7 @@ export default function OrdersScreen() {
         </View>
         {typeof item.remaining_amount === 'number' && item.remaining_amount > 0 ? (
           <Text className="text-xs mt-1" style={{ color: colors.error }}>
-            Balance due: {formatCurrency(item.remaining_amount)}
+            {t('orders.balanceDue')}: {formatCurrency(item.remaining_amount)}
           </Text>
         ) : null}
       </Pressable>
@@ -130,8 +132,8 @@ export default function OrdersScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Header
-        title="Orders"
-        subtitle={`${data?.total ?? 0} total orders`}
+        title={t('orders.title')}
+        subtitle={t('orders.totalOrders', { count: data?.total ?? 0 })}
         rightAction={
           <Pressable
             onPress={() => setFilterVisible(true)}
@@ -158,7 +160,7 @@ export default function OrdersScreen() {
             setSearch(text);
             setPage(1);
           }}
-          placeholder="Search orders..."
+          placeholder={t('orders.searchPlaceholder')}
         />
 
         {showAdminFilters ? (
@@ -178,7 +180,7 @@ export default function OrdersScreen() {
               className="text-xs font-bold"
               style={{ color: needsManualAssignment ? '#fff' : colors.text }}
             >
-              Needs Tailor
+              {t('orders.needsTailor')}
             </Text>
           </Pressable>
         ) : null}
@@ -187,9 +189,9 @@ export default function OrdersScreen() {
           <SkeletonList count={5} />
         ) : isError ? (
           <EmptyState
-            title="Failed to load orders"
+            title={t('orders.failedToLoad')}
             description={formatApiErrorDetail(error)}
-            actionLabel="Retry"
+            actionLabel={t('common.retry')}
             onAction={() => refetch()}
           />
         ) : (
@@ -204,8 +206,8 @@ export default function OrdersScreen() {
             ListEmptyComponent={
               <EmptyState
                 icon="receipt-outline"
-                title="No orders found"
-                description="Try adjusting your search or filters"
+                title={t('orders.noOrdersFound')}
+                description={t('orders.adjustFilters')}
               />
             }
             ListFooterComponent={

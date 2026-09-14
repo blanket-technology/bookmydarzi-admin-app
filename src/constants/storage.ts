@@ -10,4 +10,5 @@ export const STORAGE_KEYS = {
   SELECTED_ROLE: 'bdm_selected_role',
   THEME: 'bdm_theme',
   BIOMETRIC_LOCK: 'bdm_biometric_lock',
+  LANGUAGE: 'bdm_language',
 } as const;

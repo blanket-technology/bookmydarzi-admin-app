@@ -1,4 +1,5 @@
 import type { OrderStatus } from '@/types/orders';
+import { getLanguage, t } from '@/i18n';
 
 // Mirrors backend app/constants/order_status.py OrderStatus — keep in sync.
 export const ORDER_STATUS = {
@@ -101,8 +102,17 @@ export const ADMIN_CORRECTABLE_STATUS_OPTIONS: { label: string; value: OrderStat
     value,
   }));
 
+// Reads the module-level i18n language (kept in sync by useLanguageStore),
+// not a hook - this is a plain function called from many non-component
+// contexts (dashboard.tsx's OrderRow, list filter chips, etc.), where a
+// React hook can't be used. t()'s own English-fallback behaviour (see
+// src/i18n/index.ts) already covers any status missing a Hindi translation,
+// so this only needs to defer entirely to the catalog.
 export function orderStatusLabel(status: string): string {
-  return ORDER_STATUS_DISPLAY_LABELS[status] ?? status;
+  if (getLanguage() === 'en') return ORDER_STATUS_DISPLAY_LABELS[status] ?? status;
+  return t(`orderStatus.${status}`) !== `orderStatus.${status}`
+    ? t(`orderStatus.${status}`)
+    : ORDER_STATUS_DISPLAY_LABELS[status] ?? status;
 }
 
 // Mirrors backend EMPLOYEE_QUEUE_EXCLUDED in app/constants/employee_orders.py —

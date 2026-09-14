@@ -42,6 +42,7 @@ import {
   useUpdateMyTailorProfileMutation,
 } from '@/features/tailors/hooks/useTailors';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/store/toastStore';
 import { formatCurrency, getMutationError } from '@/utils/errors';
@@ -101,6 +102,7 @@ function SettingsRow({
   verified?: boolean;
 }) {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   return (
     <Pressable
       onPress={onPress}
@@ -119,7 +121,7 @@ function SettingsRow({
         </Text>
         <View className="flex-row items-center mt-0.5">
           <Text className="text-xs" style={{ color: colors.textMuted }} numberOfLines={1}>
-            {value || 'Not set'}
+            {value || t('profile.notSet')}
           </Text>
           {verified ? (
             <Ionicons name="checkmark-circle" size={12} color={colors.success} style={{ marginLeft: 4 }} />
@@ -138,6 +140,7 @@ function SettingsRow({
 // payout figure).
 function EarningsSummaryCard() {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const { completedCount, totalValue, isPartial, sampledCount, isLoading, isError, refetch } =
     useMyEarningsSummary();
 
@@ -145,19 +148,19 @@ function EarningsSummaryCard() {
     <Card className="mb-4">
       <View className="flex-row items-center justify-between mb-3">
         <Text className="text-lg font-bold" style={{ color: colors.text }}>
-          Earnings
+          {t('profile.earnings')}
         </Text>
         <Ionicons name="wallet-outline" size={18} color={colors.primary} />
       </View>
 
       {isLoading ? (
-        <Loader message="Loading…" />
+        <Loader message={t('common.loading')} />
       ) : isError ? (
         <View className="items-center py-4">
           <Text className="text-sm mb-2" style={{ color: colors.textMuted }}>
-            Failed to load earnings
+            {t('profile.failedToLoadEarnings')}
           </Text>
-          <Button title="Retry" size="sm" variant="outline" onPress={() => refetch()} />
+          <Button title={t('common.retry')} size="sm" variant="outline" onPress={() => refetch()} />
         </View>
       ) : (
         <>
@@ -167,7 +170,9 @@ function EarningsSummaryCard() {
                 {formatCurrency(totalValue)}
               </Text>
               <Text className="text-[11px] mt-0.5" style={{ color: colors.textSecondary }}>
-                {isPartial ? `From last ${sampledCount} completed orders` : 'Completed order value'}
+                {isPartial
+                  ? t('profile.fromLastCompletedOrders', { count: sampledCount })
+                  : t('profile.completedOrderValue')}
               </Text>
             </View>
             <View className="flex-1 rounded-2xl p-3.5" style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
@@ -175,13 +180,12 @@ function EarningsSummaryCard() {
                 {completedCount}
               </Text>
               <Text className="text-[11px] mt-0.5" style={{ color: colors.textSecondary }}>
-                Completed Orders
+                {t('profile.completedOrders')}
               </Text>
             </View>
           </View>
           <Text className="text-[11px] mt-3" style={{ color: colors.textMuted }}>
-            Total value of orders you completed, not a payout or commission figure — talk to your
-            admin for actual payment/incentive amounts.
+            {t('profile.earningsDisclaimer')}
           </Text>
         </>
       )}
@@ -194,14 +198,15 @@ function EarningsSummaryCard() {
 // (app/services/staff/kyc_self_service.py). Previously KYC was entirely
 // admin-managed with no way for a tailor/Bridge account to see which docs
 // are missing or replace one themselves.
-const KYC_DOCS: { type: 'aadhar' | 'pan_card' | 'other'; label: string }[] = [
-  { type: 'aadhar', label: 'Aadhaar Card' },
-  { type: 'pan_card', label: 'PAN Card' },
-  { type: 'other', label: 'Other Document' },
+const KYC_DOCS: { type: 'aadhar' | 'pan_card' | 'other'; labelKey: string }[] = [
+  { type: 'aadhar', labelKey: 'profile.aadhaarCard' },
+  { type: 'pan_card', labelKey: 'profile.panCard' },
+  { type: 'other', labelKey: 'profile.otherDocument' },
 ];
 
 function KycStatusCard({ role }: { role: 'tailor' | 'employee' }) {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const { data: kyc, isLoading } = useMyKycStatus(role);
   const uploadMutation = useUploadMyKycMutation(role);
   const deleteMutation = useDeleteMyKycMutation(role);
@@ -213,7 +218,7 @@ function KycStatusCard({ role }: { role: 'tailor' | 'employee' }) {
   const pickAndUpload = async (type: 'aadhar' | 'pan_card' | 'other') => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      toast.error('Photo library permission is required');
+      toast.error(t('profile.photoPermissionRequired'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
@@ -237,7 +242,7 @@ function KycStatusCard({ role }: { role: 'tailor' | 'employee' }) {
   if (isLoading) {
     return (
       <Card className="mb-4">
-        <Loader message="Loading KYC status…" />
+        <Loader message={t('profile.loadingKyc')} />
       </Card>
     );
   }
@@ -246,16 +251,16 @@ function KycStatusCard({ role }: { role: 'tailor' | 'employee' }) {
     <Card className="mb-4">
       <View className="flex-row items-center justify-between mb-1">
         <Text className="text-lg font-bold" style={{ color: colors.text }}>
-          KYC Documents
+          {t('profile.kycDocuments')}
         </Text>
         <Badge
-          label={kyc?.is_approved ? 'Verified' : 'Pending verification'}
+          label={kyc?.is_approved ? t('profile.verified') : t('profile.pendingVerification')}
           backgroundColor={kyc?.is_approved ? '#dcfce7' : '#fef3c7'}
           color={kyc?.is_approved ? '#16a34a' : '#d97706'}
         />
       </View>
       <Text className="text-xs mb-3" style={{ color: colors.textSecondary }}>
-        Upload all 3 documents to become eligible for verification by your admin.
+        {t('profile.kycUploadHint')}
       </Text>
 
       {KYC_DOCS.map((doc) => {
@@ -279,10 +284,10 @@ function KycStatusCard({ role }: { role: 'tailor' | 'employee' }) {
             </View>
             <View className="flex-1">
               <Text className="text-sm font-semibold" style={{ color: colors.text }}>
-                {doc.label}
+                {t(doc.labelKey)}
               </Text>
               <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
-                {url ? 'Uploaded' : 'Not uploaded'}
+                {url ? t('profile.uploaded') : t('profile.notUploaded')}
               </Text>
             </View>
             {isBusy ? (
@@ -295,7 +300,7 @@ function KycStatusCard({ role }: { role: 'tailor' | 'employee' }) {
             {!isBusy ? (
               <Pressable onPress={() => pickAndUpload(doc.type)} hitSlop={8}>
                 <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
-                  {url ? 'Replace' : 'Upload'}
+                  {url ? t('profile.replace') : t('profile.upload')}
                 </Text>
               </Pressable>
             ) : null}
@@ -309,6 +314,7 @@ function KycStatusCard({ role }: { role: 'tailor' | 'employee' }) {
 // ─── Tailor-specific profile section ────────────────────────────────────────
 function TailorProfileSection() {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const { data: tailorProfile, isLoading } = useMyTailorProfile();
   const updateMutation = useUpdateMyTailorProfileMutation();
   const [isAvailable, setIsAvailable] = useState(true);
@@ -340,7 +346,7 @@ function TailorProfileSection() {
   if (isLoading) {
     return (
       <Card className="mb-4">
-        <Loader message="Loading tailoring profile…" />
+        <Loader message={t('profile.loadingTailoringProfile')} />
       </Card>
     );
   }
@@ -350,7 +356,7 @@ function TailorProfileSection() {
       <Card className="mb-4">
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-lg font-bold" style={{ color: colors.text }}>
-            Tailoring Profile
+            {t('profile.tailoringProfile')}
           </Text>
           {tailorProfile?.Rating != null ? (
             <View className="flex-row items-center">
@@ -366,45 +372,45 @@ function TailorProfileSection() {
           control={form.control}
           name="specialization"
           render={({ field: { onChange, value } }) => (
-            <Input label="Specialization" placeholder="e.g. Bridal wear, Sherwani" value={value} onChangeText={onChange} />
+            <Input label={t('profile.specialization')} placeholder={t('profile.specializationPlaceholder')} value={value} onChangeText={onChange} />
           )}
         />
         <Controller
           control={form.control}
           name="experience"
           render={({ field: { onChange, value } }) => (
-            <Input label="Experience (years)" keyboardType="number-pad" value={value} onChangeText={onChange} />
+            <Input label={t('profile.experienceYears')} keyboardType="number-pad" value={value} onChangeText={onChange} />
           )}
         />
         <Controller
           control={form.control}
           name="location"
           render={({ field: { onChange, value } }) => (
-            <Input label="Location" value={value} onChangeText={onChange} />
+            <Input label={t('profile.location')} value={value} onChangeText={onChange} />
           )}
         />
         <Controller
           control={form.control}
           name="bio"
           render={({ field: { onChange, value } }) => (
-            <Input label="Bio" multiline numberOfLines={3} value={value} onChangeText={onChange} />
+            <Input label={t('profile.bio')} multiline numberOfLines={3} value={value} onChangeText={onChange} />
           )}
         />
 
         <View className="flex-row items-center justify-between py-2 mb-3">
           <View>
             <Text className="text-sm font-semibold" style={{ color: colors.text }}>
-              Available for new orders
+              {t('profile.availableForOrders')}
             </Text>
             <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
-              Turn off if you're at capacity — separate from your online/broadcast status.
+              {t('profile.availableForOrdersHint')}
             </Text>
           </View>
           <Switch value={isAvailable} onValueChange={setIsAvailable} trackColor={{ true: colors.primary }} />
         </View>
 
         <Button
-          title="Save Changes"
+          title={t('profile.saveChanges')}
           onPress={form.handleSubmit(onSave)}
           loading={updateMutation.isPending}
           fullWidth
@@ -431,6 +437,7 @@ const MAX_PORTFOLIO_IMAGES = 12;
 
 function PortfolioSection({ images }: { images: string[] }) {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const uploadMutation = useUploadProfilePhotoMutation();
   const updateMutation = useUpdateMyTailorProfileMutation();
   const [removing, setRemoving] = useState<string | null>(null);
@@ -439,12 +446,12 @@ function PortfolioSection({ images }: { images: string[] }) {
 
   const pickAndAdd = async () => {
     if (atLimit) {
-      toast.error(`You can add up to ${MAX_PORTFOLIO_IMAGES} portfolio images`);
+      toast.error(t('profile.portfolioLimit', { count: MAX_PORTFOLIO_IMAGES }));
       return;
     }
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      toast.error('Photo library permission is required');
+      toast.error(t('profile.photoPermissionRequired'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
@@ -476,14 +483,14 @@ function PortfolioSection({ images }: { images: string[] }) {
     <Card className="mb-4">
       <View className="flex-row items-center justify-between mb-1">
         <Text className="text-lg font-bold" style={{ color: colors.text }}>
-          Portfolio
+          {t('profile.portfolio')}
         </Text>
         <Text className="text-xs" style={{ color: colors.textMuted }}>
           {images.length}/{MAX_PORTFOLIO_IMAGES}
         </Text>
       </View>
       <Text className="text-xs mb-3" style={{ color: colors.textSecondary }}>
-        Photos of your past work — shown to customers browsing tailors.
+        {t('profile.portfolioHint')}
       </Text>
 
       <View className="flex-row flex-wrap" style={{ gap: 8 }}>
@@ -534,6 +541,7 @@ function PortfolioSection({ images }: { images: string[] }) {
 // verification approval stays admin-only.
 function EmployeeProfileSection() {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const { data: bridgeProfile, isLoading } = useMyBridgeProfile();
   const updateMutation = useUpdateMyBridgeProfileMutation();
 
@@ -561,7 +569,7 @@ function EmployeeProfileSection() {
   if (isLoading) {
     return (
       <Card className="mb-4">
-        <Loader message="Loading work profile…" />
+        <Loader message={t('profile.loadingWorkProfile')} />
       </Card>
     );
   }
@@ -571,10 +579,10 @@ function EmployeeProfileSection() {
       <Card className="mb-4">
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-lg font-bold" style={{ color: colors.text }}>
-            Work Profile
+            {t('profile.workProfile')}
           </Text>
           <Badge
-            label={bridgeProfile?.is_approved ? 'Verified' : 'Pending verification'}
+            label={bridgeProfile?.is_approved ? t('profile.verified') : t('profile.pendingVerification')}
             backgroundColor={bridgeProfile?.is_approved ? '#dcfce7' : '#fef3c7'}
             color={bridgeProfile?.is_approved ? '#16a34a' : '#d97706'}
           />
@@ -584,40 +592,40 @@ function EmployeeProfileSection() {
           control={form.control}
           name="experienceYears"
           render={({ field: { onChange, value } }) => (
-            <Input label="Experience (years)" keyboardType="number-pad" value={value} onChangeText={onChange} />
+            <Input label={t('profile.experienceYears')} keyboardType="number-pad" value={value} onChangeText={onChange} />
           )}
         />
         <Controller
           control={form.control}
           name="bridgeType"
           render={({ field: { onChange, value } }) => (
-            <Input label="Bridge type" placeholder="e.g. full_time, freelancer" value={value} onChangeText={onChange} />
+            <Input label={t('profile.bridgeType')} placeholder={t('profile.bridgeTypePlaceholder')} value={value} onChangeText={onChange} />
           )}
         />
         <Controller
           control={form.control}
           name="assignedArea"
           render={({ field: { onChange, value } }) => (
-            <Input label="Assigned area" placeholder="e.g. Andheri West" value={value} onChangeText={onChange} />
+            <Input label={t('profile.assignedArea')} placeholder={t('profile.assignedAreaPlaceholder')} value={value} onChangeText={onChange} />
           )}
         />
         <Controller
           control={form.control}
           name="vehicleType"
           render={({ field: { onChange, value } }) => (
-            <Input label="Vehicle type" placeholder="e.g. Bike, Scooter" value={value} onChangeText={onChange} />
+            <Input label={t('profile.vehicleType')} placeholder={t('profile.vehicleTypePlaceholder')} value={value} onChangeText={onChange} />
           )}
         />
         <Controller
           control={form.control}
           name="workingShift"
           render={({ field: { onChange, value } }) => (
-            <Input label="Working shift" placeholder="e.g. 9:00 AM - 7:00 PM" value={value} onChangeText={onChange} />
+            <Input label={t('profile.workingShift')} placeholder={t('profile.workingShiftPlaceholder')} value={value} onChangeText={onChange} />
           )}
         />
 
         <Button
-          title="Save Changes"
+          title={t('profile.saveChanges')}
           onPress={form.handleSubmit(onSave)}
           loading={updateMutation.isPending}
           fullWidth
@@ -627,7 +635,7 @@ function EmployeeProfileSection() {
       <Card className="mb-4 flex-row items-start">
         <Ionicons name="information-circle-outline" size={18} color={colors.textSecondary} style={{ marginTop: 1 }} />
         <Text className="text-xs ml-2 flex-1" style={{ color: colors.textSecondary }}>
-          Joining date, max orders/day, and earnings are managed by your admin.
+          {t('profile.employeeManagedFieldsNote')}
         </Text>
       </Card>
 
@@ -640,6 +648,7 @@ function EmployeeProfileSection() {
 
 export default function ProfileScreen() {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const updateMutation = useUpdateProfileMutation();
@@ -653,7 +662,7 @@ export default function ProfileScreen() {
   const pickAndUploadPhoto = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      toast.error('Photo library permission is required');
+      toast.error(t('profile.photoPermissionRequired'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -667,7 +676,7 @@ export default function ProfileScreen() {
     uploadPhotoMutation.mutate(
       { uri: asset.uri, fileName: asset.fileName ?? undefined, mimeType: asset.mimeType ?? 'image/jpeg' },
       {
-        onSuccess: () => toast.success('Profile photo updated'),
+        onSuccess: () => toast.success(t('profile.photoUpdated')),
         onError: (error) => toast.error(getMutationError(error)),
       },
     );
@@ -686,7 +695,9 @@ export default function ProfileScreen() {
   const displayName =
     profile?.FullName?.trim() ||
     user?.full_name?.trim() ||
-    (roleLabel ? `${roleLabel.charAt(0).toUpperCase()}${roleLabel.slice(1)} Account` : 'Your Account');
+    (roleLabel
+      ? t('profile.roleAccount', { role: `${roleLabel.charAt(0).toUpperCase()}${roleLabel.slice(1)}` })
+      : t('profile.yourAccount'));
   const hasRealName = Boolean(profile?.FullName?.trim() || user?.full_name?.trim());
 
   const profileForm = useForm<ProfileForm>({
@@ -706,7 +717,7 @@ export default function ProfileScreen() {
     updateMutation.mutate(
       { FirstName: data.firstName, LastName: data.lastName },
       {
-        onSuccess: () => toast.success('Profile updated'),
+        onSuccess: () => toast.success(t('profile.profileUpdated')),
         onError: (error) => toast.error(getMutationError(error)),
       },
     );
@@ -717,7 +728,7 @@ export default function ProfileScreen() {
       { old_password: data.oldPassword, new_password: data.newPassword },
       {
         onSuccess: () => {
-          toast.success('Password changed successfully');
+          toast.success(t('profile.passwordChanged'));
           passwordForm.reset();
           setShowPasswordForm(false);
         },
@@ -728,7 +739,7 @@ export default function ProfileScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title="Profile" subtitle="Manage your account" />
+      <Header title={t('profile.title')} subtitle={t('profile.subtitle')} />
       <ScreenContent>
         {/* Hero card - avatar, name, role pill, quick-glance contact info.
             Bigger avatar + centered layout mirrors the "identity card" hero
@@ -769,7 +780,7 @@ export default function ProfileScreen() {
           </Text>
           {!hasRealName ? (
             <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
-              Add your name below
+              {t('profile.addYourNameBelow')}
             </Text>
           ) : null}
 
@@ -790,7 +801,7 @@ export default function ProfileScreen() {
             <View className="flex-row items-center justify-center">
               <Ionicons name="mail-outline" size={14} color={colors.textMuted} />
               <Text className="text-sm ml-1.5" style={{ color: colors.textSecondary }} numberOfLines={1}>
-                {profile?.Email ?? user?.email ?? 'No email set'}
+                {profile?.Email ?? user?.email ?? t('profile.noEmailSet')}
               </Text>
               {profile?.IsEmailVerified ? (
                 <Ionicons name="checkmark-circle" size={13} color={colors.success} style={{ marginLeft: 4 }} />
@@ -818,13 +829,13 @@ export default function ProfileScreen() {
             plain name-edit form below. */}
         <Card className="mb-4">
           <Text className="text-lg font-bold mb-1" style={{ color: colors.text }}>
-            Account & Security
+            {t('profile.accountAndSecurity')}
           </Text>
           <View className="divide-y" style={{ borderColor: colors.border }}>
             <View style={{ borderBottomWidth: 1, borderColor: colors.border }}>
               <SettingsRow
                 icon="mail-outline"
-                label="Email Address"
+                label={t('profile.emailAddress')}
                 value={profile?.Email ?? user?.email}
                 verified={profile?.IsEmailVerified}
                 onPress={() => setEmailSheetVisible(true)}
@@ -833,7 +844,7 @@ export default function ProfileScreen() {
             <View style={{ borderBottomWidth: 1, borderColor: colors.border }}>
               <SettingsRow
                 icon="call-outline"
-                label="Mobile Number"
+                label={t('profile.mobileNumber')}
                 value={profile?.Mobile ?? user?.mobile}
                 verified={profile?.IsMobileVerified}
                 onPress={() => setMobileSheetVisible(true)}
@@ -841,7 +852,7 @@ export default function ProfileScreen() {
             </View>
             <SettingsRow
               icon="lock-closed-outline"
-              label="Password"
+              label={t('profile.password')}
               value="••••••••"
               onPress={() => setShowPasswordForm((prev) => !prev)}
             />
@@ -853,25 +864,25 @@ export default function ProfileScreen() {
                 control={passwordForm.control}
                 name="oldPassword"
                 render={({ field: { onChange, value } }) => (
-                  <PasswordInput label="Current Password" value={value} onChangeText={onChange} />
+                  <PasswordInput label={t('profile.currentPassword')} value={value} onChangeText={onChange} />
                 )}
               />
               <Controller
                 control={passwordForm.control}
                 name="newPassword"
                 render={({ field: { onChange, value } }) => (
-                  <PasswordInput label="New Password" value={value} onChangeText={onChange} />
+                  <PasswordInput label={t('profile.newPassword')} value={value} onChangeText={onChange} />
                 )}
               />
               <Controller
                 control={passwordForm.control}
                 name="confirmPassword"
                 render={({ field: { onChange, value } }) => (
-                  <PasswordInput label="Confirm Password" value={value} onChangeText={onChange} />
+                  <PasswordInput label={t('profile.confirmPassword')} value={value} onChangeText={onChange} />
                 )}
               />
               <Button
-                title="Update Password"
+                title={t('profile.updatePassword')}
                 onPress={passwordForm.handleSubmit(onChangePassword)}
                 loading={passwordMutation.isPending}
                 fullWidth
@@ -882,24 +893,24 @@ export default function ProfileScreen() {
 
         <Card className="mb-4">
           <Text className="text-lg font-bold mb-4" style={{ color: colors.text }}>
-            Personal Details
+            {t('profile.personalDetails')}
           </Text>
           <Controller
             control={profileForm.control}
             name="firstName"
             render={({ field: { onChange, value } }) => (
-              <Input label="First Name" value={value} onChangeText={onChange} />
+              <Input label={t('profile.firstName')} value={value} onChangeText={onChange} />
             )}
           />
           <Controller
             control={profileForm.control}
             name="lastName"
             render={({ field: { onChange, value } }) => (
-              <Input label="Last Name" value={value} onChangeText={onChange} />
+              <Input label={t('profile.lastName')} value={value} onChangeText={onChange} />
             )}
           />
           <Button
-            title="Save Changes"
+            title={t('profile.saveChanges')}
             onPress={profileForm.handleSubmit(onUpdateProfile)}
             loading={updateMutation.isPending}
             fullWidth
@@ -907,7 +918,7 @@ export default function ProfileScreen() {
         </Card>
 
         <Button
-          title="Logout"
+          title={t('profile.logout')}
           variant="danger"
           onPress={() => logoutMutation.mutate()}
           loading={logoutMutation.isPending}
