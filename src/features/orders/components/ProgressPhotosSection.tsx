@@ -9,6 +9,7 @@ import {
   useOrderPhotos,
   useUploadProgressPhotoMutation,
 } from '@/features/orders/hooks/useProgressPhotos';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/store/toastStore';
 import type { OrderStatus } from '@/types/orders';
@@ -41,6 +42,7 @@ export const ProgressPhotosSection = ({
   isTailor,
 }: ProgressPhotosSectionProps) => {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const [expanded, setExpanded] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { data, isLoading, isError } = useOrderPhotos(orderId, expanded);
@@ -52,7 +54,7 @@ export const ProgressPhotosSection = ({
   const handlePickAndUpload = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      toast.error('Photo library permission is required to upload progress photos');
+      toast.error(t('progressPhotos.permissionRequired'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -87,7 +89,7 @@ export const ProgressPhotosSection = ({
         <View className="flex-row items-center gap-2">
           <Ionicons name="images-outline" size={18} color={colors.text} />
           <Text className="text-base font-semibold" style={{ color: colors.text }}>
-            Progress Photos
+            {t('progressPhotos.title')}
           </Text>
         </View>
         <Ionicons
@@ -100,14 +102,14 @@ export const ProgressPhotosSection = ({
       {expanded ? (
         <View className="mt-4">
           {isLoading ? (
-            <Loader message="Loading photos..." />
+            <Loader message={t('progressPhotos.loadingPhotos')} />
           ) : isError ? (
             <Text className="text-sm py-2" style={{ color: colors.textSecondary }}>
-              Could not load progress photos.
+              {t('progressPhotos.couldNotLoad')}
             </Text>
           ) : photos.length === 0 ? (
             <Text className="text-sm py-2" style={{ color: colors.textSecondary }}>
-              No progress photos uploaded yet.
+              {t('progressPhotos.noPhotosYet')}
             </Text>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1 mb-2">
@@ -136,7 +138,7 @@ export const ProgressPhotosSection = ({
 
           {canUpload ? (
             <Button
-              title="Upload Photo"
+              title={t('progressPhotos.uploadPhoto')}
               variant="outline"
               onPress={handlePickAndUpload}
               loading={uploadMutation.isPending}
@@ -146,7 +148,7 @@ export const ProgressPhotosSection = ({
         </View>
       ) : null}
 
-      <Modal visible={!!previewUrl} onClose={() => setPreviewUrl(null)} title="Progress Photo">
+      <Modal visible={!!previewUrl} onClose={() => setPreviewUrl(null)} title={t('progressPhotos.modalTitle')}>
         {previewUrl ? (
           <Image
             source={{ uri: previewUrl }}

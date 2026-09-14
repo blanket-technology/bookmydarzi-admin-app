@@ -271,5 +271,70 @@
     "accepting": "Accepting…",
     "acceptPickup": "Accept Pickup",
     "acceptDelivery": "Accept Delivery"
+  },
+  "progressPhotos": {
+    "title": "Progress Photos",
+    "permissionRequired": "Photo library permission is required to upload progress photos",
+    "loadingPhotos": "Loading photos...",
+    "couldNotLoad": "Could not load progress photos.",
+    "noPhotosYet": "No progress photos uploaded yet.",
+    "uploadPhoto": "Upload Photo",
+    "modalTitle": "Progress Photo"
+  },
+  "assignTailor": {
+    "title": "Assign Tailor",
+    "noAvailable": "No available tailors",
+    "noAvailableBody": "Every tailor is currently busy. Try again shortly or reassign once someone frees up.",
+    "available": "Available"
+  },
+  "schedulePickup": {
+    "title": "Schedule Pickup",
+    "instant": "Instant",
+    "scheduled": "Scheduled",
+    "pickupDate": "Pickup date",
+    "timeSlot": "Time slot"
+  },
+  "rejectOrder": {
+    "title": "Reject Order",
+    "reasonOptional": "Reason (optional)"
+  },
+  "cancelOrder": {
+    "title": "Cancel Order",
+    "reason": "Reason"
+  },
+  "collectPayment": {
+    "title": "Collect COD Payment",
+    "cash": "Cash",
+    "qr": "QR",
+    "amountCollected": "Amount Collected",
+    "scanQrHint": "Ask the customer to scan this QR with any UPI app",
+    "enterAmountHint": "Enter an amount above to generate the QR code.",
+    "confirmCollection": "Confirm Collection"
+  },
+  "correctStatus": {
+    "title": "Correct Status"
+  },
+  "paymentDetails": {
+    "copied": "{{label}} copied",
+    "title": "Payment Details",
+    "loadingPayment": "Loading payment...",
+    "noPaymentRecord": "No payment record found for this order yet.",
+    "checkoutNeverCompleted": "Checkout was never completed.",
+    "checkoutNeverCompletedBody": "The customer opened Razorpay checkout but no payment ID came back — they likely abandoned it or it failed silently. Consider resending a payment link.",
+    "paymentCode": "Payment Code",
+    "type": "Type",
+    "method": "Method",
+    "razorpayReferences": "Razorpay References",
+    "orderId": "Order ID",
+    "paymentId": "Payment ID",
+    "transactionId": "Transaction ID",
+    "failureReason": "Failure Reason",
+    "refundHistory": "Refund History",
+    "issueRefund": "Issue Refund",
+    "correctPaymentStatus": "Correct Payment Status",
+    "transactionIdRequired": "Transaction ID (required for Success)",
+    "failureReasonUsed": "Failure Reason (used when marking Failed)",
+    "amountBlankForFull": "Amount (leave blank for full refund)",
+    "confirmRefund": "Confirm Refund"
   }
 }

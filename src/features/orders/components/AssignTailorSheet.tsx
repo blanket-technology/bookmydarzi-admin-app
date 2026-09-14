@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Text } from 'react-native';
 import { BottomSheet, EmptyState, Pressable } from '@/components/ui';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 
 /** Structurally compatible with both AdminTailorListItem and
@@ -26,6 +27,7 @@ export const AssignTailorSheet = ({
   onAssign: (tailorId: string) => void;
 }) => {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
 
   // Only offer tailors currently marked available - the backend list
   // endpoints (GET /admin/tailors, GET /employee/tailors) don't yet accept
@@ -39,12 +41,12 @@ export const AssignTailorSheet = ({
   );
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Assign Tailor">
+    <BottomSheet visible={visible} onClose={onClose} title={t('assignTailor.title')}>
       {availableTailors.length === 0 ? (
         <EmptyState
           icon="cut-outline"
-          title="No available tailors"
-          description="Every tailor is currently busy. Try again shortly or reassign once someone frees up."
+          title={t('assignTailor.noAvailable')}
+          description={t('assignTailor.noAvailableBody')}
         />
       ) : (
         availableTailors.map((tailor) => (
@@ -53,7 +55,7 @@ export const AssignTailorSheet = ({
               {tailor.full_name}
             </Text>
             <Text className="text-sm" style={{ color: colors.textSecondary }}>
-              {tailor.specialization} · Available
+              {tailor.specialization} · {t('assignTailor.available')}
             </Text>
           </Pressable>
         ))

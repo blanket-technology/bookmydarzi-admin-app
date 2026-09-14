@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BottomSheet, Button, Input } from '@/components/ui';
 import { useRejectOrderMutation } from '@/features/orders/hooks/useOrders';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 
 export const RejectOrderSheet = ({
   visible,
@@ -11,6 +12,7 @@ export const RejectOrderSheet = ({
   onClose: () => void;
   orderId: string;
 }) => {
+  const { t } = useAppLanguage();
   const [reason, setReason] = useState('');
   const rejectMutation = useRejectOrderMutation();
 
@@ -22,9 +24,9 @@ export const RejectOrderSheet = ({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Reject Order">
-      <Input label="Reason (optional)" value={reason} onChangeText={setReason} multiline />
-      <Button title="Reject Order" variant="danger" onPress={handleReject} loading={rejectMutation.isPending} fullWidth />
+    <BottomSheet visible={visible} onClose={onClose} title={t('rejectOrder.title')}>
+      <Input label={t('rejectOrder.reasonOptional')} value={reason} onChangeText={setReason} multiline />
+      <Button title={t('rejectOrder.title')} variant="danger" onPress={handleReject} loading={rejectMutation.isPending} fullWidth />
     </BottomSheet>
   );
 };

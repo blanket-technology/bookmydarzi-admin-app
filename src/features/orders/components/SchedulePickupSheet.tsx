@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { BottomSheet, Button, DateField, Pressable } from '@/components/ui';
 import { useSchedulePickupMutation } from '@/features/orders/hooks/useOrders';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 
 // Mirrors bookmydarzi-web-final/lib/pickupPrefs.ts's buildPickupTimeSlots -
@@ -45,6 +46,7 @@ export const SchedulePickupSheet = ({
   orderId: string;
 }) => {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const [mode, setMode] = useState<'instant' | 'scheduled'>('instant');
   const [date, setDate] = useState<string | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export const SchedulePickupSheet = ({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Schedule Pickup">
+    <BottomSheet visible={visible} onClose={onClose} title={t('schedulePickup.title')}>
       <View className="flex-row mb-4" style={{ gap: 8 }}>
         {(['instant', 'scheduled'] as const).map((m) => {
           const active = mode === m;
@@ -101,7 +103,7 @@ export const SchedulePickupSheet = ({
                 className="text-sm font-semibold capitalize"
                 style={{ color: active ? colors.primary : colors.textSecondary }}
               >
-                {m}
+                {m === 'instant' ? t('schedulePickup.instant') : t('schedulePickup.scheduled')}
               </Text>
             </Pressable>
           );
@@ -110,9 +112,9 @@ export const SchedulePickupSheet = ({
 
       {mode === 'scheduled' ? (
         <>
-          <DateField label="Pickup date" value={date} onChange={setDate} minimumDate={today} />
+          <DateField label={t('schedulePickup.pickupDate')} value={date} onChange={setDate} minimumDate={today} />
           <Text className="text-sm font-medium mb-2" style={{ color: colors.textSecondary }}>
-            Time slot
+            {t('schedulePickup.timeSlot')}
           </Text>
           <ScrollView style={{ maxHeight: 220 }} className="mb-4">
             <View className="flex-row flex-wrap" style={{ gap: 8 }}>
@@ -141,7 +143,7 @@ export const SchedulePickupSheet = ({
       ) : null}
 
       <Button
-        title="Schedule Pickup"
+        title={t('schedulePickup.title')}
         onPress={handleSubmit}
         loading={mutation.isPending}
         disabled={!canSubmit}

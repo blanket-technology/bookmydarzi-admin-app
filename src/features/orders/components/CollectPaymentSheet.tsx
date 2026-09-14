@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Image, Text, View, useWindowDimensions } from 'react-native';
 import { BottomSheet, Button, Input, Pressable } from '@/components/ui';
 import { useCollectPaymentMutation } from '@/features/orders/hooks/useOrders';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 
 // Same merchant UPI VPA the customer app's balance-payment QR uses
@@ -33,6 +34,7 @@ export const CollectPaymentSheet = ({
   orderCode?: string | null;
 }) => {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const { width: screenWidth } = useWindowDimensions();
   const [method, setMethod] = useState<'qr' | 'cash'>('cash');
   const [amount, setAmount] = useState('');
@@ -48,7 +50,7 @@ export const CollectPaymentSheet = ({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Collect COD Payment">
+    <BottomSheet visible={visible} onClose={onClose} title={t('collectPayment.title')}>
       <View className="flex-row gap-3 mb-4">
         <Pressable
           onPress={() => setMethod('cash')}
@@ -58,7 +60,7 @@ export const CollectPaymentSheet = ({
             backgroundColor: method === 'cash' ? `${colors.primary}15` : colors.surface,
           }}
         >
-          <Text style={{ color: colors.text }}>Cash</Text>
+          <Text style={{ color: colors.text }}>{t('collectPayment.cash')}</Text>
         </Pressable>
         <Pressable
           onPress={() => setMethod('qr')}
@@ -68,15 +70,15 @@ export const CollectPaymentSheet = ({
             backgroundColor: method === 'qr' ? `${colors.primary}15` : colors.surface,
           }}
         >
-          <Text style={{ color: colors.text }}>QR</Text>
+          <Text style={{ color: colors.text }}>{t('collectPayment.qr')}</Text>
         </Pressable>
       </View>
-      <Input label="Amount Collected" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" />
+      <Input label={t('collectPayment.amountCollected')} value={amount} onChangeText={setAmount} keyboardType="decimal-pad" />
       {method === 'qr' ? (
         Number(amount) > 0 ? (
           <View className="items-center mb-4">
             <Text className="text-xs mb-2 text-center" style={{ color: colors.textSecondary }}>
-              Ask the customer to scan this QR with any UPI app
+              {t('collectPayment.scanQrHint')}
             </Text>
             <View className="rounded-2xl overflow-hidden border p-2" style={{ borderColor: colors.border, backgroundColor: '#fff' }}>
               <Image
@@ -93,11 +95,11 @@ export const CollectPaymentSheet = ({
           </View>
         ) : (
           <Text className="text-xs mb-4" style={{ color: colors.textMuted }}>
-            Enter an amount above to generate the QR code.
+            {t('collectPayment.enterAmountHint')}
           </Text>
         )
       ) : null}
-      <Button title="Confirm Collection" onPress={handleCollect} loading={collectPaymentMutation.isPending} disabled={!amount || Number(amount) <= 0} fullWidth />
+      <Button title={t('collectPayment.confirmCollection')} onPress={handleCollect} loading={collectPaymentMutation.isPending} disabled={!amount || Number(amount) <= 0} fullWidth />
     </BottomSheet>
   );
 };

@@ -271,5 +271,70 @@
     "accepting": "स्वीकार किया जा रहा है…",
     "acceptPickup": "पिकअप स्वीकार करें",
     "acceptDelivery": "डिलीवरी स्वीकार करें"
+  },
+  "progressPhotos": {
+    "title": "प्रगति फोटो",
+    "permissionRequired": "प्रगति फोटो अपलोड करने के लिए फोटो लाइब्रेरी की अनुमति ज़रूरी है",
+    "loadingPhotos": "फोटो लोड हो रही हैं...",
+    "couldNotLoad": "प्रगति फोटो लोड नहीं हो सकीं।",
+    "noPhotosYet": "अभी तक कोई प्रगति फोटो अपलोड नहीं हुई।",
+    "uploadPhoto": "फोटो अपलोड करें",
+    "modalTitle": "प्रगति फोटो"
+  },
+  "assignTailor": {
+    "title": "दर्जी असाइन करें",
+    "noAvailable": "कोई दर्जी उपलब्ध नहीं",
+    "noAvailableBody": "सभी दर्जी अभी व्यस्त हैं। थोड़ी देर बाद फिर कोशिश करें या कोई खाली होने पर फिर से असाइन करें।",
+    "available": "उपलब्ध"
+  },
+  "schedulePickup": {
+    "title": "पिकअप शेड्यूल करें",
+    "instant": "तुरंत",
+    "scheduled": "शेड्यूल किया गया",
+    "pickupDate": "पिकअप तिथि",
+    "timeSlot": "समय स्लॉट"
+  },
+  "rejectOrder": {
+    "title": "ऑर्डर अस्वीकार करें",
+    "reasonOptional": "कारण (वैकल्पिक)"
+  },
+  "cancelOrder": {
+    "title": "ऑर्डर रद्द करें",
+    "reason": "कारण"
+  },
+  "collectPayment": {
+    "title": "COD भुगतान लें",
+    "cash": "नकद",
+    "qr": "QR",
+    "amountCollected": "ली गई राशि",
+    "scanQrHint": "ग्राहक से किसी भी UPI ऐप से यह QR स्कैन करने के लिए कहें",
+    "enterAmountHint": "QR कोड बनाने के लिए ऊपर राशि दर्ज करें।",
+    "confirmCollection": "भुगतान की पुष्टि करें"
+  },
+  "correctStatus": {
+    "title": "स्थिति सुधारें"
+  },
+  "paymentDetails": {
+    "copied": "{{label}} कॉपी हो गया",
+    "title": "भुगतान विवरण",
+    "loadingPayment": "भुगतान लोड हो रहा है...",
+    "noPaymentRecord": "इस ऑर्डर के लिए अभी तक कोई भुगतान रिकॉर्ड नहीं मिला।",
+    "checkoutNeverCompleted": "चेकआउट कभी पूरा नहीं हुआ।",
+    "checkoutNeverCompletedBody": "ग्राहक ने Razorpay चेकआउट खोला था लेकिन कोई पेमेंट ID नहीं आई — शायद उन्होंने इसे छोड़ दिया या यह चुपचाप फेल हो गया। पेमेंट लिंक फिर से भेजने पर विचार करें।",
+    "paymentCode": "पेमेंट कोड",
+    "type": "प्रकार",
+    "method": "तरीका",
+    "razorpayReferences": "Razorpay संदर्भ",
+    "orderId": "ऑर्डर ID",
+    "paymentId": "पेमेंट ID",
+    "transactionId": "ट्रांज़ैक्शन ID",
+    "failureReason": "विफलता का कारण",
+    "refundHistory": "रिफंड इतिहास",
+    "issueRefund": "रिफंड जारी करें",
+    "correctPaymentStatus": "भुगतान स्थिति सुधारें",
+    "transactionIdRequired": "ट्रांज़ैक्शन ID (Success के लिए ज़रूरी)",
+    "failureReasonUsed": "विफलता का कारण (Failed मार्क करते समय उपयोग होता है)",
+    "amountBlankForFull": "राशि (पूरे रिफंड के लिए खाली छोड़ें)",
+    "confirmRefund": "रिफंड की पुष्टि करें"
   }
 }
