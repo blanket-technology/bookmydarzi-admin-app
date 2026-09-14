@@ -23,6 +23,10 @@ export const ORDER_STATUS = {
   DELIVERED: 'delivered',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
+  RETURN_PENDING: 'return_pending',
+  RETURN_SCHEDULED: 'return_scheduled',
+  RETURN_IN_TRANSIT: 'return_in_transit',
+  RETURNED: 'returned',
 } as const satisfies Record<string, OrderStatus>;
 
 export const ORDER_STATUS_ALL: OrderStatus[] = Object.values(ORDER_STATUS);
@@ -48,6 +52,10 @@ export const ORDER_STATUS_DISPLAY_LABELS: Record<string, string> = {
   delivered: 'Delivered',
   completed: 'Completed',
   cancelled: 'Cancelled',
+  return_pending: 'Return Pending',
+  return_scheduled: 'Return Scheduled',
+  return_in_transit: 'Return In Transit',
+  returned: 'Returned',
 };
 
 export const ORDER_STATUS_COLORS: Record<string, string> = {
@@ -71,6 +79,10 @@ export const ORDER_STATUS_COLORS: Record<string, string> = {
   delivered: '#22c55e',
   completed: '#10b981',
   cancelled: '#ef4444',
+  return_pending: '#f59e0b',
+  return_scheduled: '#3b82f6',
+  return_in_transit: '#6366f1',
+  returned: '#10b981',
 };
 
 // Filter-chip options for order list screens ("All" + every real status).

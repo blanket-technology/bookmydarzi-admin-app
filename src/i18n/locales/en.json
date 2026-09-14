@@ -73,7 +73,11 @@
     "out_for_delivery": "Out for Delivery",
     "delivered": "Delivered",
     "completed": "Completed",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "return_pending": "Return Pending",
+    "return_scheduled": "Return Scheduled",
+    "return_in_transit": "Return In Transit",
+    "returned": "Returned"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -421,6 +425,21 @@
     "toggleOnlineHint": "Toggle online above to start receiving nearby delivery offers.",
     "newOffersWillAppear": "New delivery offers near you will appear here.",
     "declineOfferMessage": "Decline this delivery offer? It will be sent to the next available Bridge employee."
+  },
+  "returns": {
+    "title": "Returns",
+    "returnOrder": "Return Pickup",
+    "pickupTailor": "Pickup — tailor",
+    "locationNotAvailable": "Location not available",
+    "dropCustomer": "Drop — customer",
+    "willReceiveOffers": "You will receive nearby return-pickup offers.",
+    "goOnlineHint": "Go online to start receiving return-pickup offers.",
+    "toggleOnlineHint": "Toggle online above to start receiving nearby return-pickup offers.",
+    "newOffersWillAppear": "New return-pickup offers near you will appear here.",
+    "declineOfferMessage": "Decline this return offer? It will be sent to the next available Bridge employee.",
+    "markInTransit": "Mark In Transit",
+    "markComplete": "Mark Returned",
+    "acceptedBanner": "You've accepted this return. Pick up the item from the tailor, then mark it in transit."
   },
   "notifications": {
     "justNow": "Just now",

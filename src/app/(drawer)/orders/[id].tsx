@@ -16,6 +16,7 @@ import {
 import { useOrderActions, type OrderAction } from '@/features/orders/hooks/useOrderActions';
 import { usePickupBroadcastOffers, useAcceptPickupBroadcastMutation } from '@/features/pickups/hooks/usePickups';
 import { useDeliveryBroadcastOffers, useAcceptDeliveryBroadcastMutation } from '@/features/deliveries/hooks/useDeliveries';
+import { useMarkReturnInTransitMutation, useMarkReturnCompleteMutation } from '@/features/returns/hooks/useReturns';
 import { MeasurementManageSheet } from '@/features/orders/components/MeasurementManageSheet';
 import { AddOrderAddonSheet } from '@/features/orders/components/AddOrderAddonSheet';
 import { ProgressPhotosSection } from '@/features/orders/components/ProgressPhotosSection';
@@ -116,6 +117,15 @@ export default function OrderDetailsScreen() {
   const statusMutation = useUpdateOrderStatusMutation();
   const triggerBroadcastMutation = useTriggerBroadcastMutation();
   const downloadInvoiceMutation = useDownloadInvoiceMutation();
+  const markReturnInTransitMutation = useMarkReturnInTransitMutation();
+  const markReturnCompleteMutation = useMarkReturnCompleteMutation();
+
+  // Return leg (post-cancellation reverse trip) - only meaningful once THIS
+  // employee has accepted the order's return broadcast (return_employee_id
+  // set). RETURN_PENDING (not yet accepted by anyone) is handled by the
+  // banner below instead, pointing at the Returns queue.
+  const isMyReturn =
+    isEmployeeRole && !!order?.return_employee_id && String(order.return_employee_id) === String(user?.id ?? '');
 
   // Tailor-assignment broadcast tracker - only meaningful to admins who manage
   // tailor search. Hidden from Bridge/employee, whose job is pickup/delivery,
@@ -310,6 +320,59 @@ export default function OrderDetailsScreen() {
                   {t('orderDetail.goToDeliveries')}
                 </Text>
               </Pressable>
+            </View>
+          </View>
+        ) : null}
+
+        {isEmployeeRole && order.status === ORDER_STATUS.RETURN_PENDING ? (
+          <View
+            className="mb-4 flex-row items-start rounded-3xl p-4"
+            style={{ backgroundColor: colors.primaryLight }}
+          >
+            <Ionicons name="return-up-back-outline" size={18} color={colors.primary} style={{ marginTop: 1 }} />
+            <View className="ml-2.5 flex-1">
+              <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+                {t('returns.returnOrder')}
+              </Text>
+              <Text className="text-xs mt-0.5" style={{ color: colors.textSecondary }}>
+                {t('returns.willReceiveOffers')}
+              </Text>
+              <Pressable onPress={() => router.push('/(drawer)/returns' as never)} className="mt-2">
+                <Text className="text-xs font-bold" style={{ color: colors.primary }}>
+                  {t('returns.title')}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
+        {isMyReturn && (order.status === ORDER_STATUS.RETURN_SCHEDULED || order.status === ORDER_STATUS.RETURN_IN_TRANSIT) ? (
+          <View
+            className="mb-4 rounded-3xl p-4"
+            style={{ backgroundColor: colors.primaryLight }}
+          >
+            <View className="flex-row items-start">
+              <Ionicons name="return-up-back-outline" size={18} color={colors.primary} style={{ marginTop: 1 }} />
+              <Text className="text-sm font-semibold ml-2.5 flex-1" style={{ color: colors.text }}>
+                {t('returns.acceptedBanner')}
+              </Text>
+            </View>
+            <View className="flex-row mt-3" style={{ gap: 10 }}>
+              {order.status === ORDER_STATUS.RETURN_SCHEDULED ? (
+                <Button
+                  title={t('returns.markInTransit')}
+                  onPress={() => markReturnInTransitMutation.mutate(order.order_id)}
+                  loading={markReturnInTransitMutation.isPending}
+                  fullWidth
+                />
+              ) : (
+                <Button
+                  title={t('returns.markComplete')}
+                  onPress={() => markReturnCompleteMutation.mutate(order.order_id)}
+                  loading={markReturnCompleteMutation.isPending}
+                  fullWidth
+                />
+              )}
             </View>
           </View>
         ) : null}

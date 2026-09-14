@@ -62,6 +62,7 @@ function normalizeOrderResponse(item: MyOrderItem): AdminOrderItem {
     customization_notes: item.CustomizationNotes ?? null,
     cloth_details: item.ClothDetails ?? null,
     assigned_employee_id: item.AssignedEmployeeId != null ? String(item.AssignedEmployeeId) : undefined,
+    return_employee_id: item.ReturnEmployeeId != null ? String(item.ReturnEmployeeId) : undefined,
     measurement: item.measurement ? { ...item.measurement, id: String(item.measurement.id) } : null,
     needs_manual_assignment: item.NeedsManualAssignment ?? false,
     broadcast_exhausted_at: item.BroadcastExhaustedAt ?? null,

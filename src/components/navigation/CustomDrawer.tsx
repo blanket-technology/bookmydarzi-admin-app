@@ -8,6 +8,7 @@ import type { AppPermissions } from '@/constants/permissions';
 import { useBroadcastOffers } from '@/features/broadcasts/hooks/useBroadcasts';
 import { useDeliveryBroadcastOffers } from '@/features/deliveries/hooks/useDeliveries';
 import { usePickupBroadcastOffers } from '@/features/pickups/hooks/usePickups';
+import { useReturnBroadcastOffers } from '@/features/returns/hooks/useReturns';
 import { useLogoutMutation } from '@/features/auth/hooks/useAuthMutations';
 import { useUnreadNotificationCount } from '@/features/notifications/hooks/useNotifications';
 import { usePendingChatCount } from '@/features/chat/hooks/useChat';
@@ -31,6 +32,7 @@ const MENU_ITEMS: {
   { label: 'Broadcasts', icon: 'radio-outline', route: '/(drawer)/broadcasts', permission: 'broadcasts' },
   { label: 'Pickups', icon: 'cube-outline', route: '/(drawer)/pickups', permission: 'deliveries' },
   { label: 'Deliveries', icon: 'bicycle-outline', route: '/(drawer)/deliveries', permission: 'deliveries' },
+  { label: 'Returns', icon: 'return-up-back-outline', route: '/(drawer)/returns', permission: 'deliveries' },
   { label: 'Leave', icon: 'calendar-outline', route: '/(drawer)/leave', permission: 'leave' },
   { label: 'Customers', icon: 'people-outline', route: '/(drawer)/customers', permission: 'users' },
   { label: 'Tailors', icon: 'cut-outline', route: '/(drawer)/tailors', permission: 'tailors' },
@@ -105,6 +107,9 @@ export const CustomDrawer = (props: DrawerContentComponentProps) => {
   const { data: pickupBroadcastsData } = usePickupBroadcastOffers(
     isAuthenticated && permissions.deliveries,
   );
+  const { data: returnBroadcastsData } = useReturnBroadcastOffers(
+    isAuthenticated && permissions.deliveries,
+  );
 
   const visibleItems = MENU_ITEMS.filter((item) => permissions[item.permission]);
 
@@ -170,7 +175,9 @@ export const CustomDrawer = (props: DrawerContentComponentProps) => {
                       ? pickupBroadcastsData?.total
                       : item.route === '/(drawer)/deliveries'
                         ? deliveryBroadcastsData?.total
-                        : undefined
+                        : item.route === '/(drawer)/returns'
+                          ? returnBroadcastsData?.total
+                          : undefined
             }
           />
         ))}

@@ -118,6 +118,14 @@ export const ENDPOINTS = {
       `/api/v1/employee/orders/${orderId}/pickup-broadcast/accept`,
     PICKUP_BROADCAST_DECLINE: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/pickup-broadcast/decline`,
+    // Return broadcast (post-cancellation reverse trip), mirrors delivery.
+    RETURN_BROADCASTS: '/api/v1/employee/return-broadcasts',
+    RETURN_BROADCAST_ACCEPT: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/return-broadcast/accept`,
+    RETURN_BROADCAST_DECLINE: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/return-broadcast/decline`,
+    RETURN_IN_TRANSIT: (orderId: string) => `/api/v1/employee/orders/${orderId}/return/in-transit`,
+    RETURN_COMPLETE: (orderId: string) => `/api/v1/employee/orders/${orderId}/return/complete`,
     MY_BRIDGE_PROFILE: '/api/v1/employee/me/bridge-profile',
     MY_KYC: '/api/v1/employee/me/kyc',
   },

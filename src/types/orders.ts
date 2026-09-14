@@ -19,7 +19,11 @@ export type OrderStatus =
   | 'out_for_delivery'
   | 'delivered'
   | 'completed'
-  | 'cancelled';
+  | 'cancelled'
+  | 'return_pending'
+  | 'return_scheduled'
+  | 'return_in_transit'
+  | 'returned';
 
 // Mirrors app/schemas/measurement.py MeasurementResponseSchema — the same
 // fields AdminOrderMeasurementRequest below can edit, but this is what's
@@ -103,6 +107,9 @@ export interface AdminOrderItem {
   customization_notes?: string | null;
   cloth_details?: string | null;
   assigned_employee_id?: string;
+  /** Return-leg employee (post-cancellation reverse trip) - only set once an
+   * employee has accepted the order's return broadcast. */
+  return_employee_id?: string;
   measurement?: OrderMeasurement | null;
   /** True when the tailor broadcast exhausted every round (including the
    * all-tailor fallback) with zero acceptance - needs manual assignment. */
@@ -196,6 +203,7 @@ export interface MyOrderItem {
   CustomizationNotes?: string | null;
   ClothDetails?: string | null;
   AssignedEmployeeId?: number | null;
+  ReturnEmployeeId?: number | null;
   Items?: RawOrderItemSummary[] | null;
 }
 
