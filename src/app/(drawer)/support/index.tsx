@@ -6,6 +6,7 @@ import { Badge, EmptyState, FilterSheet, Header, Pagination, Pressable, SearchBa
 import { useChatSessions, useMyAgentStatus, useSetAgentStatusMutation } from '@/features/chat/hooks/useChat';
 import { useSupportTickets } from '@/features/support/hooks/useSupportTickets';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -19,23 +20,23 @@ import { formatApiErrorDetail, formatDate } from '@/utils/errors';
 // the same customer base. Both underlying systems/backends are unchanged;
 // this is a navigation/presentation merge only.
 
-const CHAT_STATUS_OPTIONS: { label: string; value: string }[] = [
-  { label: 'All', value: '' },
-  { label: 'Waiting for Agent', value: 'pending_human' },
-  { label: 'Assigned', value: 'assigned' },
-  { label: 'AI Handling', value: 'ai_handling' },
-  { label: 'Open', value: 'open' },
-  { label: 'Resolved', value: 'resolved' },
-  { label: 'Closed', value: 'closed' },
+const CHAT_STATUS_OPTIONS: { labelKey: string; value: string }[] = [
+  { labelKey: 'common.all', value: '' },
+  { labelKey: 'support.waitingForAgent', value: 'pending_human' },
+  { labelKey: 'support.assigned', value: 'assigned' },
+  { labelKey: 'support.aiHandling', value: 'ai_handling' },
+  { labelKey: 'support.open', value: 'open' },
+  { labelKey: 'support.resolved', value: 'resolved' },
+  { labelKey: 'support.closed', value: 'closed' },
 ];
 
-const CHAT_STATUS_LABELS: Record<ChatSessionStatus, string> = {
-  open: 'Open',
-  ai_handling: 'AI Handling',
-  pending_human: 'Waiting for Agent',
-  assigned: 'Assigned',
-  resolved: 'Resolved',
-  closed: 'Closed',
+const CHAT_STATUS_LABEL_KEYS: Record<ChatSessionStatus, string> = {
+  open: 'support.open',
+  ai_handling: 'support.aiHandling',
+  pending_human: 'support.waitingForAgent',
+  assigned: 'support.assigned',
+  resolved: 'support.resolved',
+  closed: 'support.closed',
 };
 
 const CHAT_STATUS_COLORS: Record<ChatSessionStatus, string> = {
@@ -51,6 +52,7 @@ const PAGE_SIZE = 20;
 
 function ConversationsTab() {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const { contentMaxWidth } = useResponsive();
   const { user } = useAuth();
   const [status, setStatus] = useState('');
@@ -107,7 +109,7 @@ function ConversationsTab() {
           <View className="flex-1">
             <View className="flex-row items-center gap-2">
               <Text className="font-bold text-base" style={{ color: colors.text }}>
-                {item.customer_name ?? `Customer #${item.user_id}`}
+                {item.customer_name ?? t('support.customerHash', { id: item.user_id })}
               </Text>
               {!!item.unread_count && (
                 <View
@@ -121,23 +123,23 @@ function ConversationsTab() {
               )}
             </View>
             <Text className="text-sm mt-1" style={{ color: colors.textSecondary }}>
-              {item.order_id ? (item.order_code ?? `Order #${item.order_id}`) : 'General support'}
+              {item.order_id ? (item.order_code ?? t('pickups.orderHash', { id: item.order_id })) : t('support.generalSupport')}
             </Text>
             {item.assigned_agent_id ? (
               <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
-                Assigned to agent #{item.assigned_agent_id}
+                {t('support.assignedToAgent', { id: item.assigned_agent_id })}
               </Text>
             ) : null}
           </View>
           <Badge
-            label={CHAT_STATUS_LABELS[item.status] ?? item.status}
+            label={CHAT_STATUS_LABEL_KEYS[item.status] ? t(CHAT_STATUS_LABEL_KEYS[item.status]) : item.status}
             backgroundColor={`${statusColor}20`}
             color={statusColor}
           />
         </View>
         <View className="flex-row items-center justify-between mt-3 pt-3 border-t" style={{ borderColor: colors.border }}>
           <Text className="text-xs" style={{ color: colors.textMuted }}>
-            {item.ai_handled ? 'AI assisted' : 'Human conversation'}
+            {item.ai_handled ? t('support.aiAssisted') : t('support.humanConversation')}
           </Text>
           <Text className="text-xs" style={{ color: colors.textMuted }}>
             {formatDate(item.last_message_at ?? item.created_at ?? undefined)}
@@ -159,14 +161,14 @@ function ConversationsTab() {
         </Pressable>
       </View>
       <View className="px-5 flex-1 mt-2 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
-        <SearchBar value={search} onChangeText={setSearch} placeholder="Search by customer or order..." />
+        <SearchBar value={search} onChangeText={setSearch} placeholder={t('support.searchConversationsPlaceholder')} />
         {isLoading ? (
           <SkeletonList count={5} />
         ) : isError ? (
           <EmptyState
-            title="Failed to load conversations"
+            title={t('support.failedToLoadConversations')}
             description={formatApiErrorDetail(error)}
-            actionLabel="Retry"
+            actionLabel={t('common.retry')}
             onAction={() => refetch()}
           />
         ) : (
@@ -181,8 +183,8 @@ function ConversationsTab() {
             ListEmptyComponent={
               <EmptyState
                 icon="chatbubbles-outline"
-                title="No conversations"
-                description="Support conversations will appear here"
+                title={t('support.noConversations')}
+                description={t('support.conversationsWillAppear')}
               />
             }
             ListFooterComponent={
@@ -196,13 +198,13 @@ function ConversationsTab() {
                     <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
                     <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
-                      Load More
+                      {t('support.loadMore')}
                     </Text>
                   )}
                 </Pressable>
               ) : sessions.length > 0 ? (
                 <Text className="text-center text-xs py-4" style={{ color: colors.textMuted }}>
-                  No more conversations
+                  {t('support.noMoreConversations')}
                 </Text>
               ) : null
             }
@@ -213,8 +215,8 @@ function ConversationsTab() {
       <FilterSheet
         visible={filterVisible}
         onClose={() => setFilterVisible(false)}
-        title="Filter by Status"
-        options={CHAT_STATUS_OPTIONS}
+        title={t('support.filterByStatus')}
+        options={CHAT_STATUS_OPTIONS.map((o) => ({ label: t(o.labelKey), value: o.value }))}
         selectedValue={status}
         onSelect={setStatus}
       />
@@ -229,18 +231,19 @@ const TICKET_STATUS_BADGE: Record<string, { bg: string; color: string }> = {
   closed: { bg: '#f3f4f6', color: '#6b7280' },
 };
 
-const TICKET_STATUS_FILTERS: { label: string; value: TicketStatus | '' }[] = [
-  { label: 'All', value: '' },
-  { label: 'Open', value: 'open' },
-  { label: 'In Progress', value: 'in_progress' },
-  { label: 'Resolved', value: 'resolved' },
-  { label: 'Closed', value: 'closed' },
+const TICKET_STATUS_FILTERS: { labelKey: string; value: TicketStatus | '' }[] = [
+  { labelKey: 'common.all', value: '' },
+  { labelKey: 'support.open', value: 'open' },
+  { labelKey: 'support.inProgress', value: 'in_progress' },
+  { labelKey: 'support.resolved', value: 'resolved' },
+  { labelKey: 'support.closed', value: 'closed' },
 ];
 
 const TICKET_LIMIT = 20;
 
 function TicketsTab() {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const { contentMaxWidth } = useResponsive();
   const { user } = useAuth();
   const normalizedRole = String(user?.role ?? '').toLowerCase();
@@ -274,7 +277,7 @@ function TicketsTab() {
             </Text>
             <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
               {item.ticket_code ?? `#${item.id}`}
-              {item.order_id ? ` · Order #${item.order_id}` : ''}
+              {item.order_id ? ` · ${t('pickups.orderHash', { id: item.order_id })}` : ''}
             </Text>
           </View>
           <Badge label={item.status.replace(/_/g, ' ')} backgroundColor={badge.bg} color={badge.color} />
@@ -303,7 +306,7 @@ function TicketsTab() {
             }}
           >
             <Text className="text-sm font-medium" style={{ color: status === f.value ? '#fff' : colors.text }}>
-              {f.label}
+              {t(f.labelKey)}
             </Text>
           </Pressable>
         ))}
@@ -315,15 +318,15 @@ function TicketsTab() {
             setSearch(text);
             setPage(1);
           }}
-          placeholder="Search ticket code or subject..."
+          placeholder={t('support.searchTicketsPlaceholder')}
         />
         {isLoading ? (
           <SkeletonList count={5} />
         ) : isError ? (
           <EmptyState
-            title="Failed to load tickets"
+            title={t('support.failedToLoadTickets')}
             description={formatApiErrorDetail(error)}
-            actionLabel="Retry"
+            actionLabel={t('common.retry')}
             onAction={() => refetch()}
           />
         ) : (
@@ -337,8 +340,8 @@ function TicketsTab() {
             ListEmptyComponent={
               <EmptyState
                 icon="help-buoy-outline"
-                title="No support tickets"
-                description={isStaff ? 'No tickets have been raised yet.' : 'Tap + to raise a new ticket.'}
+                title={t('support.noSupportTickets')}
+                description={isStaff ? t('support.noTicketsRaised') : t('support.tapToRaiseTicket')}
               />
             }
             ListFooterComponent={
@@ -358,6 +361,7 @@ type SupportTab = 'conversations' | 'tickets';
 // "Connecting to agent…" on the customer side and no agent ever sees them.
 function AgentPresenceToggle() {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const { user } = useAuth();
   const { data, isLoading } = useMyAgentStatus(!!user?.id);
   const { mutate, isPending } = useSetAgentStatusMutation();
@@ -388,12 +392,12 @@ function AgentPresenceToggle() {
         style={{ color: isOnline ? '#15803d' : colors.textSecondary }}
       >
         {isLoading
-          ? 'Checking status…'
+          ? t('support.checkingStatus')
           : isPending
-            ? 'Updating…'
+            ? t('support.updating')
             : isOnline
-              ? "You're online — receiving chats"
-              : "You're offline — go online to receive chats"}
+              ? t('support.onlineReceivingChats')
+              : t('support.offlineGoOnline')}
       </Text>
     </Pressable>
   );
@@ -401,6 +405,7 @@ function AgentPresenceToggle() {
 
 export default function SupportScreen() {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const { permissions } = usePermissions();
   const { user } = useAuth();
   const normalizedRole = String(user?.role ?? '').toLowerCase();
@@ -427,7 +432,7 @@ export default function SupportScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Header
-        title="Support"
+        title={t('support.title')}
         rightAction={
           activeTab === 'tickets' ? (
             <Pressable
@@ -465,7 +470,7 @@ export default function SupportScreen() {
               className="text-sm font-semibold"
               style={{ color: activeTab === 'conversations' ? '#ffffff' : colors.text }}
             >
-              Conversations
+              {t('support.conversations')}
             </Text>
           </Pressable>
           <Pressable
@@ -477,7 +482,7 @@ export default function SupportScreen() {
             }}
           >
             <Text className="text-sm font-semibold" style={{ color: activeTab === 'tickets' ? '#ffffff' : colors.text }}>
-              Tickets
+              {t('support.tickets')}
             </Text>
           </Pressable>
         </View>
