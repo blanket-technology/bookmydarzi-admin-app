@@ -21,6 +21,7 @@ import { AddOrderAddonSheet } from '@/features/orders/components/AddOrderAddonSh
 import { ProgressPhotosSection } from '@/features/orders/components/ProgressPhotosSection';
 import { PendingOfferCard } from '@/features/orders/components/PendingOfferCard';
 import { OrderSummaryCard } from '@/features/orders/components/OrderSummaryCard';
+import { OrderAddressCard } from '@/features/orders/components/OrderAddressCard';
 import { OrderNotesCard } from '@/features/orders/components/OrderNotesCard';
 import { OrderNotesEditSheet } from '@/features/orders/components/OrderNotesEditSheet';
 import { OrderMeasurementCard } from '@/features/orders/components/OrderMeasurementCard';
@@ -280,6 +281,8 @@ export default function OrderDetailsScreen() {
         ) : null}
 
         <OrderSummaryCard order={order} />
+
+        <OrderAddressCard order={order} />
 
         <OrderNotesCard order={order} isAdminRole={isAdminRole} onEdit={() => setNotesSheetVisible(true)} />
 

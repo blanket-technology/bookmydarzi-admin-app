@@ -78,6 +78,11 @@ export interface AdminOrderItem {
   customer_id?: string;
   customer_name?: string;
   customer_mobile?: string;
+  /** Full delivery address, previously discarded by normalizeOrderResponse
+   * (only full_name/mobile were kept, denormalized onto customer_name/
+   * customer_mobile above) - kept whole here so the order-detail screen can
+   * actually show it, matching the web admin panel's Delivery Address card. */
+  address?: MyOrderAddress | null;
   service_name?: string;
   category_name?: string;
   status: OrderStatus | string;
@@ -128,7 +133,14 @@ export interface MyOrderAddress {
   full_name: string;
   mobile: string;
   address_line_1: string;
+  address_line_2?: string | null;
+  landmark?: string | null;
   city: string;
+  state?: string | null;
+  pincode?: string | null;
+  address_type?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 /** One booked service within an order (backend OrderItemSummary). A

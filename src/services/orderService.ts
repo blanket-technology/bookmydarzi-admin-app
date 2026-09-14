@@ -36,6 +36,7 @@ function normalizeOrderResponse(item: MyOrderItem): AdminOrderItem {
     customer_id: String(item.CustomerId),
     customer_name: item.address?.full_name ?? undefined,
     customer_mobile: item.address?.mobile ?? undefined,
+    address: item.address ?? null,
     service_name: item.ServiceTitle ?? item.ServiceName ?? undefined,
     category_name: item.ServiceSubtitle ?? undefined,
     status: item.Status,
