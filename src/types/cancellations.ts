@@ -85,3 +85,24 @@ export interface CancellationsQueryParams {
   skip?: number;
   limit?: number;
 }
+
+// Mirrors app/schemas/cancellation.py's CancellationPreviewOut. Used by both
+// the customer-app preview and (via the admin preview endpoint, is_admin=
+// True/waive_penalty on the backend) the admin Cancel Order sheet, so an
+// admin sees the exact same penalty/refund math before confirming.
+export interface CancellationPreview {
+  order_id: number;
+  order_code: string;
+  current_stage: string;
+  display_stage: string;
+  payment_type: 'prepaid' | 'postpaid';
+  cancellation_allowed: boolean;
+  contact_support: boolean;
+  paid_amount: number;
+  penalty_pct: number;
+  penalty_amount: number;
+  refund_pct: number;
+  refund_amount: number;
+  policy_description?: string | null;
+  cancel_reason?: string | null;
+}

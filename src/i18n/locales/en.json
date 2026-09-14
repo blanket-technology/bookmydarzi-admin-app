@@ -300,7 +300,17 @@
   },
   "cancelOrder": {
     "title": "Cancel Order",
-    "reason": "Reason"
+    "reason": "Reason",
+    "loadingPreview": "Loading refund details…",
+    "previewUnavailable": "Could not load cancellation preview.",
+    "paymentType": "Payment type",
+    "paidAmount": "Paid amount",
+    "penalty": "Penalty",
+    "none": "None",
+    "refundToCustomer": "Refund to customer",
+    "postpaidPenaltyNote": "No upfront payment was collected — this penalty will be applied to the customer's next order.",
+    "waivePenalty": "Waive penalty",
+    "waivePenaltyDescription": "Cancel as a goodwill gesture with no penalty charged and a full refund of the amount paid."
   },
   "collectPayment": {
     "title": "Collect COD Payment",

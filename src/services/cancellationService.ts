@@ -6,6 +6,7 @@ import type {
   CancellationPatchRequest,
   CancellationPolicyItem,
   CancellationPolicyUpdate,
+  CancellationPreview,
   CancellationRejectRequest,
   CancellationsQueryParams,
   OrderCancellationDetail,
@@ -16,6 +17,18 @@ export const cancellationService = {
     const { data } = await apiClient.get<CancellationListResponse>(ENDPOINTS.ADMIN.CANCELLATIONS, {
       params,
     });
+    return data;
+  },
+
+  // Same penalty-aware preview the customer apps show before confirming,
+  // bypassing the contact-support stage gate (admin may cancel any
+  // non-terminal order) - see cancellation_service.get_cancellation_preview's
+  // is_admin/waive_penalty params.
+  getAdminPreview: async (orderId: string, waivePenalty = false): Promise<CancellationPreview> => {
+    const { data } = await apiClient.get<CancellationPreview>(
+      ENDPOINTS.ADMIN.ORDER_CANCELLATION_PREVIEW(orderId),
+      { params: { waive_penalty: waivePenalty } },
+    );
     return data;
   },
 

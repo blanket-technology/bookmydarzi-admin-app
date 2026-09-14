@@ -217,6 +217,7 @@ export interface OrderStatusUpdateRequest {
 
 export interface AdminCancelOrderRequest {
   reason: string;
+  waive_penalty?: boolean;
 }
 
 export interface OrderNotesRequest {

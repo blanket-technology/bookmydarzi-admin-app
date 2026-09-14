@@ -300,7 +300,17 @@
   },
   "cancelOrder": {
     "title": "ऑर्डर रद्द करें",
-    "reason": "कारण"
+    "reason": "कारण",
+    "loadingPreview": "रिफंड विवरण लोड हो रहा है…",
+    "previewUnavailable": "रद्दीकरण पूर्वावलोकन लोड नहीं हो सका।",
+    "paymentType": "भुगतान प्रकार",
+    "paidAmount": "भुगतान की गई राशि",
+    "penalty": "जुर्माना",
+    "none": "कोई नहीं",
+    "refundToCustomer": "ग्राहक को रिफंड",
+    "postpaidPenaltyNote": "पहले से कोई भुगतान नहीं लिया गया था — यह जुर्माना ग्राहक के अगले ऑर्डर पर लागू होगा।",
+    "waivePenalty": "जुर्माना माफ करें",
+    "waivePenaltyDescription": "बिना किसी जुर्माने के और भुगतान की गई पूरी राशि वापस करते हुए सद्भावना के तौर पर रद्द करें।"
   },
   "collectPayment": {
     "title": "COD भुगतान लें",

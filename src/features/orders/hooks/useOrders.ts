@@ -4,6 +4,7 @@ import * as Sharing from 'expo-sharing';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { orderService } from '@/services/orderService';
 import { catalogService } from '@/services/catalogService';
+import { cancellationService } from '@/services/cancellationService';
 import { useAuth } from '@/hooks/useAuth';
 import type {
   AdminCancelOrderRequest,
@@ -178,6 +179,17 @@ export const useUpdateOrderMeasurementMutation = () => {
     onError: (error) => toast.error(formatApiErrorDetail(error)),
   });
 };
+
+// Same penalty-aware preview the customer apps show before confirming - see
+// cancellationService.getAdminPreview. enabled only while the sheet is open,
+// refetches when the waive-penalty toggle changes (waivePenalty is part of
+// the query key) so the previewed numbers update live.
+export const useAdminCancellationPreview = (orderId: string, waivePenalty: boolean, enabled: boolean) =>
+  useQuery({
+    queryKey: ['admin-cancellation-preview', orderId, waivePenalty],
+    queryFn: () => cancellationService.getAdminPreview(orderId, waivePenalty),
+    enabled: enabled && !!orderId,
+  });
 
 export const useCancelOrderMutation = () => {
   const queryClient = useQueryClient();
