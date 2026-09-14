@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native';
 import { Card, Pressable } from '@/components/ui';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import type { AdminOrderItem } from '@/types/orders';
 import { capitalize } from '@/utils/errors';
@@ -24,11 +25,12 @@ export const OrderItemsCard = ({
   onAddAddon?: (item: { id?: number; label?: string; serviceId?: number }) => void;
 }) => {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
 
   return (
     <Card className="mb-4">
       <Text className="font-bold mb-3" style={{ color: colors.text }}>
-        Items &amp; Measurements ({order.items.length})
+        {t('orderItems.title', { count: order.items.length })}
       </Text>
       {order.items.map((item, idx) => (
         <View
@@ -38,14 +40,14 @@ export const OrderItemsCard = ({
         >
           <View className="flex-1 pr-3">
             <Text className="text-sm font-semibold" style={{ color: colors.text }}>
-              {item.service_name ?? item.category_name ?? 'Item'}
+              {item.service_name ?? item.category_name ?? t('orderItems.item')}
               {item.person_name ? ` — ${item.person_name}` : ''}
             </Text>
             <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
-              Qty {item.quantity}
+              {t('orderItems.qty', { qty: item.quantity })}
               {item.gender ? ` · ${capitalize(item.gender)}` : ''}
               {' · '}
-              {item.has_measurement ? 'Measured' : 'Not measured'}
+              {item.has_measurement ? t('orderItems.measured') : t('orderItems.notMeasured')}
             </Text>
             {item.addons && item.addons.length > 0 ? (
               <View className="mt-1.5">
@@ -64,7 +66,7 @@ export const OrderItemsCard = ({
                 onPress={() =>
                   onAddAddon?.({
                     id: item.order_item_id ?? undefined,
-                    label: `${item.service_name ?? 'Item'}${item.person_name ? ` for ${item.person_name}` : ''}`,
+                    label: `${item.service_name ?? t('orderItems.item')}${item.person_name ? ` ${t('orderItems.forPerson', { name: item.person_name })}` : ''}`,
                     serviceId: item.service_id ?? undefined,
                   })
                 }
@@ -72,7 +74,7 @@ export const OrderItemsCard = ({
                 style={{ borderColor: colors.border, backgroundColor: colors.surface }}
               >
                 <Text className="text-xs font-bold" style={{ color: colors.text }}>
-                  + Extra
+                  {t('orderItems.addExtra')}
                 </Text>
               </Pressable>
             ) : null}
@@ -81,7 +83,7 @@ export const OrderItemsCard = ({
                 onPress={() =>
                   onManageMeasurement({
                     id: item.order_item_id ?? undefined,
-                    label: `${item.service_name ?? 'Item'}${item.person_name ? ` for ${item.person_name}` : ''}`,
+                    label: `${item.service_name ?? t('orderItems.item')}${item.person_name ? ` ${t('orderItems.forPerson', { name: item.person_name })}` : ''}`,
                   })
                 }
                 className="px-3 py-2 rounded-xl"
@@ -92,7 +94,7 @@ export const OrderItemsCard = ({
                 }}
               >
                 <Text className="text-xs font-bold" style={{ color: item.has_measurement ? colors.text : '#fff' }}>
-                  {item.has_measurement ? 'Update' : 'Fill'}
+                  {item.has_measurement ? t('common.edit') : t('orderItems.fill')}
                 </Text>
               </Pressable>
             ) : null}

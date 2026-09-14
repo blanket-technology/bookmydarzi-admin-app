@@ -181,7 +181,18 @@
     "needsTailor": "Needs Tailor",
     "failedToLoad": "Failed to load orders",
     "noOrdersFound": "No orders found",
-    "adjustFilters": "Try adjusting your search or filters"
+    "adjustFilters": "Try adjusting your search or filters",
+    "noTailorFoundTitle": "No tailor found",
+    "noTailorFoundBody": "No tailor accepted after every broadcast round, including the all-tailor fallback. Assign a tailor manually below.",
+    "exhausted": "Exhausted {{date}}"
+  },
+  "orderSummary": {
+    "mobile": "Mobile",
+    "category": "Category",
+    "payment": "Payment",
+    "urgency": "Urgency",
+    "created": "Created",
+    "expectedDelivery": "Expected Delivery"
   },
   "ordersFilter": {
     "title": "Filter Orders",
@@ -194,5 +205,71 @@
     "to": "To",
     "clearAll": "Clear All",
     "done": "Done"
+  },
+  "orderDetail": {
+    "title": "Order Details",
+    "loadingOrder": "Loading order...",
+    "failedToLoad": "Failed to load order",
+    "notFound": "Order not found",
+    "goBack": "Go Back",
+    "closeOrderDetails": "Close order details",
+    "readyForDispatch": "Ready for dispatch",
+    "readyForDispatchHint": "This order is now waiting to be claimed on the Deliveries screen — go online there to receive it as a delivery offer.",
+    "goToDeliveries": "Go to Deliveries →",
+    "actions": "Actions",
+    "confirmActionMessage": "Are you sure you want to {{action}}?",
+    "forceRestartBroadcast": "Force Restart Broadcast",
+    "forceRestartBroadcastMessage": "This restarts tailor broadcast for this order regardless of its current status. Use this to recover a stuck order.",
+    "triggerBroadcast": "Trigger Broadcast"
+  },
+  "measurement": {
+    "title": "Measurements",
+    "notCollectedYet": "Not collected yet — the assigned Bridge employee records these at pickup.",
+    "chest": "Chest",
+    "waist": "Waist",
+    "hips": "Hips",
+    "shoulder": "Shoulder",
+    "neck": "Neck",
+    "sleeveLength": "Sleeve Length",
+    "inseam": "Inseam",
+    "height": "Height",
+    "fitPreference": "Fit Preference",
+    "notes": "Notes"
+  },
+  "orderItems": {
+    "title": "Items & Measurements ({{count}})",
+    "item": "Item",
+    "qty": "Qty {{qty}}",
+    "measured": "Measured",
+    "notMeasured": "Not measured",
+    "forPerson": "for {{name}}",
+    "addExtra": "+ Extra",
+    "fill": "Fill"
+  },
+  "orderNotes": {
+    "title": "Order Notes",
+    "description": "Description",
+    "fabricNotes": "Fabric Notes",
+    "customization": "Customization",
+    "clothDetails": "Cloth Details",
+    "noNotesYet": "No notes added yet."
+  },
+  "broadcastMonitor": {
+    "title": "Broadcast Monitor",
+    "tailorHash": "Tailor #{{id}}",
+    "round4": "Round 4 · All Areas",
+    "round": "Round {{round}}",
+    "notified": "Notified {{date}}",
+    "responded": "Responded {{date}}",
+    "noAttempts": "No broadcast attempts yet."
+  },
+  "pendingOffer": {
+    "pickupOfferTitle": "Pickup offer for you",
+    "deliveryOfferTitle": "Delivery offer for you",
+    "pickupBody": "You have a pending pickup offer for this order. Accept to claim it (first come, first served).",
+    "deliveryBody": "You have a pending delivery offer for this order. Accept to claim it (first come, first served).",
+    "accepting": "Accepting…",
+    "acceptPickup": "Accept Pickup",
+    "acceptDelivery": "Accept Delivery"
   }
 }

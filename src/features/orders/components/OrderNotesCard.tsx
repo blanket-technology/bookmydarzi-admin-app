@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import { Card, Pressable } from '@/components/ui';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import type { AdminOrderItem } from '@/types/orders';
 import { DetailRow } from './DetailRow';
@@ -19,6 +20,7 @@ export const OrderNotesCard = ({
   onEdit: () => void;
 }) => {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const hasOrderNotes = !!(order.description || order.fabric_notes || order.customization_notes || order.cloth_details);
 
   if (!hasOrderNotes && !isAdminRole) return null;
@@ -27,7 +29,7 @@ export const OrderNotesCard = ({
     <Card className="mb-4">
       <View className="flex-row items-center justify-between mb-2">
         <Text className="font-bold" style={{ color: colors.text }}>
-          Order Notes
+          {t('orderNotes.title')}
         </Text>
         {isAdminRole ? (
           <Pressable onPress={onEdit} hitSlop={8}>
@@ -37,16 +39,16 @@ export const OrderNotesCard = ({
       </View>
       {hasOrderNotes ? (
         <>
-          {order.description ? <DetailRow label="Description" value={order.description} colors={colors} /> : null}
-          {order.fabric_notes ? <DetailRow label="Fabric Notes" value={order.fabric_notes} colors={colors} /> : null}
+          {order.description ? <DetailRow label={t('orderNotes.description')} value={order.description} colors={colors} /> : null}
+          {order.fabric_notes ? <DetailRow label={t('orderNotes.fabricNotes')} value={order.fabric_notes} colors={colors} /> : null}
           {order.customization_notes ? (
-            <DetailRow label="Customization" value={order.customization_notes} colors={colors} />
+            <DetailRow label={t('orderNotes.customization')} value={order.customization_notes} colors={colors} />
           ) : null}
-          {order.cloth_details ? <DetailRow label="Cloth Details" value={order.cloth_details} colors={colors} /> : null}
+          {order.cloth_details ? <DetailRow label={t('orderNotes.clothDetails')} value={order.cloth_details} colors={colors} /> : null}
         </>
       ) : (
         <Text className="text-sm py-1" style={{ color: colors.textMuted }}>
-          No notes added yet.
+          {t('orderNotes.noNotesYet')}
         </Text>
       )}
     </Card>

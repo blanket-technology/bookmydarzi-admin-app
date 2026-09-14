@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native';
 import { Card } from '@/components/ui';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import type { AdminOrderItem } from '@/types/orders';
 import { capitalize } from '@/utils/errors';
@@ -18,6 +19,7 @@ export const OrderMeasurementCard = ({
   isTailorRole: boolean;
 }) => {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   // Single-item orders don't render OrderItemsCard (see that component's
   // own docstring), so this is the only card that gets a chance to show
   // what add-ons were selected - without it the tailor/bridge had no way
@@ -46,11 +48,11 @@ export const OrderMeasurementCard = ({
     return (
       <Card className="mb-4">
         <Text className="font-bold mb-1" style={{ color: colors.text }}>
-          Measurements
+          {t('measurement.title')}
         </Text>
         {isTailorRole ? (
           <Text className="text-sm mb-2" style={{ color: colors.textMuted }}>
-            Not collected yet — the assigned Bridge employee records these at pickup.
+            {t('measurement.notCollectedYet')}
           </Text>
         ) : null}
         {addonsBlock}
@@ -62,22 +64,22 @@ export const OrderMeasurementCard = ({
   return (
     <Card className="mb-4">
       <Text className="font-bold mb-2" style={{ color: colors.text }}>
-        Measurements
+        {t('measurement.title')}
       </Text>
       {addonsBlock}
       <Text className="text-xs mb-1" style={{ color: colors.textMuted }}>
         {m.profile_name}
       </Text>
-      {m.chest != null ? <DetailRow label="Chest" value={`${m.chest} in`} colors={colors} /> : null}
-      {m.waist != null ? <DetailRow label="Waist" value={`${m.waist} in`} colors={colors} /> : null}
-      {m.hips != null ? <DetailRow label="Hips" value={`${m.hips} in`} colors={colors} /> : null}
-      {m.shoulder != null ? <DetailRow label="Shoulder" value={`${m.shoulder} in`} colors={colors} /> : null}
-      {m.neck != null ? <DetailRow label="Neck" value={`${m.neck} in`} colors={colors} /> : null}
-      {m.sleeve_length != null ? <DetailRow label="Sleeve Length" value={`${m.sleeve_length} in`} colors={colors} /> : null}
-      {m.inseam != null ? <DetailRow label="Inseam" value={`${m.inseam} in`} colors={colors} /> : null}
-      {m.height != null ? <DetailRow label="Height" value={`${m.height} in`} colors={colors} /> : null}
-      {m.fit_preference ? <DetailRow label="Fit Preference" value={capitalize(m.fit_preference)} colors={colors} /> : null}
-      {m.notes ? <DetailRow label="Notes" value={m.notes} colors={colors} /> : null}
+      {m.chest != null ? <DetailRow label={t('measurement.chest')} value={`${m.chest} in`} colors={colors} /> : null}
+      {m.waist != null ? <DetailRow label={t('measurement.waist')} value={`${m.waist} in`} colors={colors} /> : null}
+      {m.hips != null ? <DetailRow label={t('measurement.hips')} value={`${m.hips} in`} colors={colors} /> : null}
+      {m.shoulder != null ? <DetailRow label={t('measurement.shoulder')} value={`${m.shoulder} in`} colors={colors} /> : null}
+      {m.neck != null ? <DetailRow label={t('measurement.neck')} value={`${m.neck} in`} colors={colors} /> : null}
+      {m.sleeve_length != null ? <DetailRow label={t('measurement.sleeveLength')} value={`${m.sleeve_length} in`} colors={colors} /> : null}
+      {m.inseam != null ? <DetailRow label={t('measurement.inseam')} value={`${m.inseam} in`} colors={colors} /> : null}
+      {m.height != null ? <DetailRow label={t('measurement.height')} value={`${m.height} in`} colors={colors} /> : null}
+      {m.fit_preference ? <DetailRow label={t('measurement.fitPreference')} value={capitalize(m.fit_preference)} colors={colors} /> : null}
+      {m.notes ? <DetailRow label={t('measurement.notes')} value={m.notes} colors={colors} /> : null}
     </Card>
   );
 };

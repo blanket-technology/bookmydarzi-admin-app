@@ -36,6 +36,7 @@ import { CancelOrderSheet } from '@/features/orders/components/CancelOrderSheet'
 import { CollectPaymentSheet } from '@/features/orders/components/CollectPaymentSheet';
 import { PaymentDetailsSheet } from '@/features/orders/components/PaymentDetailsSheet';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTailors, useTailorsForEmployee } from '@/features/tailors/hooks/useTailors';
 import { useTheme } from '@/hooks/useTheme';
 import type { OrderStatus } from '@/types/orders';
@@ -58,6 +59,7 @@ import { formatApiErrorDetail } from '@/utils/errors';
 export default function OrderDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const { user, selectedRole } = useAuth();
 
   const [assignSheetVisible, setAssignSheetVisible] = useState(false);
@@ -215,15 +217,15 @@ export default function OrderDetailsScreen() {
     setMeasurementManageSheetVisible(true);
   }, [isEmployeeRole, order]);
 
-  if (isLoading) return <Loader fullScreen message="Loading order..." />;
+  if (isLoading) return <Loader fullScreen message={t('orderDetail.loadingOrder')} />;
   if (isError || !order) {
     return (
       <View className="flex-1" style={{ backgroundColor: colors.background }}>
-        <Header title="Order Details" showMenu={false} />
+        <Header title={t('orderDetail.title')} showMenu={false} />
         <EmptyState
-          title={isError ? 'Failed to load order' : 'Order not found'}
+          title={isError ? t('orderDetail.failedToLoad') : t('orderDetail.notFound')}
           description={isError ? formatApiErrorDetail(error) : undefined}
-          actionLabel={isError ? 'Retry' : 'Go Back'}
+          actionLabel={isError ? t('common.retry') : t('orderDetail.goBack')}
           onAction={isError ? () => refetch() : () => router.back()}
         />
       </View>
@@ -239,7 +241,7 @@ export default function OrderDetailsScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Header
-        title={order.order_code ?? 'Order Details'}
+        title={order.order_code ?? t('orderDetail.title')}
         subtitle={orderStatusLabel(order.status)}
         showMenu={false}
         rightAction={
@@ -259,7 +261,7 @@ export default function OrderDetailsScreen() {
               onPress={() => router.back()}
               hitSlop={10}
               accessibilityRole="button"
-              accessibilityLabel="Close order details"
+              accessibilityLabel={t('orderDetail.closeOrderDetails')}
             >
               <Ionicons name="close" size={24} color={colors.text} />
             </Pressable>
@@ -298,15 +300,14 @@ export default function OrderDetailsScreen() {
             <Ionicons name="bicycle-outline" size={18} color={colors.primary} style={{ marginTop: 1 }} />
             <View className="ml-2.5 flex-1">
               <Text className="text-sm font-semibold" style={{ color: colors.text }}>
-                Ready for dispatch
+                {t('orderDetail.readyForDispatch')}
               </Text>
               <Text className="text-xs mt-0.5" style={{ color: colors.textSecondary }}>
-                This order is now waiting to be claimed on the Deliveries screen — go online there to
-                receive it as a delivery offer.
+                {t('orderDetail.readyForDispatchHint')}
               </Text>
               <Pressable onPress={() => router.push('/(drawer)/deliveries')} className="mt-2">
                 <Text className="text-xs font-bold" style={{ color: colors.primary }}>
-                  Go to Deliveries →
+                  {t('orderDetail.goToDeliveries')}
                 </Text>
               </Pressable>
             </View>
@@ -333,7 +334,7 @@ export default function OrderDetailsScreen() {
         {actions.length > 0 ? (
           <>
             <Text className="text-xs font-semibold uppercase tracking-wide mb-2 ml-1" style={{ color: colors.textMuted }}>
-              Actions
+              {t('orderDetail.actions')}
             </Text>
             {actions
               .filter((action) =>
@@ -402,7 +403,7 @@ export default function OrderDetailsScreen() {
       <ConfirmModal
         visible={!!confirmAction}
         title={confirmAction?.label ?? ''}
-        message={`Are you sure you want to ${confirmAction?.label.toLowerCase()}?`}
+        message={t('orderDetail.confirmActionMessage', { action: confirmAction?.label.toLowerCase() ?? '' })}
         confirmLabel={confirmAction?.label}
         loading={confirmAction?.isLoading}
         onConfirm={() => {
@@ -414,9 +415,9 @@ export default function OrderDetailsScreen() {
 
       <ConfirmModal
         visible={broadcastConfirmVisible}
-        title="Force Restart Broadcast"
-        message="This restarts tailor broadcast for this order regardless of its current status. Use this to recover a stuck order."
-        confirmLabel="Trigger Broadcast"
+        title={t('orderDetail.forceRestartBroadcast')}
+        message={t('orderDetail.forceRestartBroadcastMessage')}
+        confirmLabel={t('orderDetail.triggerBroadcast')}
         loading={triggerBroadcastMutation.isPending}
         onConfirm={() => {
           triggerBroadcastMutation.mutate(order.order_id);

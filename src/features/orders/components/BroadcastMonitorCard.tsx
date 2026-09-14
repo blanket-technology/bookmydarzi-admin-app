@@ -1,6 +1,7 @@
 import { ActivityIndicator, Text, View } from 'react-native';
 import { Badge, Card } from '@/components/ui';
 import { ORDER_STATUS_COLORS } from '@/constants/orderStatus';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import type { OrderBroadcastStatus } from '@/types/orders';
 import { formatDate } from '@/utils/errors';
@@ -16,12 +17,13 @@ export const BroadcastMonitorCard = ({
   isLoading: boolean;
 }) => {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
 
   return (
     <Card className="mb-4">
       <View className="flex-row items-center justify-between mb-2">
         <Text className="font-bold" style={{ color: colors.text }}>
-          Broadcast Monitor
+          {t('broadcastMonitor.title')}
         </Text>
         {isLoading ? <ActivityIndicator size="small" color={colors.textMuted} /> : null}
       </View>
@@ -34,11 +36,11 @@ export const BroadcastMonitorCard = ({
           >
             <View>
               <Text className="text-sm font-semibold" style={{ color: colors.text }}>
-                Tailor #{b.tailor_id} · {b.round >= 4 ? 'Round 4 · All Areas' : `Round ${b.round}`}
+                {t('broadcastMonitor.tailorHash', { id: b.tailor_id })} · {b.round >= 4 ? t('broadcastMonitor.round4') : t('broadcastMonitor.round', { round: b.round })}
               </Text>
               <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
-                Notified {formatDate(b.notified_at ?? undefined)}
-                {b.responded_at ? ` · Responded ${formatDate(b.responded_at)}` : ''}
+                {t('broadcastMonitor.notified', { date: formatDate(b.notified_at ?? undefined) })}
+                {b.responded_at ? ` · ${t('broadcastMonitor.responded', { date: formatDate(b.responded_at) })}` : ''}
               </Text>
             </View>
             <Badge
@@ -50,7 +52,7 @@ export const BroadcastMonitorCard = ({
         ))
       ) : (
         <Text className="text-sm py-2" style={{ color: colors.textMuted }}>
-          No broadcast attempts yet.
+          {t('broadcastMonitor.noAttempts')}
         </Text>
       )}
     </Card>

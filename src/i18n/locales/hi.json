@@ -181,7 +181,18 @@
     "needsTailor": "दर्जी चाहिए",
     "failedToLoad": "ऑर्डर लोड नहीं हो सके",
     "noOrdersFound": "कोई ऑर्डर नहीं मिला",
-    "adjustFilters": "अपनी खोज या फ़िल्टर बदलकर देखें"
+    "adjustFilters": "अपनी खोज या फ़िल्टर बदलकर देखें",
+    "noTailorFoundTitle": "कोई दर्जी नहीं मिला",
+    "noTailorFoundBody": "हर ब्रॉडकास्ट राउंड के बाद भी, सभी-दर्जी फॉलबैक सहित, किसी ने स्वीकार नहीं किया। नीचे मैन्युअल रूप से दर्जी असाइन करें।",
+    "exhausted": "{{date}} को समाप्त हुआ"
+  },
+  "orderSummary": {
+    "mobile": "मोबाइल",
+    "category": "श्रेणी",
+    "payment": "भुगतान",
+    "urgency": "प्राथमिकता",
+    "created": "बनाया गया",
+    "expectedDelivery": "संभावित डिलीवरी"
   },
   "ordersFilter": {
     "title": "ऑर्डर फ़िल्टर करें",
@@ -194,5 +205,71 @@
     "to": "तक",
     "clearAll": "सभी हटाएं",
     "done": "हो गया"
+  },
+  "orderDetail": {
+    "title": "ऑर्डर विवरण",
+    "loadingOrder": "ऑर्डर लोड हो रहा है...",
+    "failedToLoad": "ऑर्डर लोड नहीं हो सका",
+    "notFound": "ऑर्डर नहीं मिला",
+    "goBack": "वापस जाएं",
+    "closeOrderDetails": "ऑर्डर विवरण बंद करें",
+    "readyForDispatch": "भेजने के लिए तैयार",
+    "readyForDispatchHint": "यह ऑर्डर अब डिलीवरी स्क्रीन पर लिए जाने के लिए तैयार है — इसे डिलीवरी ऑफर के रूप में पाने के लिए वहां ऑनलाइन हो जाएं।",
+    "goToDeliveries": "डिलीवरी पर जाएं →",
+    "actions": "कार्य",
+    "confirmActionMessage": "क्या आप वाकई {{action}} करना चाहते हैं?",
+    "forceRestartBroadcast": "ब्रॉडकास्ट फिर से शुरू करें",
+    "forceRestartBroadcastMessage": "यह इस ऑर्डर की मौजूदा स्थिति की परवाह किए बिना दर्जी ब्रॉडकास्ट फिर से शुरू करता है। किसी अटके ऑर्डर को ठीक करने के लिए इसका उपयोग करें।",
+    "triggerBroadcast": "ब्रॉडकास्ट शुरू करें"
+  },
+  "measurement": {
+    "title": "माप",
+    "notCollectedYet": "अभी दर्ज नहीं हुआ — असाइन किया गया ब्रिज कर्मचारी इसे पिकअप के समय दर्ज करता है।",
+    "chest": "चेस्ट",
+    "waist": "कमर",
+    "hips": "हिप्स",
+    "shoulder": "कंधा",
+    "neck": "गला",
+    "sleeveLength": "बाजू की लंबाई",
+    "inseam": "इनसीम",
+    "height": "ऊंचाई",
+    "fitPreference": "फिट पसंद",
+    "notes": "टिप्पणी"
+  },
+  "orderItems": {
+    "title": "आइटम और माप ({{count}})",
+    "item": "आइटम",
+    "qty": "मात्रा {{qty}}",
+    "measured": "माप लिया गया",
+    "notMeasured": "माप नहीं लिया गया",
+    "forPerson": "{{name}} के लिए",
+    "addExtra": "+ अतिरिक्त",
+    "fill": "भरें"
+  },
+  "orderNotes": {
+    "title": "ऑर्डर टिप्पणी",
+    "description": "विवरण",
+    "fabricNotes": "कपड़े की टिप्पणी",
+    "customization": "कस्टमाइज़ेशन",
+    "clothDetails": "कपड़े का विवरण",
+    "noNotesYet": "अभी कोई टिप्पणी नहीं जोड़ी गई।"
+  },
+  "broadcastMonitor": {
+    "title": "ब्रॉडकास्ट मॉनिटर",
+    "tailorHash": "दर्जी #{{id}}",
+    "round4": "राउंड 4 · सभी क्षेत्र",
+    "round": "राउंड {{round}}",
+    "notified": "{{date}} को सूचित किया गया",
+    "responded": "{{date}} को जवाब दिया",
+    "noAttempts": "अभी तक कोई ब्रॉडकास्ट प्रयास नहीं हुआ।"
+  },
+  "pendingOffer": {
+    "pickupOfferTitle": "आपके लिए पिकअप ऑफर",
+    "deliveryOfferTitle": "आपके लिए डिलीवरी ऑफर",
+    "pickupBody": "इस ऑर्डर के लिए आपके पास एक पिकअप ऑफर बाकी है। इसे लेने के लिए स्वीकार करें (जो पहले करे, वही पाए)।",
+    "deliveryBody": "इस ऑर्डर के लिए आपके पास एक डिलीवरी ऑफर बाकी है। इसे लेने के लिए स्वीकार करें (जो पहले करे, वही पाए)।",
+    "accepting": "स्वीकार किया जा रहा है…",
+    "acceptPickup": "पिकअप स्वीकार करें",
+    "acceptDelivery": "डिलीवरी स्वीकार करें"
   }
 }

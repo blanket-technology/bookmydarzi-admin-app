@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import { Card, Pressable } from '@/components/ui';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 
 /**
@@ -19,17 +20,17 @@ export const PendingOfferCard = ({
   accepting: boolean;
 }) => {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   return (
     <Card className="mb-4" style={{ borderColor: colors.primary, borderWidth: 1.5 }}>
       <View className="flex-row items-center mb-2">
         <Ionicons name={isPickup ? 'cube-outline' : 'bicycle-outline'} size={18} color={colors.primary} />
         <Text className="font-bold ml-2" style={{ color: colors.text }}>
-          {isPickup ? 'Pickup offer for you' : 'Delivery offer for you'}
+          {isPickup ? t('pendingOffer.pickupOfferTitle') : t('pendingOffer.deliveryOfferTitle')}
         </Text>
       </View>
       <Text className="text-sm mb-3" style={{ color: colors.textSecondary }}>
-        You have a pending {isPickup ? 'pickup' : 'delivery'} offer for this order. Accept to claim it
-        (first come, first served).
+        {isPickup ? t('pendingOffer.pickupBody') : t('pendingOffer.deliveryBody')}
       </Text>
       <Pressable
         onPress={onAccept}
@@ -38,7 +39,7 @@ export const PendingOfferCard = ({
         style={{ backgroundColor: colors.primary, opacity: accepting ? 0.6 : 1 }}
       >
         <Text className="text-white font-semibold">
-          {accepting ? 'Accepting…' : isPickup ? 'Accept Pickup' : 'Accept Delivery'}
+          {accepting ? t('pendingOffer.accepting') : isPickup ? t('pendingOffer.acceptPickup') : t('pendingOffer.acceptDelivery')}
         </Text>
       </Pressable>
     </Card>
