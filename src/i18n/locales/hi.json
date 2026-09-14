@@ -375,5 +375,41 @@
   "orderNotesEdit": {
     "title": "ऑर्डर टिप्पणी बदलें",
     "saveNotes": "टिप्पणी सेव करें"
+  },
+  "pickups": {
+    "title": "पिकअप",
+    "expired": "समय समाप्त",
+    "timeLeftMinSec": "{{mins}} मिनट {{secs}} सेकंड बाकी",
+    "timeLeftSec": "{{secs}} सेकंड बाकी",
+    "pickupOrder": "पिकअप ऑर्डर",
+    "orderHash": "ऑर्डर #{{id}}",
+    "pickupCustomer": "पिकअप — ग्राहक",
+    "addressNotAvailable": "पता उपलब्ध नहीं है",
+    "call": "{{mobile}} पर कॉल करें",
+    "decline": "अस्वीकार करें",
+    "accept": "स्वीकार करें",
+    "pendingOffers": "{{count}} बाकी ऑफर",
+    "youAreOffline": "आप ऑफलाइन हैं",
+    "willReceiveOffers": "आपको आस-पास के पिकअप ऑफर मिलेंगे।",
+    "goOnlineHint": "पिकअप ऑफर पाने के लिए ऑनलाइन हो जाएं।",
+    "youreOffline": "आप ऑफलाइन हैं",
+    "toggleOnlineHint": "आस-पास के पिकअप ऑफर पाने के लिए ऊपर ऑनलाइन टॉगल करें।",
+    "failedToLoadOffers": "ऑफर लोड नहीं हो सके",
+    "noPendingOffers": "कोई बाकी ऑफर नहीं",
+    "newOffersWillAppear": "आपके आस-पास के नए पिकअप ऑफर यहां दिखेंगे।",
+    "declineOfferTitle": "ऑफर अस्वीकार करें",
+    "declineOfferMessage": "इस पिकअप ऑफर को अस्वीकार करें? यह अगले उपलब्ध ब्रिज कर्मचारी को भेज दिया जाएगा।"
+  },
+  "deliveries": {
+    "title": "डिलीवरी",
+    "deliveryOrder": "डिलीवरी ऑर्डर",
+    "pickupTailor": "पिकअप — दर्जी",
+    "locationNotAvailable": "स्थान उपलब्ध नहीं है",
+    "dropCustomer": "ड्रॉप — ग्राहक",
+    "willReceiveOffers": "आपको आस-पास के डिलीवरी ऑफर मिलेंगे।",
+    "goOnlineHint": "डिलीवरी ऑफर पाने के लिए ऑनलाइन हो जाएं।",
+    "toggleOnlineHint": "आस-पास के डिलीवरी ऑफर पाने के लिए ऊपर ऑनलाइन टॉगल करें।",
+    "newOffersWillAppear": "आपके आस-पास के नए डिलीवरी ऑफर यहां दिखेंगे।",
+    "declineOfferMessage": "इस डिलीवरी ऑफर को अस्वीकार करें? यह अगले उपलब्ध ब्रिज कर्मचारी को भेज दिया जाएगा।"
   }
 }

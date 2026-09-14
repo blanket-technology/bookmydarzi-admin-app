@@ -375,5 +375,41 @@
   "orderNotesEdit": {
     "title": "Edit Order Notes",
     "saveNotes": "Save Notes"
+  },
+  "pickups": {
+    "title": "Pickups",
+    "expired": "Expired",
+    "timeLeftMinSec": "{{mins}}m {{secs}}s left",
+    "timeLeftSec": "{{secs}}s left",
+    "pickupOrder": "Pickup Order",
+    "orderHash": "Order #{{id}}",
+    "pickupCustomer": "Pickup — customer",
+    "addressNotAvailable": "Address not available",
+    "call": "Call {{mobile}}",
+    "decline": "Decline",
+    "accept": "Accept",
+    "pendingOffers": "{{count}} pending offers",
+    "youAreOffline": "You are offline",
+    "willReceiveOffers": "You will receive nearby pickup offers.",
+    "goOnlineHint": "Go online to start receiving pickup offers.",
+    "youreOffline": "You're offline",
+    "toggleOnlineHint": "Toggle online above to start receiving nearby pickup offers.",
+    "failedToLoadOffers": "Failed to load offers",
+    "noPendingOffers": "No pending offers",
+    "newOffersWillAppear": "New pickup offers near you will appear here.",
+    "declineOfferTitle": "Decline Offer",
+    "declineOfferMessage": "Decline this pickup offer? It will be sent to the next available Bridge employee."
+  },
+  "deliveries": {
+    "title": "Deliveries",
+    "deliveryOrder": "Delivery Order",
+    "pickupTailor": "Pickup — tailor",
+    "locationNotAvailable": "Location not available",
+    "dropCustomer": "Drop — customer",
+    "willReceiveOffers": "You will receive nearby delivery offers.",
+    "goOnlineHint": "Go online to start receiving delivery offers.",
+    "toggleOnlineHint": "Toggle online above to start receiving nearby delivery offers.",
+    "newOffersWillAppear": "New delivery offers near you will appear here.",
+    "declineOfferMessage": "Decline this delivery offer? It will be sent to the next available Bridge employee."
   }
 }

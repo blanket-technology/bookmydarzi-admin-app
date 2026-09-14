@@ -11,7 +11,9 @@ import {
   useSetPickupOnlineStatusMutation,
 } from '@/features/pickups/hooks/usePickups';
 import { useLocation } from '@/hooks/useLocation';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
+import { t as translate } from '@/i18n';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { PickupBroadcastOffer } from '@/types/pickups';
 import { formatApiErrorDetail, formatDate } from '@/utils/errors';
@@ -27,12 +29,16 @@ const useCountdown = (expiresAt?: string | null) => {
     const update = () => {
       const diffMs = new Date(expiresAt).getTime() - Date.now();
       if (diffMs <= 0) {
-        setLabel('Expired');
+        setLabel(translate('pickups.expired'));
         return;
       }
       const mins = Math.floor(diffMs / 60000);
       const secs = Math.floor((diffMs % 60000) / 1000);
-      setLabel(mins > 0 ? `${mins}m ${secs}s left` : `${secs}s left`);
+      setLabel(
+        mins > 0
+          ? translate('pickups.timeLeftMinSec', { mins, secs })
+          : translate('pickups.timeLeftSec', { secs }),
+      );
     };
     update();
     const interval = setInterval(update, 1000);
@@ -55,7 +61,7 @@ const itemsLabel = (items?: { service_name?: string | null; category_name?: stri
   if (!items || items.length === 0) return null;
   return items
     .map((it) => {
-      const name = it.service_name ?? it.category_name ?? 'Item';
+      const name = it.service_name ?? it.category_name ?? translate('orderItems.item');
       return it.quantity > 1 ? `${name} × ${it.quantity}` : name;
     })
     .join(', ');
@@ -79,8 +85,9 @@ const OfferCard = ({
   myCoords: { latitude: number; longitude: number } | null;
 }) => {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const countdown = useCountdown(offer.expires_at);
-  const isExpired = countdown === 'Expired';
+  const isExpired = countdown === t('pickups.expired');
 
   const pickupLine = offer.pickup
     ? [offer.pickup.address_line_1, offer.pickup.address_line_2, offer.pickup.city, offer.pickup.pincode]
@@ -110,10 +117,10 @@ const OfferCard = ({
       <View className="flex-row items-start justify-between mb-2">
         <View className="flex-1 mr-2">
           <Text className="font-bold text-base" style={{ color: colors.text }}>
-            Pickup Order
+            {t('pickups.pickupOrder')}
           </Text>
           <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
-            {offer.order_code ?? `Order #${offer.order_id}`}
+            {offer.order_code ?? t('pickups.orderHash', { id: offer.order_id })}
           </Text>
         </View>
         <View className="items-end" style={{ gap: 4 }}>
@@ -127,7 +134,7 @@ const OfferCard = ({
           {offer.broadcast_round ? (
             <View className="px-2.5 py-1 rounded-full" style={{ backgroundColor: colors.surface }}>
               <Text className="text-xs font-semibold" style={{ color: colors.textSecondary }}>
-                Round {offer.broadcast_round}
+                {t('broadcastMonitor.round', { round: offer.broadcast_round })}
               </Text>
             </View>
           ) : null}
@@ -147,10 +154,10 @@ const OfferCard = ({
           <Ionicons name="location-outline" size={15} color={colors.primary} style={{ marginTop: 1 }} />
           <View className="flex-1 ml-2">
             <Text className="text-[11px] font-semibold uppercase" style={{ color: colors.textMuted }}>
-              Pickup — customer
+              {t('pickups.pickupCustomer')}
             </Text>
             <Text className="text-sm mt-0.5" style={{ color: colors.text }} numberOfLines={2}>
-              {pickupLine || 'Address not available'}
+              {pickupLine || t('pickups.addressNotAvailable')}
             </Text>
             {offer.pickup?.full_name ? (
               <Text className="text-xs mt-0.5" style={{ color: colors.textSecondary }}>
@@ -173,7 +180,7 @@ const OfferCard = ({
           >
             <Ionicons name="call-outline" size={13} color={colors.primary} />
             <Text className="text-xs font-semibold ml-1.5" style={{ color: colors.primary }}>
-              Call {offer.pickup.mobile}
+              {t('pickups.call', { mobile: offer.pickup.mobile })}
             </Text>
           </Pressable>
         ) : null}
@@ -192,7 +199,7 @@ const OfferCard = ({
         <View className="flex-row items-center mt-2">
           <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
           <Text className="text-sm ml-1.5" style={{ color: colors.textSecondary }}>
-            Notified {formatDate(offer.notified_at)}
+            {t('broadcastMonitor.notified', { date: formatDate(offer.notified_at) })}
           </Text>
         </View>
       ) : null}
@@ -212,7 +219,7 @@ const OfferCard = ({
             style={{ borderColor: colors.border, opacity: declining || isExpired ? 0.5 : 1 }}
           >
             <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>
-              Decline
+              {t('pickups.decline')}
             </Text>
           </Pressable>
           <Pressable
@@ -224,7 +231,7 @@ const OfferCard = ({
             className="px-4 py-2 rounded-xl"
             style={{ backgroundColor: colors.primary, opacity: accepting || isExpired ? 0.6 : 1 }}
           >
-            <Text className="text-sm font-semibold text-white">{accepting ? 'Accepting…' : 'Accept'}</Text>
+            <Text className="text-sm font-semibold text-white">{accepting ? t('pendingOffer.accepting') : t('pickups.accept')}</Text>
           </Pressable>
         </View>
       </View>
@@ -234,6 +241,7 @@ const OfferCard = ({
 
 export default function PickupsScreen() {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const { contentMaxWidth } = useResponsive();
   const location = useLocation();
   const setOnlineStatus = useSetPickupOnlineStatusMutation();
@@ -326,7 +334,7 @@ export default function PickupsScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title="Pickups" subtitle={isOnline ? `${offers.length} pending offers` : 'You are offline'} />
+      <Header title={t('pickups.title')} subtitle={isOnline ? t('pickups.pendingOffers', { count: offers.length }) : t('pickups.youAreOffline')} />
       <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
         <Card className="mb-4 flex-row items-center justify-between">
           <View className="flex-1 mr-3">
@@ -336,13 +344,13 @@ export default function PickupsScreen() {
                 style={{ backgroundColor: isOnline ? colors.success : colors.textMuted }}
               />
               <Text className="font-bold text-base" style={{ color: colors.text }}>
-                {isOnline ? 'Online' : 'Offline'}
+                {isOnline ? t('dashboard.online') : t('dashboard.offline')}
               </Text>
             </View>
             <Text className="text-xs mt-1" style={{ color: colors.textSecondary }}>
               {isOnline
-                ? 'You will receive nearby pickup offers.'
-                : 'Go online to start receiving pickup offers.'}
+                ? t('pickups.willReceiveOffers')
+                : t('pickups.goOnlineHint')}
             </Text>
             {location.error ? (
               <Text className="text-xs mt-1" style={{ color: colors.error }}>
@@ -361,16 +369,16 @@ export default function PickupsScreen() {
         {!isOnline ? (
           <EmptyState
             icon="cube-outline"
-            title="You're offline"
-            description="Toggle online above to start receiving nearby pickup offers."
+            title={t('pickups.youreOffline')}
+            description={t('pickups.toggleOnlineHint')}
           />
         ) : isLoading ? (
           <SkeletonList count={4} />
         ) : isError ? (
           <EmptyState
-            title="Failed to load offers"
+            title={t('pickups.failedToLoadOffers')}
             description={formatApiErrorDetail(error)}
-            actionLabel="Retry"
+            actionLabel={t('common.retry')}
             onAction={() => refetch()}
           />
         ) : (
@@ -394,8 +402,8 @@ export default function PickupsScreen() {
             ListEmptyComponent={
               <EmptyState
                 icon="cube-outline"
-                title="No pending offers"
-                description="New pickup offers near you will appear here."
+                title={t('pickups.noPendingOffers')}
+                description={t('pickups.newOffersWillAppear')}
               />
             }
           />
@@ -404,9 +412,9 @@ export default function PickupsScreen() {
 
       <ConfirmModal
         visible={!!declineTarget}
-        title="Decline Offer"
-        message="Decline this pickup offer? It will be sent to the next available Bridge employee."
-        confirmLabel="Decline"
+        title={t('pickups.declineOfferTitle')}
+        message={t('pickups.declineOfferMessage')}
+        confirmLabel={t('pickups.decline')}
         loading={declineMutation.isPending}
         onConfirm={handleConfirmDecline}
         onCancel={() => setDeclineTarget(null)}
