@@ -9,8 +9,10 @@ import {
   useNotifications,
 } from '@/features/notifications/hooks/useNotifications';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
+import { t as translate } from '@/i18n';
 import {
   EMPLOYEE_RELEVANT_TYPES,
   STAFF_ALERT_TYPES,
@@ -63,12 +65,12 @@ const timeAgo = (iso: string): string => {
   if (Number.isNaN(date.getTime())) return '';
   const diffMs = Date.now() - date.getTime();
   const minutes = Math.floor(diffMs / 60_000);
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return translate('notifications.justNow');
+  if (minutes < 60) return translate('notifications.minutesAgo', { minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return translate('notifications.hoursAgo', { hours });
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
+  if (days < 7) return translate('notifications.daysAgo', { days });
   return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
 };
 
@@ -115,6 +117,7 @@ const resolveDeepLink = (notification: NotificationItem): string | null => {
 
 export default function NotificationsScreen() {
   const { colors } = useTheme();
+  const { t } = useAppLanguage();
   const { contentMaxWidth } = useResponsive();
   const { user } = useAuth();
   const [page, setPage] = useState(1);
@@ -198,7 +201,7 @@ export default function NotificationsScreen() {
             {isAttention ? (
               <View className="px-2 py-0.5 rounded-full mr-1" style={{ backgroundColor: `${colors.primary}20` }}>
                 <Text className="text-[10px] font-bold" style={{ color: colors.primary }}>
-                  ACTION
+                  {t('notifications.action')}
                 </Text>
               </View>
             ) : null}
@@ -220,9 +223,9 @@ export default function NotificationsScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Header
-        title="Notifications"
+        title={t('notifications.title')}
         subtitle={
-          data && data.unread_count > 0 ? `${data.unread_count} unread` : 'Stay updated'
+          data && data.unread_count > 0 ? t('notifications.unreadCount', { count: data.unread_count }) : t('notifications.stayUpdated')
         }
         rightAction={
           data && data.unread_count > 0 ? (
@@ -233,7 +236,7 @@ export default function NotificationsScreen() {
               style={{ borderColor: colors.border, backgroundColor: colors.surface }}
             >
               <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
-                Mark all read
+                {t('notifications.markAllRead')}
               </Text>
             </Pressable>
           ) : undefined
@@ -241,15 +244,15 @@ export default function NotificationsScreen() {
       />
 
       <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
-        <SearchBar value={search} onChangeText={setSearch} placeholder="Search title or body..." />
+        <SearchBar value={search} onChangeText={setSearch} placeholder={t('notifications.searchPlaceholder')} />
         {isLoading ? (
           <SkeletonList count={6} />
         ) : isError ? (
           <EmptyState
             icon="cloud-offline-outline"
-            title="Unable to load notifications"
+            title={t('notifications.unableToLoad')}
             description={formatApiErrorDetail(error)}
-            actionLabel="Retry"
+            actionLabel={t('common.retry')}
             onAction={() => refetch()}
           />
         ) : (
@@ -264,8 +267,8 @@ export default function NotificationsScreen() {
             ListEmptyComponent={
               <EmptyState
                 icon="notifications-outline"
-                title="No notifications"
-                description="New alerts about your orders and account will appear here"
+                title={t('notifications.noNotifications')}
+                description={t('notifications.newAlertsWillAppear')}
               />
             }
             ListFooterComponent={

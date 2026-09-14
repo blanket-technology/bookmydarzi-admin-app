@@ -411,5 +411,20 @@
     "toggleOnlineHint": "आस-पास के डिलीवरी ऑफर पाने के लिए ऊपर ऑनलाइन टॉगल करें।",
     "newOffersWillAppear": "आपके आस-पास के नए डिलीवरी ऑफर यहां दिखेंगे।",
     "declineOfferMessage": "इस डिलीवरी ऑफर को अस्वीकार करें? यह अगले उपलब्ध ब्रिज कर्मचारी को भेज दिया जाएगा।"
+  },
+  "notifications": {
+    "justNow": "अभी",
+    "minutesAgo": "{{minutes}} मिनट पहले",
+    "hoursAgo": "{{hours}} घंटे पहले",
+    "daysAgo": "{{days}} दिन पहले",
+    "action": "कार्रवाई",
+    "title": "नोटिफिकेशन",
+    "unreadCount": "{{count}} अपठित",
+    "stayUpdated": "अपडेट रहें",
+    "markAllRead": "सभी पढ़ा हुआ मार्क करें",
+    "searchPlaceholder": "टाइटल या मैसेज खोजें...",
+    "unableToLoad": "नोटिफिकेशन लोड नहीं हो सके",
+    "noNotifications": "कोई नोटिफिकेशन नहीं",
+    "newAlertsWillAppear": "आपके ऑर्डर और अकाउंट के बारे में नए अलर्ट यहां दिखेंगे"
   }
 }

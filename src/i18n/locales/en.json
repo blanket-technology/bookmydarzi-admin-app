@@ -411,5 +411,20 @@
     "toggleOnlineHint": "Toggle online above to start receiving nearby delivery offers.",
     "newOffersWillAppear": "New delivery offers near you will appear here.",
     "declineOfferMessage": "Decline this delivery offer? It will be sent to the next available Bridge employee."
+  },
+  "notifications": {
+    "justNow": "Just now",
+    "minutesAgo": "{{minutes}}m ago",
+    "hoursAgo": "{{hours}}h ago",
+    "daysAgo": "{{days}}d ago",
+    "action": "ACTION",
+    "title": "Notifications",
+    "unreadCount": "{{count}} unread",
+    "stayUpdated": "Stay updated",
+    "markAllRead": "Mark all read",
+    "searchPlaceholder": "Search title or body...",
+    "unableToLoad": "Unable to load notifications",
+    "noNotifications": "No notifications",
+    "newAlertsWillAppear": "New alerts about your orders and account will appear here"
   }
 }
