@@ -9,8 +9,15 @@ import { capitalize, formatCurrency, formatDate } from '@/utils/errors';
 import { DetailRow } from './DetailRow';
 
 /** Top-of-screen status/amount/customer-info card - identical across every
- * role, extracted unchanged from orders/[id].tsx. */
-export const OrderSummaryCard = ({ order }: { order: AdminOrderItem }) => {
+ * role except tailor, extracted unchanged from orders/[id].tsx.
+ *
+ * isTailorRole hides customer identity/contact and all price/payment
+ * fields - the backend now redacts these from the tailor-facing order
+ * response entirely (order_response_builder.py's
+ * redact_order_response_for_tailor), so most of these already come back
+ * blank for a tailor caller; this prop just keeps the UI from rendering
+ * empty/zeroed rows for fields a tailor should never see in the first place. */
+export const OrderSummaryCard = ({ order, isTailorRole = false }: { order: AdminOrderItem; isTailorRole?: boolean }) => {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
   const statusColor = ORDER_STATUS_COLORS[order.status] ?? colors.primary;
@@ -19,9 +26,11 @@ export const OrderSummaryCard = ({ order }: { order: AdminOrderItem }) => {
     <Card className="mb-4">
       <View className="flex-row items-center justify-between mb-4">
         <Badge label={orderStatusLabel(order.status)} backgroundColor={`${statusColor}20`} color={statusColor} />
-        <Text className="text-xl font-bold" style={{ color: colors.primary }}>
-          {formatCurrency(order.final_amount ?? order.amount)}
-        </Text>
+        {!isTailorRole ? (
+          <Text className="text-xl font-bold" style={{ color: colors.primary }}>
+            {formatCurrency(order.final_amount ?? order.amount)}
+          </Text>
+        ) : null}
       </View>
 
       {order.needs_manual_assignment ? (
@@ -42,22 +51,32 @@ export const OrderSummaryCard = ({ order }: { order: AdminOrderItem }) => {
         </View>
       ) : null}
 
-      <DetailRow label={t('orders.customer')} value={order.customer_name ?? '—'} colors={colors} />
-      <DetailRow label={t('orderSummary.mobile')} value={order.customer_mobile ?? '—'} colors={colors} />
+      {!isTailorRole ? (
+        <>
+          <DetailRow label={t('orders.customer')} value={order.customer_name ?? '—'} colors={colors} />
+          <DetailRow label={t('orderSummary.mobile')} value={order.customer_mobile ?? '—'} colors={colors} />
+        </>
+      ) : null}
       <DetailRow label={t('orders.service')} value={order.service_name ?? '—'} colors={colors} />
       <DetailRow label={t('orderSummary.category')} value={order.category_name ?? '—'} colors={colors} />
-      <DetailRow label={t('orders.tailorLabel')} value={order.tailor_name ?? t('orders.unassigned')} colors={colors} />
-      {order.return_employee_id ? (
+      {!isTailorRole ? (
+        <DetailRow label={t('orders.tailorLabel')} value={order.tailor_name ?? t('orders.unassigned')} colors={colors} />
+      ) : null}
+      {!isTailorRole && order.return_employee_id ? (
         <DetailRow
           label={t('orderSummary.returnHandledBy')}
           value={order.return_employee_name ?? `#${order.return_employee_id}`}
           colors={colors}
         />
       ) : null}
-      <DetailRow label={t('orderSummary.payment')} value={capitalize(order.payment_status ?? '—')} colors={colors} />
-      {typeof order.remaining_amount === 'number' && order.remaining_amount > 0 && (
-        <DetailRow label={t('orders.balanceDue')} value={formatCurrency(order.remaining_amount)} colors={colors} />
-      )}
+      {!isTailorRole ? (
+        <>
+          <DetailRow label={t('orderSummary.payment')} value={capitalize(order.payment_status ?? '—')} colors={colors} />
+          {typeof order.remaining_amount === 'number' && order.remaining_amount > 0 && (
+            <DetailRow label={t('orders.balanceDue')} value={formatCurrency(order.remaining_amount)} colors={colors} />
+          )}
+        </>
+      ) : null}
       <DetailRow label={t('orderSummary.urgency')} value={capitalize(order.urgency_level ?? '—')} colors={colors} />
       <DetailRow label={t('orderSummary.created')} value={formatDate(order.created_at)} colors={colors} />
       <DetailRow label={t('orderSummary.expectedDelivery')} value={formatDate(order.expected_delivery_date)} colors={colors} />

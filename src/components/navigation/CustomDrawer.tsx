@@ -28,7 +28,7 @@ const MENU_ITEMS: {
 }[] = [
   { label: 'Dashboard', icon: 'grid-outline', route: '/(drawer)/dashboard', permission: 'dashboard' },
   { label: 'Orders', icon: 'receipt-outline', route: '/(drawer)/orders', permission: 'orders' },
-  { label: 'Payments', icon: 'wallet-outline', route: '/(drawer)/payments', permission: 'orders' },
+  { label: 'Payments', icon: 'wallet-outline', route: '/(drawer)/payments', permission: 'payments' },
   { label: 'Broadcasts', icon: 'radio-outline', route: '/(drawer)/broadcasts', permission: 'broadcasts' },
   { label: 'Pickups', icon: 'cube-outline', route: '/(drawer)/pickups', permission: 'deliveries' },
   { label: 'Deliveries', icon: 'bicycle-outline', route: '/(drawer)/deliveries', permission: 'deliveries' },

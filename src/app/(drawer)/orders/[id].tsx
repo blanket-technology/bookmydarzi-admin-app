@@ -111,7 +111,7 @@ export default function OrderDetailsScreen() {
   // employees see a stripped, PII-free list via a separate endpoint - see
   // GET /employee/tailors vs GET /admin/tailors.
   const { data: adminTailorsData } = useTailors(undefined, isAdminRole);
-  const { data: employeeTailorsData } = useTailorsForEmployee(!isAdminRole);
+  const { data: employeeTailorsData } = useTailorsForEmployee(isEmployeeRole);
   const assignMutation = useAssignTailorMutation();
   const assignEmployeeMutation = useAssignTailorEmployeeMutation();
   const statusMutation = useUpdateOrderStatusMutation();
@@ -256,17 +256,19 @@ export default function OrderDetailsScreen() {
         showMenu={false}
         rightAction={
           <View className="flex-row items-center gap-4">
-            <Pressable
-              onPress={() => downloadInvoiceMutation.mutate({ orderId: order.order_id, orderCode: order.order_code })}
-              disabled={downloadInvoiceMutation.isPending}
-              hitSlop={8}
-            >
-              {downloadInvoiceMutation.isPending ? (
-                <ActivityIndicator size="small" color={colors.text} />
-              ) : (
-                <Ionicons name="download-outline" size={22} color={colors.text} />
-              )}
-            </Pressable>
+            {!isTailorRole ? (
+              <Pressable
+                onPress={() => downloadInvoiceMutation.mutate({ orderId: order.order_id, orderCode: order.order_code })}
+                disabled={downloadInvoiceMutation.isPending}
+                hitSlop={8}
+              >
+                {downloadInvoiceMutation.isPending ? (
+                  <ActivityIndicator size="small" color={colors.text} />
+                ) : (
+                  <Ionicons name="download-outline" size={22} color={colors.text} />
+                )}
+              </Pressable>
+            ) : null}
             <Pressable
               onPress={() => router.back()}
               hitSlop={10}
@@ -292,9 +294,9 @@ export default function OrderDetailsScreen() {
           />
         ) : null}
 
-        <OrderSummaryCard order={order} />
+        <OrderSummaryCard order={order} isTailorRole={isTailorRole} />
 
-        <OrderAddressCard order={order} />
+        {!isTailorRole ? <OrderAddressCard order={order} /> : null}
 
         <OrderNotesCard order={order} isAdminRole={isAdminRole} onEdit={() => setNotesSheetVisible(true)} />
 

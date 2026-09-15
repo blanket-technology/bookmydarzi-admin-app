@@ -6,6 +6,12 @@ export interface AppPermissions {
   dashboard: boolean;
   users: boolean;
   orders: boolean;
+  /** Payments screen — customer payment/price/refund detail across all
+   * orders. Admin/employee/superadmin only server-side (payment_service.py's
+   * ADMIN_STAFF_ROLES); tailors have no legitimate reason to see any
+   * customer's payment/price info (see the same principle behind
+   * OrderAddressCard being hidden from tailors on the order-detail screen). */
+  payments: boolean;
   tailors: boolean;
   staff: boolean;
   applications: boolean;
@@ -89,6 +95,7 @@ const ADMIN_PERMISSIONS: AppPermissions = {
   dashboard: true,
   users: true,
   orders: true,
+  payments: true,
   tailors: true,
   staff: true,
   applications: true,
@@ -146,6 +153,7 @@ const EMPLOYEE_PERMISSIONS: AppPermissions = {
   dashboard: true,
   users: false,
   orders: true,
+  payments: true,
   tailors: false,
   staff: false,
   applications: false,
@@ -180,6 +188,9 @@ const TAILOR_PERMISSIONS: AppPermissions = {
   dashboard: true,
   users: false,
   orders: true,
+  // Tailors must not see customer payment/price/refund detail — see the
+  // AppPermissions.payments docstring.
+  payments: false,
   tailors: false,
   staff: false,
   applications: false,
@@ -220,6 +231,7 @@ const NO_PERMISSIONS: AppPermissions = {
   dashboard: false,
   users: false,
   orders: false,
+  payments: false,
   tailors: false,
   staff: false,
   applications: false,
@@ -356,7 +368,7 @@ export const mergeEffectivePermissions = (
 export const ROUTE_PERMISSION_MAP: Record<string, keyof AppPermissions> = {
   dashboard: 'dashboard',
   orders: 'orders',
-  payments: 'orders',
+  payments: 'payments',
   customers: 'users',
   tailors: 'tailors',
   employees: 'staff',
