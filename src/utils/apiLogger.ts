@@ -46,15 +46,27 @@ export const logApiResponse = (
 // credentials, validation errors, not-found) are expected traffic, not bugs —
 // logging them as console.error triggers Expo's red-screen overlay and makes
 // a normal "user mistyped their password" look like a crash. Only genuinely
-// unexpected failures (5xx, network errors, and 401s outside the login flow,
-// which usually mean a stale/invalid session) warrant console.error.
-const isExpectedClientError = (status: number, url: string): boolean => {
+// unexpected failures (5xx, network errors, and 401s the axios interceptor
+// itself isn't already about to handle) warrant console.error.
+//
+// A 401 outside the login flow that the interceptor is about to attempt a
+// silent token refresh for (see axios.ts's response interceptor) is exactly
+// the scenario this whole refresh machinery exists to handle gracefully -
+// whether it resolves via a successful refresh or ends in
+// REFRESH_TOKEN_MISSING/EXPIRED (session genuinely stale, e.g. after the app
+// sat backgrounded past token expiry - see useAutoOnline.ts's foreground
+// re-check, whose own try/catch already silently handles this), it's
+// expected traffic, not a crash. `willAttemptRefresh` lets the interceptor
+// tell the logger this BEFORE the refresh outcome is known, since the log
+// call happens up front on the raw error.
+const isExpectedClientError = (status: number, url: string, willAttemptRefresh = false): boolean => {
   if (status === 404 || status === 422) return true;
   if (status === 401 && url.includes('/auth/')) return true;
+  if (status === 401 && willAttemptRefresh) return true;
   return false;
 };
 
-export const logApiError = (error: AxiosError | unknown, willRetry = false) => {
+export const logApiError = (error: AxiosError | unknown, willRetry = false, willAttemptRefresh = false) => {
   if (!__DEV__) return;
 
   const axiosError = error as AxiosError;
@@ -64,7 +76,7 @@ export const logApiError = (error: AxiosError | unknown, willRetry = false) => {
 
   if (axiosError.response) {
     const status = axiosError.response.status;
-    const log = isExpectedClientError(status, url) ? console.warn : console.error;
+    const log = isExpectedClientError(status, url, willAttemptRefresh) ? console.warn : console.error;
     log('[API Error]', {
       url,
       method: axiosError.config?.method?.toUpperCase(),
