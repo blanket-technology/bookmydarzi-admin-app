@@ -131,7 +131,18 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       }
     } else {
-      logApiError(error);
+      // Mirrors the exact condition below that decides whether this 401
+      // triggers the silent-refresh flow - a 401 about to go through that
+      // path (successfully refreshed, or ending in a graceful
+      // REFRESH_TOKEN_MISSING/EXPIRED session-expiry, both already handled
+      // without surfacing anything to the user) shouldn't log as a loud
+      // console.error/dev red-screen. See apiLogger.ts's isExpectedClientError.
+      const willAttemptRefresh =
+        error.response?.status === 401 &&
+        !!originalRequest &&
+        !(originalRequest as RetryConfig)._retry &&
+        !isAuthRoute(originalRequest.url);
+      logApiError(error, false, willAttemptRefresh);
     }
 
     if (!originalRequest) {
