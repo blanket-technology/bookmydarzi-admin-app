@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
-import { useOfferAlertSound } from '@/hooks/useOfferAlertSound';
 import { useBroadcastOffers } from '@/features/broadcasts/hooks/useBroadcasts';
 import { useDeliveryBroadcastOffers } from '@/features/deliveries/hooks/useDeliveries';
 import { usePickupBroadcastOffers } from '@/features/pickups/hooks/usePickups';
@@ -13,10 +12,11 @@ import { toast } from '@/store/toastStore';
  * the matching NOTIFICATION event, not just the poll fallback - and raises a
  * one-shot toast per role on every fresh increase.
  *
- * Bridge/employee (pickup/delivery) offers now also open the full-screen
- * IncomingOfferModal (see AppProviders.tsx), which owns its own looping
- * sound/haptics tied to actually being on screen - so the continuous alert
- * here is only still needed for tailor broadcasts, which have no such modal.
+ * Bridge/employee (pickup/delivery) offers open IncomingOfferModal, and
+ * tailor broadcasts open IncomingBroadcastModal (both in AppProviders.tsx) -
+ * each owns its own looping sound/haptics tied to actually being on screen,
+ * so this component is toast-only now; it never plays the alert sound
+ * itself.
  *
  * Each role only runs the query for its own offer type (gated on
  * permissions.broadcasts for tailors, permissions.deliveries for Bridge/
@@ -72,12 +72,6 @@ export const OfferAlerts = () => {
       prevDelivery.current = null;
     }
   }, [tailorEnabled, staffEnabled]);
-
-  // Tailor broadcasts have no full-screen popup (unlike Bridge/employee,
-  // which IncomingOfferModal now handles) so the continuous looping
-  // sound/haptic alert stays here for tailors only, active for as long as
-  // there's a pending tailor offer count.
-  useOfferAlertSound(tailorEnabled && tailorCount > 0);
 
   return null;
 };
