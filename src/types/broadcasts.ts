@@ -32,7 +32,7 @@ export interface BroadcastItem {
   notes?: string | null;
   stitching_preferences?: Record<string, unknown> | null;
   measurement?: BroadcastItemMeasurement | null;
-  addons: BroadcastItemAddon[];
+  addons?: BroadcastItemAddon[];
 }
 
 export interface BroadcastOffer {
@@ -63,7 +63,11 @@ export interface BroadcastOffer {
   /** JSON object on the backend (Order.StitchingPreferences), e.g.
    * {"collar": "mandarin", "sleeve": "full"} - never a plain string. */
   stitching_preferences?: Record<string, unknown> | null;
-  items: BroadcastItem[];
+  // Optional even though the backend always sends it now - defends against
+  // a stale cached response (from before this field existed) or an app
+  // build still running against an older deployed backend, either of which
+  // would otherwise crash on offer.items.length with no items array at all.
+  items?: BroadcastItem[];
   broadcast_id: string;
   expires_at?: string | null;
   notified_at?: string | null;

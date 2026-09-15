@@ -103,7 +103,7 @@ const GarmentItemCard = ({ item, index }: { item: BroadcastItem; index: number }
         </Text>
       ) : null}
 
-      {item.addons.length > 0 ? (
+      {item.addons && item.addons.length > 0 ? (
         <Text className="text-xs mt-1" style={{ color: colors.textSecondary }}>
           Add-ons: {item.addons.map((a) => a.name).join(', ')}
         </Text>
@@ -204,7 +204,7 @@ export const TailorOfferCard = ({
         </Text>
       </View>
 
-      {offer.items.length > 0 ? (
+      {offer.items && offer.items.length > 0 ? (
         <View className="mb-1">
           {offer.items.map((item, index) => (
             <GarmentItemCard key={index} item={item} index={index} />
