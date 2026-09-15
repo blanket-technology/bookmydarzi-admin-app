@@ -67,9 +67,13 @@ export const IncomingOfferModal = () => {
   const { data: deliveryOffersData } = useDeliveryBroadcastOffers(staffEnabled && offer?.kind === 'delivery');
   const { data: returnOffersData } = useReturnBroadcastOffers(staffEnabled && offer?.kind === 'return');
 
-  const resolvedPickupOffer = pickupOffersData?.broadcasts.find((b) => b.order_id === offer?.orderId);
-  const resolvedDeliveryOffer = deliveryOffersData?.broadcasts.find((b) => b.order_id === offer?.orderId);
-  const resolvedReturnOffer = returnOffersData?.broadcasts.find((b) => b.order_id === offer?.orderId);
+  // order_id comes back as a number from these list endpoints
+  // (employee.py: "order_id": order.Id) while offer.orderId is always a
+  // string (useAppSocket.ts's String(data.order_id ?? '')) - String()-ing
+  // both sides here so this actually matches instead of always missing.
+  const resolvedPickupOffer = pickupOffersData?.broadcasts.find((b) => String(b.order_id) === String(offer?.orderId));
+  const resolvedDeliveryOffer = deliveryOffersData?.broadcasts.find((b) => String(b.order_id) === String(offer?.orderId));
+  const resolvedReturnOffer = returnOffersData?.broadcasts.find((b) => String(b.order_id) === String(offer?.orderId));
   const resolvedOffer = resolvedPickupOffer ?? resolvedDeliveryOffer ?? resolvedReturnOffer;
 
   const pickup: IncomingOfferLocation | null | undefined =
