@@ -90,7 +90,7 @@ export default function OrdersScreen() {
               {item.order_code ?? item.order_id}
             </Text>
             <Text className="text-sm mt-1" style={{ color: colors.textSecondary }}>
-              {item.customer_name ?? t('orders.customer')} · {item.service_name ?? t('orders.service')}
+              {isTailorRole ? item.service_name ?? t('orders.service') : `${item.customer_name ?? t('orders.customer')} · ${item.service_name ?? t('orders.service')}`}
             </Text>
             {!isTailorRole ? (
               <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
@@ -116,11 +116,13 @@ export default function OrdersScreen() {
           <Text className="text-sm" style={{ color: colors.textMuted }}>
             {formatDate(item.created_at)}
           </Text>
-          <Text className="font-bold" style={{ color: colors.primary }}>
-            {formatCurrency(item.final_amount ?? item.amount)}
-          </Text>
+          {!isTailorRole ? (
+            <Text className="font-bold" style={{ color: colors.primary }}>
+              {formatCurrency(item.final_amount ?? item.amount)}
+            </Text>
+          ) : null}
         </View>
-        {typeof item.remaining_amount === 'number' && item.remaining_amount > 0 ? (
+        {!isTailorRole && typeof item.remaining_amount === 'number' && item.remaining_amount > 0 ? (
           <Text className="text-xs mt-1" style={{ color: colors.error }}>
             {t('orders.balanceDue')}: {formatCurrency(item.remaining_amount)}
           </Text>
