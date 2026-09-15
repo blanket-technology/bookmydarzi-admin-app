@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, Linking, RefreshControl, Switch, Text, View } from 'react-native';
+import { FlatList, RefreshControl, Switch, Text, View } from 'react-native';
 import { Card, ConfirmModal, EmptyState, Header, Pressable, SkeletonList } from '@/components/ui';
 import {
   useAcceptReturnBroadcastMutation,
@@ -18,6 +18,7 @@ import { t as translate } from '@/i18n';
 import type { ReturnBroadcastOffer } from '@/types/returns';
 import { formatApiErrorDetail, formatDate } from '@/utils/errors';
 import { formatDistanceKm, haversineDistanceKm } from '@/utils/geo';
+import { LocationRow, itemsLabel, openMap, useCountdown } from '@/features/broadcasts/offerCardHelpers';
 
 // Return-pickup queue: the reverse leg of a cancelled order where the tailor
 // already had the fabric/garment in hand at cancel time. Same broadcast/
@@ -27,111 +28,6 @@ import { formatDistanceKm, haversineDistanceKm } from '@/utils/geo';
 // complete steps happen from the order detail screen (orders/[id].tsx),
 // since a return stays assigned to one employee across those steps rather
 // than being re-broadcast.
-const useCountdown = (expiresAt?: string | null) => {
-  const [label, setLabel] = useState('');
-  useEffect(() => {
-    if (!expiresAt) {
-      setLabel('');
-      return;
-    }
-    const update = () => {
-      const diffMs = new Date(expiresAt).getTime() - Date.now();
-      if (diffMs <= 0) {
-        setLabel(translate('pickups.expired'));
-        return;
-      }
-      const mins = Math.floor(diffMs / 60000);
-      const secs = Math.floor((diffMs % 60000) / 1000);
-      setLabel(
-        mins > 0
-          ? translate('pickups.timeLeftMinSec', { mins, secs })
-          : translate('pickups.timeLeftSec', { secs }),
-      );
-    };
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [expiresAt]);
-  return label;
-};
-
-const openMap = (latitude?: number | null, longitude?: number | null, label?: string) => {
-  if (latitude == null || longitude == null) return;
-  const query = encodeURIComponent(label ?? `${latitude},${longitude}`);
-  Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}&query_place_id=${query}`).catch(
-    () => {},
-  );
-};
-
-const callNumber = (mobile?: string | null) => {
-  if (!mobile) return;
-  Linking.openURL(`tel:${mobile}`).catch(() => {});
-};
-
-const itemsLabel = (items?: { service_name?: string | null; category_name?: string | null; quantity: number }[]) => {
-  if (!items || items.length === 0) return null;
-  return items
-    .map((it) => {
-      const name = it.service_name ?? it.category_name ?? translate('orderItems.item');
-      return it.quantity > 1 ? `${name} × ${it.quantity}` : name;
-    })
-    .join(', ');
-};
-
-const LocationRow = ({
-  icon,
-  iconColor,
-  label,
-  addressLine,
-  personName,
-  mobile,
-  onPress,
-  colors,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  iconColor: string;
-  label: string;
-  addressLine: string;
-  personName?: string | null;
-  mobile?: string | null;
-  onPress?: () => void;
-  colors: ReturnType<typeof useTheme>['colors'];
-}) => (
-  <View className="py-1.5">
-    <Pressable onPress={onPress} disabled={!onPress} className="flex-row items-start">
-      <Ionicons name={icon} size={15} color={iconColor} style={{ marginTop: 1 }} />
-      <View className="flex-1 ml-2">
-        <Text className="text-[11px] font-semibold uppercase" style={{ color: colors.textMuted }}>
-          {label}
-        </Text>
-        <Text className="text-sm mt-0.5" style={{ color: colors.text }} numberOfLines={2}>
-          {addressLine}
-        </Text>
-        {personName ? (
-          <Text className="text-xs mt-0.5" style={{ color: colors.textSecondary }}>
-            {personName}
-          </Text>
-        ) : null}
-      </View>
-      {onPress ? <Ionicons name="navigate-outline" size={16} color={colors.primary} style={{ marginTop: 2 }} /> : null}
-    </Pressable>
-    {mobile ? (
-      <Pressable
-        onPress={(e) => {
-          e.stopPropagation();
-          callNumber(mobile);
-        }}
-        className="flex-row items-center self-start mt-1.5 ml-6 px-3 py-1.5 rounded-full"
-        style={{ backgroundColor: colors.primaryLight }}
-      >
-        <Ionicons name="call-outline" size={13} color={colors.primary} />
-        <Text className="text-xs font-semibold ml-1.5" style={{ color: colors.primary }}>
-          {translate('pickups.call', { mobile: mobile ?? '' })}
-        </Text>
-      </Pressable>
-    ) : null}
-  </View>
-);
 
 const OfferCard = ({
   offer,

@@ -5,6 +5,7 @@ import { API_CONFIG } from '@/config/api';
 import { ENDPOINTS } from '@/services/endpoints';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { useAuthStore } from '@/store/authStore';
+import { incomingOfferQueue, type IncomingOfferLocation } from '@/store/incomingOfferStore';
 import { toast } from '@/store/toastStore';
 import { wsStatus } from '@/store/wsStatusStore';
 import type { NotificationItem, NotificationListResponse } from '@/types/notifications';
@@ -98,17 +99,61 @@ export function useAppSocket() {
         toast.info(`${notification.title}${notification.body ? ` — ${notification.body}` : ''}`);
       }
 
-      // Pickup/delivery broadcast offers also need their own screens' data
-      // refreshed instantly, not just the notification feed - OfferAlerts.tsx
-      // reacts to these query caches changing to fire its own toast, so
-      // invalidating here removes its previous 30s-poll lag with no change
-      // needed on that side.
+      // Pickup/delivery/return broadcast offers also need their own screens'
+      // data refreshed instantly, not just the notification feed -
+      // OfferAlerts.tsx/IncomingOfferModal.tsx react to these query caches
+      // changing, so invalidating here removes the previous 30s-poll lag
+      // with no change needed on that side.
       if (notification.type === 'pickup_broadcast_offer') {
         queryClient.invalidateQueries({ queryKey: ['pickup-broadcasts'] });
       } else if (notification.type === 'delivery_broadcast_offer') {
         queryClient.invalidateQueries({ queryKey: ['delivery-broadcasts'] });
+      } else if (notification.type === 'return_broadcast_offer') {
+        // Was previously missing entirely - the Returns screen only ever
+        // updated via its own 30s poll, unlike pickup/delivery above.
+        queryClient.invalidateQueries({ queryKey: ['return-broadcasts'] });
       } else if (notification.type === 'broadcast_offer') {
         queryClient.invalidateQueries({ queryKey: ['broadcasts'] });
+      }
+
+      // Feed the full-screen incoming-offer popup (IncomingOfferModal.tsx) -
+      // delivery/return notifications already carry the full pickup/drop
+      // location payload in `data` (see delivery_broadcast_service.py /
+      // return_broadcast_service.py's notify_users calls), so the popup can
+      // render instantly with zero refetch latency. Pickup offers only carry
+      // order_id/order_code (single-location by design - the "pickup" point
+      // IS the customer's own address) - the modal resolves that itself from
+      // the now-invalidated pickup-broadcasts list above.
+      if (
+        notification.type === 'pickup_broadcast_offer' ||
+        notification.type === 'delivery_broadcast_offer' ||
+        notification.type === 'return_broadcast_offer'
+      ) {
+        const kind =
+          notification.type === 'pickup_broadcast_offer'
+            ? 'pickup'
+            : notification.type === 'delivery_broadcast_offer'
+              ? 'delivery'
+              : 'return';
+        const data = notification.data ?? {};
+        // The WS notification payload doesn't carry the broadcast row's real
+        // expires_at (see delivery/pickup/return_broadcast_service.py's
+        // notify_users calls - order_id/order_code/pickup/drop only), but
+        // every broadcast round is a fixed 5-minute window
+        // (ROUND_TIMEOUT_MINUTES) - approximating "now + 5 min" here gets
+        // the popup's countdown started immediately rather than waiting on
+        // a fetch; it's superseded by the real value once the pickup-offer
+        // lookup (for kind='pickup') or a manual refresh resolves it.
+        const approxExpiresAt = new Date(Date.now() + 5 * 60_000).toISOString();
+        incomingOfferQueue.enqueue({
+          kind,
+          orderId: String(data.order_id ?? ''),
+          orderCode: (data.order_code as string | null | undefined) ?? null,
+          pickup: (data.pickup as IncomingOfferLocation | null | undefined) ?? null,
+          drop: (data.drop as IncomingOfferLocation | null | undefined) ?? null,
+          expiresAt: approxExpiresAt,
+          broadcastRound: null,
+        });
       }
 
       // Every order-lifecycle event (tailor assigned, status changed, pickup

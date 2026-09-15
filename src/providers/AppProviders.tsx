@@ -7,6 +7,7 @@ import { Toast } from '@/components/ui/Toast';
 import { SessionExpired } from '@/components/ui/SessionExpired';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { ConnectionStatusBanner } from '@/components/ui/ConnectionStatusBanner';
+import { IncomingOfferModal } from '@/components/ui/IncomingOfferModal';
 import { AuthProvider } from '@/contexts/authContext';
 import { OfferAlerts } from '@/features/pickups/components/OfferAlerts';
 import { useAppSocket } from '@/hooks/useAppSocket';
@@ -90,6 +91,7 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
             <AppSocketConnection />
             <AutoOnlineConnection />
             <OfferAlerts />
+            <IncomingOfferModal />
             <OfflineBanner />
             <ConnectionStatusBanner />
             <Toast />

@@ -414,7 +414,8 @@
     "noPendingOffers": "No pending offers",
     "newOffersWillAppear": "New pickup offers near you will appear here.",
     "declineOfferTitle": "Decline Offer",
-    "declineOfferMessage": "Decline this pickup offer? It will be sent to the next available Bridge employee."
+    "declineOfferMessage": "Decline this pickup offer? It will be sent to the next available Bridge employee.",
+    "away": "away"
   },
   "deliveries": {
     "title": "Deliveries",

@@ -10,12 +10,13 @@ import { toast } from '@/store/toastStore';
  * App-wide alert for incoming job offers - tailor broadcasts (accept/decline
  * a new order) and Bridge/employee pickup + delivery broadcasts. Reacts to
  * these offer queries changing - invalidated instantly by useAppSocket.ts on
- * the matching NOTIFICATION event, not just the poll fallback - and raises
- * BOTH a toast and a continuous, Uber/Ola/Rapido-style alert (looping sound +
- * repeated haptic pulse, see useOfferAlertSound) that keeps going for as
- * long as ANY tracked offer count is still above zero - not a single
- * easy-to-miss ding. The alert silences itself the instant every count the
- * staff member is watching drops back to zero (accepted/declined/expired).
+ * the matching NOTIFICATION event, not just the poll fallback - and raises a
+ * one-shot toast per role on every fresh increase.
+ *
+ * Bridge/employee (pickup/delivery) offers now also open the full-screen
+ * IncomingOfferModal (see AppProviders.tsx), which owns its own looping
+ * sound/haptics tied to actually being on screen - so the continuous alert
+ * here is only still needed for tailor broadcasts, which have no such modal.
  *
  * Each role only runs the query for its own offer type (gated on
  * permissions.broadcasts for tailors, permissions.deliveries for Bridge/
@@ -72,15 +73,11 @@ export const OfferAlerts = () => {
     }
   }, [tailorEnabled, staffEnabled]);
 
-  // The continuous alert (looping sound + repeated haptic pulse) tracks
-  // straightforwardly off current totals - it's active for as long as ANY
-  // enabled offer type has a pending count, and stops the instant they're
-  // all back to zero. No separate "was this a fresh increase" gate is
-  // needed here (that's only relevant for the one-shot toasts above),
-  // since re-alerting while an offer is still genuinely pending is exactly
-  // the "keep ringing until acted on" behavior this is meant to have.
-  const alerting = (tailorEnabled && tailorCount > 0) || (staffEnabled && (pickupCount > 0 || deliveryCount > 0));
-  useOfferAlertSound(alerting);
+  // Tailor broadcasts have no full-screen popup (unlike Bridge/employee,
+  // which IncomingOfferModal now handles) so the continuous looping
+  // sound/haptic alert stays here for tailors only, active for as long as
+  // there's a pending tailor offer count.
+  useOfferAlertSound(tailorEnabled && tailorCount > 0);
 
   return null;
 };
