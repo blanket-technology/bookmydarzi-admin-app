@@ -19,6 +19,7 @@ import { useDeliveryBroadcastOffers, useAcceptDeliveryBroadcastMutation } from '
 import { useMarkReturnInTransitMutation, useMarkReturnCompleteMutation } from '@/features/returns/hooks/useReturns';
 import { MeasurementManageSheet } from '@/features/orders/components/MeasurementManageSheet';
 import { AddOrderAddonSheet } from '@/features/orders/components/AddOrderAddonSheet';
+import { UpdateProgressSheet } from '@/features/orders/components/UpdateProgressSheet';
 import { ProgressPhotosSection } from '@/features/orders/components/ProgressPhotosSection';
 import { PendingOfferCard } from '@/features/orders/components/PendingOfferCard';
 import { OrderSummaryCard } from '@/features/orders/components/OrderSummaryCard';
@@ -82,6 +83,8 @@ export default function OrderDetailsScreen() {
   const [paymentSheetVisible, setPaymentSheetVisible] = useState(false);
   const [notesSheetVisible, setNotesSheetVisible] = useState(false);
   const [broadcastConfirmVisible, setBroadcastConfirmVisible] = useState(false);
+  const [updateProgressSheetVisible, setUpdateProgressSheetVisible] = useState(false);
+  const [updateProgressStage, setUpdateProgressStage] = useState<'in_progress' | 'final_check'>('in_progress');
 
   const role = user?.role ?? selectedRole ?? undefined;
   const normalizedRole = String(role ?? '').toLowerCase();
@@ -197,6 +200,15 @@ export default function OrderDetailsScreen() {
       case 'view_payment':
         setPaymentSheetVisible(true);
         return;
+      case 'in_progress':
+      case 'final_check':
+        if (action.requiresInput) {
+          setUpdateProgressStage(action.id);
+          setUpdateProgressSheetVisible(true);
+          return;
+        }
+        action.run();
+        return;
       default:
         if (action.requiresConfirmation) {
           setConfirmAction(action);
@@ -299,6 +311,30 @@ export default function OrderDetailsScreen() {
         {!isTailorRole ? <OrderAddressCard order={order} /> : null}
 
         <OrderNotesCard order={order} isAdminRole={isAdminRole} onEdit={() => setNotesSheetVisible(true)} />
+
+        {isTailorRole ? (
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: '/(drawer)/support/tickets/new',
+                params: { orderId: order.order_id, category: 'order' },
+              })
+            }
+            className="flex-row items-center rounded-2xl px-4 py-3 mb-4 border"
+            style={{ borderColor: colors.border, backgroundColor: colors.card }}
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.primary} />
+            <View className="ml-2.5 flex-1">
+              <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+                {t('orderDetail.contactSupport')}
+              </Text>
+              <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
+                {t('orderDetail.contactSupportHint')}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </Pressable>
+        ) : null}
 
         {order.items.length <= 1 ? <OrderMeasurementCard order={order} isTailorRole={isTailorRole} /> : null}
 
@@ -534,6 +570,14 @@ export default function OrderDetailsScreen() {
         serviceId={addAddonTargetItem?.serviceId ?? (order.items.length === 1 ? order.items[0]?.service_id ?? undefined : undefined)}
         orderItemId={addAddonTargetItem?.id}
         itemLabel={addAddonTargetItem?.label}
+      />
+
+      <UpdateProgressSheet
+        visible={updateProgressSheetVisible}
+        onClose={() => setUpdateProgressSheetVisible(false)}
+        orderId={order.order_id}
+        nextStage={updateProgressStage}
+        nextStageLabel={updateProgressStage === 'final_check' ? t('updateProgress.finalCheckTitle') : t('updateProgress.updateProgressTitle')}
       />
     </View>
   );
