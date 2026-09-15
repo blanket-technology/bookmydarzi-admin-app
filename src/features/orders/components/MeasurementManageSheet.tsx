@@ -253,7 +253,25 @@ export const MeasurementManageSheet = ({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={requestClose} title={t('measurement.title')}>
+    <BottomSheet
+      visible={visible}
+      onClose={requestClose}
+      title={t('measurement.title')}
+      contentKey={mode}
+      footer={
+        mode === 'list' ? (
+          <Button title={t('measurementManage.addNew')} variant="outline" onPress={() => setMode('new')} fullWidth />
+        ) : gender ? (
+          <Button
+            title={mode === 'edit' ? t('profile.saveChanges') : t('measurementManage.saveMeasurement')}
+            onPress={mode === 'edit' ? handleSaveEdit : handleCreateNew}
+            loading={mode === 'edit' ? updateProfileMutation.isPending || collectMutation.isPending : collectMutation.isPending}
+            disabled={!profileName.trim() || hasInvalidValue}
+            fullWidth
+          />
+        ) : null
+      }
+    >
       {itemLabel ? (
         <Text className="text-xs font-semibold mb-3 -mt-1" style={{ color: colors.textSecondary }}>
           {t('measurementManage.forItem', { item: itemLabel })}
@@ -317,13 +335,6 @@ export const MeasurementManageSheet = ({
               ))}
             </ScrollView>
           )}
-          <Button
-            title={t('measurementManage.addNew')}
-            variant="outline"
-            onPress={() => setMode('new')}
-            className="mt-3"
-            fullWidth
-          />
         </>
       ) : (
         <ScrollView style={{ maxHeight: 460 }} showsVerticalScrollIndicator={false}>
@@ -418,15 +429,6 @@ export const MeasurementManageSheet = ({
                 value={notes}
                 onChangeText={setNotes}
                 placeholder={t('measurementManage.optional')}
-              />
-
-              <Button
-                title={mode === 'edit' ? t('profile.saveChanges') : t('measurementManage.saveMeasurement')}
-                onPress={mode === 'edit' ? handleSaveEdit : handleCreateNew}
-                loading={mode === 'edit' ? updateProfileMutation.isPending || collectMutation.isPending : collectMutation.isPending}
-                disabled={!profileName.trim() || hasInvalidValue}
-                className="mt-2"
-                fullWidth
               />
             </>
           )}

@@ -49,7 +49,21 @@ export const CancelOrderSheet = ({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title={t('cancelOrder.title')}>
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title={t('cancelOrder.title')}
+      footer={
+        <Button
+          title={t('cancelOrder.title')}
+          variant="danger"
+          onPress={handleCancel}
+          loading={cancelMutation.isPending}
+          disabled={!reason.trim() || loadingPreview}
+          fullWidth
+        />
+      }
+    >
       {existingCancellation && ['pending', 'approved'].includes(existingCancellation.Status) ? (
         <View
           className="flex-row items-start rounded-2xl p-3 mb-3 border"
@@ -147,15 +161,6 @@ export const CancelOrderSheet = ({
       ) : null}
 
       <Input label={t('cancelOrder.reason')} value={reason} onChangeText={setReason} multiline />
-      <Button
-        title={t('cancelOrder.title')}
-        variant="danger"
-        onPress={handleCancel}
-        loading={cancelMutation.isPending}
-        disabled={!reason.trim() || loadingPreview}
-        fullWidth
-        className="mt-3"
-      />
     </BottomSheet>
   );
 };

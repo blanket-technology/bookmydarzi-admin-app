@@ -84,7 +84,20 @@ export const SchedulePickupSheet = ({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title={t('schedulePickup.title')}>
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title={t('schedulePickup.title')}
+      footer={
+        <Button
+          title={t('schedulePickup.title')}
+          onPress={handleSubmit}
+          loading={mutation.isPending}
+          disabled={!canSubmit}
+          fullWidth
+        />
+      }
+    >
       <View className="flex-row mb-4" style={{ gap: 8 }}>
         {(['instant', 'scheduled'] as const).map((m) => {
           const active = mode === m;
@@ -141,14 +154,6 @@ export const SchedulePickupSheet = ({
           </ScrollView>
         </>
       ) : null}
-
-      <Button
-        title={t('schedulePickup.title')}
-        onPress={handleSubmit}
-        loading={mutation.isPending}
-        disabled={!canSubmit}
-        fullWidth
-      />
     </BottomSheet>
   );
 };

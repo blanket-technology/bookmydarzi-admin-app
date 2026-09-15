@@ -68,7 +68,20 @@ export const AddOrderAddonSheet = ({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={handleClose} title={t('addAddon.title')}>
+    <BottomSheet
+      visible={visible}
+      onClose={handleClose}
+      title={t('addAddon.title')}
+      footer={
+        <Button
+          title={t('addAddon.addToOrder')}
+          onPress={handleSubmit}
+          loading={addMutation.isPending}
+          disabled={!selectedId}
+          fullWidth
+        />
+      }
+    >
       {itemLabel ? (
         <Text className="text-xs font-semibold mb-3 -mt-1" style={{ color: colors.textSecondary }}>
           {t('measurementManage.forItem', { item: itemLabel })}
@@ -134,15 +147,6 @@ export const AddOrderAddonSheet = ({
           multiline
         />
       ) : null}
-
-      <Button
-        title={t('addAddon.addToOrder')}
-        onPress={handleSubmit}
-        loading={addMutation.isPending}
-        disabled={!selectedId}
-        className="mt-3"
-        fullWidth
-      />
     </BottomSheet>
   );
 };

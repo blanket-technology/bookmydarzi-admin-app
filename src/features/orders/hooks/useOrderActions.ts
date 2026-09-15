@@ -365,17 +365,15 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
       const nextStage = stitchingStageFor[status];
       if (nextStage) {
         const mutation = isTailor ? tailorStitchingMutation : staffStitchingMutation;
-        // Update Progress / Send for Final Check open UpdateProgressSheet
-        // first so a tailor can optionally attach a progress photo before
-        // confirming - only meaningful for the tailor (photo upload is
-        // require_roles(TAILOR) server-side, see orders.py's
-        // upload_order_photo) and only at the two stages the backend's
-        // _PHOTO_UPLOAD_STAGES actually accepts an upload for right now
-        // (STITCHING_STARTED -> IN_PROGRESS and IN_PROGRESS -> FINAL_CHECK).
-        // Staff and the other two transitions stay a direct one-tap action,
-        // unchanged.
-        const opensProgressSheet =
-          isTailor && (nextStage === ORDER_STATUS.IN_PROGRESS || nextStage === ORDER_STATUS.FINAL_CHECK);
+        // Only "Update Progress" (STITCHING_STARTED -> IN_PROGRESS) opens
+        // UpdateProgressSheet to optionally attach a photo - asking again at
+        // "Send for Final Check" would prompt the tailor for a photo twice
+        // in a row for the same garment, which is exactly the confusing
+        // double-ask the sheet was meant to avoid. Only meaningful for the
+        // tailor (photo upload is require_roles(TAILOR) server-side, see
+        // orders.py's upload_order_photo). Staff and every other transition
+        // stay a direct one-tap action, unchanged.
+        const opensProgressSheet = isTailor && nextStage === ORDER_STATUS.IN_PROGRESS;
         list.push({
           id: nextStage as OrderActionId,
           label: stitchingLabels[nextStage] ?? nextStage,
