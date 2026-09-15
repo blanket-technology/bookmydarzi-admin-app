@@ -83,8 +83,10 @@ export default function OrderDetailsScreen() {
   const [paymentSheetVisible, setPaymentSheetVisible] = useState(false);
   const [notesSheetVisible, setNotesSheetVisible] = useState(false);
   const [broadcastConfirmVisible, setBroadcastConfirmVisible] = useState(false);
+  // Only "Update Progress" (STITCHING_STARTED -> IN_PROGRESS) opens this
+  // sheet - see useOrderActions.ts's opensProgressSheet - so there's only
+  // ever one stage to open it for, no need to track which.
   const [updateProgressSheetVisible, setUpdateProgressSheetVisible] = useState(false);
-  const [updateProgressStage, setUpdateProgressStage] = useState<'in_progress' | 'final_check'>('in_progress');
 
   const role = user?.role ?? selectedRole ?? undefined;
   const normalizedRole = String(role ?? '').toLowerCase();
@@ -201,9 +203,10 @@ export default function OrderDetailsScreen() {
         setPaymentSheetVisible(true);
         return;
       case 'in_progress':
-      case 'final_check':
+        // Only this stitching-stage transition opens the optional-photo
+        // sheet (see useOrderActions.ts's opensProgressSheet) - final_check
+        // and every other stage fall through to the default direct-run path.
         if (action.requiresInput) {
-          setUpdateProgressStage(action.id);
           setUpdateProgressSheetVisible(true);
           return;
         }
@@ -576,8 +579,8 @@ export default function OrderDetailsScreen() {
         visible={updateProgressSheetVisible}
         onClose={() => setUpdateProgressSheetVisible(false)}
         orderId={order.order_id}
-        nextStage={updateProgressStage}
-        nextStageLabel={updateProgressStage === 'final_check' ? t('updateProgress.finalCheckTitle') : t('updateProgress.updateProgressTitle')}
+        nextStage="in_progress"
+        nextStageLabel={t('updateProgress.updateProgressTitle')}
       />
     </View>
   );

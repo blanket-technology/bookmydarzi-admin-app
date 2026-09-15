@@ -116,7 +116,19 @@ export const UpdateProgressSheet = ({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={handleClose} title={nextStageLabel}>
+    <BottomSheet
+      visible={visible}
+      onClose={handleClose}
+      title={nextStageLabel}
+      footer={
+        <Button
+          title={photos.length > 0 ? t('updateProgress.uploadAndContinue') : t('updateProgress.continueWithoutPhoto')}
+          onPress={handleSubmit}
+          loading={submitting}
+          fullWidth
+        />
+      }
+    >
       <Text className="text-sm mb-4" style={{ color: colors.textSecondary }}>
         {t('updateProgress.hint')}
       </Text>
@@ -150,13 +162,6 @@ export const UpdateProgressSheet = ({
           </Text>
         </Pressable>
       ) : null}
-
-      <Button
-        title={photos.length > 0 ? t('updateProgress.uploadAndContinue') : t('updateProgress.continueWithoutPhoto')}
-        onPress={handleSubmit}
-        loading={submitting}
-        fullWidth
-      />
     </BottomSheet>
   );
 };

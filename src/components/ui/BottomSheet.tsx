@@ -25,6 +25,14 @@ interface BottomSheetProps {
    * same offset, so the new step's content renders partly or fully
    * off-screen and the previous step's content stays visible underneath. */
   contentKey?: string | number;
+  /** Pinned below the scrollable body, outside it - use this for the
+   * primary submit/confirm button instead of putting it in `children`.
+   * Without this, a sheet whose content is taller than the visible area
+   * (maxHeight 88%) can leave its own submit button scrolled mostly or
+   * fully out of view with no obvious way to reach it - the button renders,
+   * it's just below the fold. A footer here is always visible regardless of
+   * how much content sits above it. */
+  footer?: ReactNode;
 }
 
 export const BottomSheet = ({
@@ -33,6 +41,7 @@ export const BottomSheet = ({
   title,
   children,
   contentKey,
+  footer,
 }: BottomSheetProps) => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -97,9 +106,11 @@ export const BottomSheet = ({
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ flexGrow: 1 }}
+              style={footer ? { flexGrow: 0, flexShrink: 1 } : undefined}
             >
               {children}
             </ScrollView>
+            {footer ? <View className="pt-3">{footer}</View> : null}
           </RNPressable>
         </KeyboardAvoidingView>
       </RNPressable>
