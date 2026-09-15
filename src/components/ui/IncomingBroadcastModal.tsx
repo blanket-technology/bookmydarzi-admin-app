@@ -35,7 +35,12 @@ export const IncomingBroadcastModal = () => {
   // Broadcasts screen - if a WS event enqueued this, the offer already
   // exists server-side regardless of what the toggle shows right now.
   const { data } = useBroadcastOffers({ limit: 50 }, visible);
-  const offer = data?.broadcasts.find((b) => b.order_id === pending?.orderId);
+  // order_id comes back as a number from GET /orders/broadcasts
+  // (broadcast.py: "order_id": int(order.Id)) while pending.orderId is
+  // always a string (see useAppSocket.ts's String(data.order_id ?? '')) -
+  // without String()-ing both sides this strict-equality find() never
+  // matches, so the modal never leaves its loading state.
+  const offer = data?.broadcasts.find((b) => String(b.order_id) === String(pending?.orderId));
 
   const acceptMutation = useAcceptBroadcastMutation();
   const declineMutation = useDeclineBroadcastMutation();
