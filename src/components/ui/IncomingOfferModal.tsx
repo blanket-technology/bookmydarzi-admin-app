@@ -1,0 +1,267 @@
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useEffect, useMemo } from 'react';
+import { ActivityIndicator, Modal, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Button } from '@/components/ui/Button';
+import { LocationRow, itemsLabel, useCountdown } from '@/features/broadcasts/offerCardHelpers';
+import {
+  useAcceptDeliveryBroadcastMutation,
+  useDeclineDeliveryBroadcastMutation,
+  useDeliveryBroadcastOffers,
+} from '@/features/deliveries/hooks/useDeliveries';
+import {
+  useAcceptPickupBroadcastMutation,
+  useDeclinePickupBroadcastMutation,
+  useEmployeeOnlineStatus,
+  usePickupBroadcastOffers,
+} from '@/features/pickups/hooks/usePickups';
+import {
+  useAcceptReturnBroadcastMutation,
+  useDeclineReturnBroadcastMutation,
+  useReturnBroadcastOffers,
+} from '@/features/returns/hooks/useReturns';
+import { usePermissions } from '@/hooks/usePermissions';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
+import { useTheme } from '@/hooks/useTheme';
+import { useOfferAlertSound } from '@/hooks/useOfferAlertSound';
+import { useIncomingOfferStore, type IncomingOfferLocation } from '@/store/incomingOfferStore';
+import { formatDistanceKm, haversineDistanceKm } from '@/utils/geo';
+
+// Full-screen, non-dismissible "New offer!" takeover - the Rapido/Ola-style
+// ride-request popup this app was missing. Previously a new pickup/delivery/
+// return broadcast only surfaced as a toast + looping sound
+// (OfferAlerts.tsx), leaving the employee to notice, then manually navigate
+// to the right list screen to find and accept it. This shows pickup/drop/
+// distance/items with Accept/Reject right on the popup, closing the loop
+// with zero navigation. Modeled on SessionExpired.tsx's non-dismissible
+// pattern (plain RN Modal, no onRequestClose, no backdrop-tap-to-close) -
+// an incoming job offer isn't something to accidentally swipe away.
+export const IncomingOfferModal = () => {
+  const { colors } = useTheme();
+  const { t } = useAppLanguage();
+  const insets = useSafeAreaInsets();
+  const { permissions } = usePermissions();
+  const staffEnabled = !!permissions.deliveries;
+
+  const queue = useIncomingOfferStore((s) => s.queue);
+  const dequeue = useIncomingOfferStore((s) => s.dequeue);
+  const offer = queue[0] ?? null;
+
+  const { data: onlineStatus } = useEmployeeOnlineStatus(staffEnabled);
+  const myCoords =
+    onlineStatus?.latitude != null && onlineStatus?.longitude != null
+      ? { latitude: onlineStatus.latitude, longitude: onlineStatus.longitude }
+      : null;
+
+  // Pickup offers arrive with no location payload at all (see
+  // incomingOfferStore.ts's IncomingOffer docstring) - resolve it from the
+  // list endpoint the WS event already invalidated, so it's typically ready
+  // within a moment of the popup opening. Delivery/return already have
+  // full location data from the WS payload, but their list rows also carry
+  // the real expires_at/broadcast_round (the WS payload doesn't - see
+  // useAppSocket.ts's approxExpiresAt comment), so look those up too purely
+  // to correct the countdown/round display once available.
+  const needsPickupLookup = offer?.kind === 'pickup' && !offer.pickup;
+  const { data: pickupOffersData } = usePickupBroadcastOffers(staffEnabled && offer?.kind === 'pickup');
+  const { data: deliveryOffersData } = useDeliveryBroadcastOffers(staffEnabled && offer?.kind === 'delivery');
+  const { data: returnOffersData } = useReturnBroadcastOffers(staffEnabled && offer?.kind === 'return');
+
+  const resolvedPickupOffer = pickupOffersData?.broadcasts.find((b) => b.order_id === offer?.orderId);
+  const resolvedDeliveryOffer = deliveryOffersData?.broadcasts.find((b) => b.order_id === offer?.orderId);
+  const resolvedReturnOffer = returnOffersData?.broadcasts.find((b) => b.order_id === offer?.orderId);
+  const resolvedOffer = resolvedPickupOffer ?? resolvedDeliveryOffer ?? resolvedReturnOffer;
+
+  const pickup: IncomingOfferLocation | null | undefined =
+    offer?.kind === 'pickup' ? resolvedPickupOffer?.pickup ?? offer?.pickup ?? null : offer?.pickup ?? null;
+  const drop = offer?.drop ?? null;
+  const items = resolvedOffer?.items;
+  const expiresAt = resolvedOffer?.expires_at ?? offer?.expiresAt;
+  const broadcastRound = resolvedOffer?.broadcast_round ?? offer?.broadcastRound;
+
+  const acceptPickup = useAcceptPickupBroadcastMutation();
+  const declinePickup = useDeclinePickupBroadcastMutation();
+  const acceptDelivery = useAcceptDeliveryBroadcastMutation();
+  const declineDelivery = useDeclineDeliveryBroadcastMutation();
+  const acceptReturn = useAcceptReturnBroadcastMutation();
+  const declineReturn = useDeclineReturnBroadcastMutation();
+
+  const { acceptMutation, declineMutation } = useMemo(() => {
+    switch (offer?.kind) {
+      case 'delivery':
+        return { acceptMutation: acceptDelivery, declineMutation: declineDelivery };
+      case 'return':
+        return { acceptMutation: acceptReturn, declineMutation: declineReturn };
+      case 'pickup':
+      default:
+        return { acceptMutation: acceptPickup, declineMutation: declinePickup };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offer?.kind]);
+
+  const countdown = useCountdown(expiresAt);
+  const isExpired = countdown === t('pickups.expired');
+
+  // The broadcast already timed out server-side by the time the countdown
+  // hits zero - nothing to decline, just stop showing it and move to
+  // whatever's next in the queue.
+  useEffect(() => {
+    if (offer && isExpired) dequeue();
+  }, [offer, isExpired, dequeue]);
+
+  const visible = !!offer && staffEnabled;
+  useOfferAlertSound(visible && !isExpired);
+
+  if (!offer) return null;
+
+  const distanceLabel =
+    myCoords && pickup?.latitude != null && pickup?.longitude != null
+      ? formatDistanceKm(haversineDistanceKm(myCoords.latitude, myCoords.longitude, pickup.latitude, pickup.longitude))
+      : null;
+
+  const pickupLine = pickup
+    ? [pickup.address_line_1, pickup.address_line_2, pickup.city, pickup.pincode].filter(Boolean).join(', ') ||
+      pickup.location ||
+      null
+    : null;
+  const dropLine = drop
+    ? [drop.address_line_1, drop.address_line_2, drop.city, drop.pincode].filter(Boolean).join(', ')
+    : null;
+
+  const titleKey =
+    offer.kind === 'delivery' ? 'deliveries.deliveryOrder' : offer.kind === 'return' ? 'returns.returnOrder' : 'pickups.pickupOrder';
+  const iconName = offer.kind === 'delivery' ? 'bicycle-outline' : offer.kind === 'return' ? 'return-up-back-outline' : 'cube-outline';
+
+  const handleAccept = () => {
+    acceptMutation.mutate(offer.orderId, {
+      onSuccess: () => {
+        dequeue();
+        router.push(`/(drawer)/orders/${offer.orderId}` as never);
+      },
+      onError: () => dequeue(),
+    });
+  };
+
+  const handleDecline = () => {
+    declineMutation.mutate(offer.orderId, { onSettled: () => dequeue() });
+  };
+
+  const acting = acceptMutation.isPending || declineMutation.isPending;
+  const loadingPickupDetails = needsPickupLookup && !resolvedPickupOffer;
+
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <View className="flex-1" style={{ backgroundColor: colors.background, paddingTop: insets.top }}>
+        <View className="items-center pt-6 pb-2">
+          <View
+            className="w-16 h-16 rounded-full items-center justify-center mb-3"
+            style={{ backgroundColor: colors.primaryLight }}
+          >
+            <Ionicons name={iconName} size={30} color={colors.primary} />
+          </View>
+          <Text className="text-xl font-bold" style={{ color: colors.text }}>
+            {t(titleKey)}
+          </Text>
+          <Text className="text-sm mt-0.5" style={{ color: colors.textMuted }}>
+            {offer.orderCode ?? t('pickups.orderHash', { id: offer.orderId })}
+          </Text>
+          <View
+            className="mt-3 px-4 py-1.5 rounded-full"
+            style={{ backgroundColor: isExpired ? `${colors.error}20` : `${colors.primary}20` }}
+          >
+            <Text className="text-lg font-black" style={{ color: isExpired ? colors.error : colors.primary }}>
+              {countdown}
+            </Text>
+          </View>
+          {distanceLabel ? (
+            <Text className="text-sm mt-2 font-semibold" style={{ color: colors.textSecondary }}>
+              {distanceLabel} {t('pickups.away')}
+            </Text>
+          ) : null}
+        </View>
+
+        <ScrollView className="flex-1 px-5 mt-2" showsVerticalScrollIndicator={false}>
+          {loadingPickupDetails ? (
+            <View className="items-center justify-center py-10">
+              <ActivityIndicator size="small" color={colors.primary} />
+            </View>
+          ) : (
+            <View
+              className="rounded-2xl p-4 border"
+              style={{ backgroundColor: colors.card, borderColor: colors.border }}
+            >
+              <LocationRow
+                icon={offer.kind === 'delivery' || offer.kind === 'return' ? 'cut-outline' : 'location-outline'}
+                iconColor={colors.primary}
+                label={
+                  offer.kind === 'delivery' || offer.kind === 'return'
+                    ? t('deliveries.pickupTailor')
+                    : t('pickups.pickupCustomer')
+                }
+                addressLine={pickupLine || t('pickups.addressNotAvailable')}
+                personName={pickup?.tailor_name ?? pickup?.full_name}
+                mobile={pickup?.tailor_mobile ?? pickup?.mobile}
+                onPress={undefined}
+                colors={colors}
+              />
+              {drop ? (
+                <>
+                  <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 6 }} />
+                  <LocationRow
+                    icon="location-outline"
+                    iconColor={colors.error}
+                    label={t('deliveries.dropCustomer')}
+                    addressLine={dropLine || t('pickups.addressNotAvailable')}
+                    personName={drop.full_name}
+                    mobile={drop.mobile}
+                    onPress={undefined}
+                    colors={colors}
+                  />
+                </>
+              ) : null}
+            </View>
+          )}
+
+          {itemsLabel(items) ? (
+            <View className="flex-row items-start mt-4">
+              <Ionicons name="shirt-outline" size={16} color={colors.textSecondary} style={{ marginTop: 1 }} />
+              <Text className="text-sm ml-2 flex-1" style={{ color: colors.textSecondary }}>
+                {itemsLabel(items)}
+              </Text>
+            </View>
+          ) : null}
+
+          {broadcastRound ? (
+            <Text className="text-xs mt-3" style={{ color: colors.textMuted }}>
+              {t('broadcastMonitor.round', { round: broadcastRound })}
+            </Text>
+          ) : null}
+        </ScrollView>
+
+        <View
+          className="px-5 pt-3 flex-row"
+          style={{ gap: 12, paddingBottom: insets.bottom + 16, borderTopWidth: 1, borderColor: colors.border }}
+        >
+          <Button
+            title={t('pickups.decline')}
+            variant="outline"
+            size="lg"
+            onPress={handleDecline}
+            loading={declineMutation.isPending}
+            disabled={acting || isExpired}
+            className="flex-1"
+          />
+          <Button
+            title={t('pickups.accept')}
+            variant="primary"
+            size="lg"
+            onPress={handleAccept}
+            loading={acceptMutation.isPending}
+            disabled={acting || isExpired}
+            className="flex-1"
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+};

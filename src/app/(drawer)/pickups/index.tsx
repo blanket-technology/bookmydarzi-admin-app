@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, Linking, RefreshControl, Switch, Text, View } from 'react-native';
+import { FlatList, RefreshControl, Switch, Text, View } from 'react-native';
 import { Card, ConfirmModal, EmptyState, Header, Pressable, SkeletonList } from '@/components/ui';
 import {
   useAcceptPickupBroadcastMutation,
@@ -18,54 +18,7 @@ import { useResponsive } from '@/hooks/useResponsive';
 import type { PickupBroadcastOffer } from '@/types/pickups';
 import { formatApiErrorDetail, formatDate } from '@/utils/errors';
 import { formatDistanceKm, haversineDistanceKm } from '@/utils/geo';
-
-const useCountdown = (expiresAt?: string | null) => {
-  const [label, setLabel] = useState('');
-  useEffect(() => {
-    if (!expiresAt) {
-      setLabel('');
-      return;
-    }
-    const update = () => {
-      const diffMs = new Date(expiresAt).getTime() - Date.now();
-      if (diffMs <= 0) {
-        setLabel(translate('pickups.expired'));
-        return;
-      }
-      const mins = Math.floor(diffMs / 60000);
-      const secs = Math.floor((diffMs % 60000) / 1000);
-      setLabel(
-        mins > 0
-          ? translate('pickups.timeLeftMinSec', { mins, secs })
-          : translate('pickups.timeLeftSec', { secs }),
-      );
-    };
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [expiresAt]);
-  return label;
-};
-
-const openMap = (latitude?: number | null, longitude?: number | null) => {
-  if (latitude == null || longitude == null) return;
-  Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`).catch(() => {});
-};
-
-const callNumber = (mobile?: string | null) => {
-  if (!mobile) return;
-  Linking.openURL(`tel:${mobile}`).catch(() => {});
-};
-
-const itemsLabel = (items?: { service_name?: string | null; category_name?: string | null; quantity: number }[]) => {
-  if (!items || items.length === 0) return null;
-  return items
-    .map((it) => {
-      const name = it.service_name ?? it.category_name ?? translate('orderItems.item');
-      return it.quantity > 1 ? `${name} × ${it.quantity}` : name;
-    })
-    .join(', ');
-};
+import { callNumber, itemsLabel, openMap, useCountdown } from '@/features/broadcasts/offerCardHelpers';
 
 const OfferCard = ({
   offer,
