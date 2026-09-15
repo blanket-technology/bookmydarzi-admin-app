@@ -224,6 +224,8 @@
     "waitingForClothTitle": "Waiting for pickup",
     "waitingForClothAssignedHint": "A Bridge team member will collect the cloth from the customer and hand it to you. Stitching actions will appear here once you've received it.",
     "waitingForClothPickedUpHint": "The cloth has been picked up and is on its way to you. Stitching actions will appear here once it's handed over.",
+    "contactSupport": "Contact Support",
+    "contactSupportHint": "Have a question about this order? Our support team will relay it to the customer for you.",
     "actions": "Actions",
     "confirmActionMessage": "Are you sure you want to {{action}}?",
     "forceRestartBroadcast": "Force Restart Broadcast",
@@ -288,6 +290,14 @@
     "noPhotosYet": "No progress photos uploaded yet.",
     "uploadPhoto": "Upload Photo",
     "modalTitle": "Progress Photo"
+  },
+  "updateProgress": {
+    "updateProgressTitle": "Update Progress",
+    "finalCheckTitle": "Send for Final Check",
+    "hint": "You can optionally attach a photo to show your progress on this order.",
+    "addPhoto": "Add Photo",
+    "uploadAndContinue": "Upload & Continue",
+    "continueWithoutPhoto": "Continue Without Photo"
   },
   "assignTailor": {
     "title": "Assign Tailor",

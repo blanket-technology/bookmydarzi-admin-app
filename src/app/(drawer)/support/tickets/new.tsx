@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { Button, Header, Input, Pressable, ScreenContent } from '@/components/ui';
@@ -17,10 +17,16 @@ const CATEGORY_LABELS: Record<TicketCategory, string> = {
 export default function NewSupportTicketScreen() {
   const { colors } = useTheme();
   const createMutation = useCreateTicketMutation();
+  // Deep-linked from an order screen (e.g. a tailor's "Contact Support"
+  // button on orders/[id].tsx) with orderId/category pre-filled so the
+  // ticket is never accidentally raised detached from the order the tailor
+  // meant to ask about.
+  const params = useLocalSearchParams<{ orderId?: string; category?: TicketCategory }>();
+  const isPrefilled = !!params.orderId;
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
-  const [category, setCategory] = useState<TicketCategory>('general');
-  const [orderId, setOrderId] = useState('');
+  const [category, setCategory] = useState<TicketCategory>(params.category ?? 'general');
+  const [orderId, setOrderId] = useState(params.orderId ?? '');
 
   const handleSubmit = () => {
     if (subject.trim().length < 3 || !message.trim()) return;
@@ -37,49 +43,63 @@ export default function NewSupportTicketScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title="Raise a Ticket" showMenu={false} />
+      <Header title={isPrefilled ? 'Contact Support' : 'Raise a Ticket'} showMenu={false} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         <ScreenContent keyboardShouldPersistTaps="handled">
+          {isPrefilled ? (
+            <View
+              className="flex-row items-center px-3.5 py-2.5 rounded-2xl mb-4"
+              style={{ backgroundColor: colors.primaryLight }}
+            >
+              <Text className="text-sm font-medium flex-1" style={{ color: colors.primary }}>
+                About Order #{orderId}
+              </Text>
+            </View>
+          ) : null}
           <Input
             label="Subject"
             value={subject}
             onChangeText={setSubject}
             placeholder="Brief summary of the issue"
           />
-          <Text className="text-sm font-medium mb-2" style={{ color: colors.textSecondary }}>
-            CATEGORY
-          </Text>
-          <View className="flex-row flex-wrap mb-4" style={{ gap: 8 }}>
-            {TICKET_CATEGORIES.map((value) => (
-              <Pressable
-                key={value}
-                onPress={() => setCategory(value)}
-                className="px-3.5 py-2 rounded-full border"
-                style={{
-                  backgroundColor: category === value ? colors.primary : colors.surface,
-                  borderColor: category === value ? colors.primary : colors.border,
-                }}
-              >
-                <Text
-                  className="text-sm font-medium"
-                  style={{ color: category === value ? '#fff' : colors.text }}
-                >
-                  {CATEGORY_LABELS[value]}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-          {category === 'order' ? (
-            <Input
-              label="Order ID (optional)"
-              value={orderId}
-              onChangeText={setOrderId}
-              keyboardType="number-pad"
-              placeholder="e.g. 122"
-            />
+          {!isPrefilled ? (
+            <>
+              <Text className="text-sm font-medium mb-2" style={{ color: colors.textSecondary }}>
+                CATEGORY
+              </Text>
+              <View className="flex-row flex-wrap mb-4" style={{ gap: 8 }}>
+                {TICKET_CATEGORIES.map((value) => (
+                  <Pressable
+                    key={value}
+                    onPress={() => setCategory(value)}
+                    className="px-3.5 py-2 rounded-full border"
+                    style={{
+                      backgroundColor: category === value ? colors.primary : colors.surface,
+                      borderColor: category === value ? colors.primary : colors.border,
+                    }}
+                  >
+                    <Text
+                      className="text-sm font-medium"
+                      style={{ color: category === value ? '#fff' : colors.text }}
+                    >
+                      {CATEGORY_LABELS[value]}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+              {category === 'order' ? (
+                <Input
+                  label="Order ID (optional)"
+                  value={orderId}
+                  onChangeText={setOrderId}
+                  keyboardType="number-pad"
+                  placeholder="e.g. 122"
+                />
+              ) : null}
+            </>
           ) : null}
           <Input
             label="Message"

@@ -224,6 +224,8 @@
     "waitingForClothTitle": "पिकअप की प्रतीक्षा है",
     "waitingForClothAssignedHint": "एक ब्रिज टीम सदस्य ग्राहक से कपड़ा लेकर आपको सौंपेगा। कपड़ा मिलने के बाद यहां सिलाई से जुड़े कार्य दिखाई देंगे।",
     "waitingForClothPickedUpHint": "कपड़ा उठा लिया गया है और आपकी ओर आ रहा है। सौंपे जाने के बाद यहां सिलाई से जुड़े कार्य दिखाई देंगे।",
+    "contactSupport": "सहायता से संपर्क करें",
+    "contactSupportHint": "इस ऑर्डर के बारे में कोई सवाल है? हमारी सहायता टीम इसे ग्राहक तक पहुंचाएगी।",
     "actions": "कार्य",
     "confirmActionMessage": "क्या आप वाकई {{action}} करना चाहते हैं?",
     "forceRestartBroadcast": "ब्रॉडकास्ट फिर से शुरू करें",
@@ -288,6 +290,14 @@
     "noPhotosYet": "अभी तक कोई प्रगति फोटो अपलोड नहीं हुई।",
     "uploadPhoto": "फोटो अपलोड करें",
     "modalTitle": "प्रगति फोटो"
+  },
+  "updateProgress": {
+    "updateProgressTitle": "प्रगति अपडेट करें",
+    "finalCheckTitle": "अंतिम जांच के लिए भेजें",
+    "hint": "आप चाहें तो इस ऑर्डर की प्रगति दिखाने के लिए एक फोटो जोड़ सकते हैं।",
+    "addPhoto": "फोटो जोड़ें",
+    "uploadAndContinue": "अपलोड करें और आगे बढ़ें",
+    "continueWithoutPhoto": "बिना फोटो के आगे बढ़ें"
   },
   "assignTailor": {
     "title": "दर्जी असाइन करें",
