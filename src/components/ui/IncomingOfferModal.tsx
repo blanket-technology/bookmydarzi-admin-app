@@ -154,7 +154,7 @@ export const IncomingOfferModal = () => {
   const loadingPickupDetails = needsPickupLookup && !resolvedPickupOffer;
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="slide" statusBarTranslucent>
       <View className="flex-1" style={{ backgroundColor: colors.background, paddingTop: insets.top }}>
         <View className="items-center pt-6 pb-2">
           <View
