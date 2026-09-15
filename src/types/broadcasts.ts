@@ -1,6 +1,40 @@
 // Mirrors app/api/v1/endpoints/broadcast.py's _privacy_safe_order dict shape.
 // Deliberately excludes customer name/phone/full address/amounts — the
 // backend never sends them to a tailor before they accept.
+
+export interface BroadcastItemMeasurement {
+  gender?: string | null;
+  chest?: number | null;
+  waist?: number | null;
+  hips?: number | null;
+  shoulder?: number | null;
+  neck?: number | null;
+  sleeve_length?: number | null;
+  inseam?: number | null;
+  height?: number | null;
+  fit_preference?: string | null;
+}
+
+export interface BroadcastItemAddon {
+  name: string;
+  note?: string | null;
+}
+
+export interface BroadcastItem {
+  service_name?: string | null;
+  category_name?: string | null;
+  image_url?: string | null;
+  quantity: number;
+  /** Who this garment is for (male/female/kids/other) - not the customer's
+   * name, just the fit/gender to stitch for. */
+  gender?: string | null;
+  /** Customer's own note for this specific garment, if any. */
+  notes?: string | null;
+  stitching_preferences?: Record<string, unknown> | null;
+  measurement?: BroadcastItemMeasurement | null;
+  addons: BroadcastItemAddon[];
+}
+
 export interface BroadcastOffer {
   order_id: string;
   order_code?: string | null;
@@ -29,6 +63,7 @@ export interface BroadcastOffer {
   /** JSON object on the backend (Order.StitchingPreferences), e.g.
    * {"collar": "mandarin", "sleeve": "full"} - never a plain string. */
   stitching_preferences?: Record<string, unknown> | null;
+  items: BroadcastItem[];
   broadcast_id: string;
   expires_at?: string | null;
   notified_at?: string | null;

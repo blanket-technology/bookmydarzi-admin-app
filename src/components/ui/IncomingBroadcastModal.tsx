@@ -63,12 +63,10 @@ export const IncomingBroadcastModal = () => {
     declineMutation.mutate(pending.orderId, { onSettled: () => dequeue() });
   };
 
-  const acting = acceptMutation.isPending || declineMutation.isPending;
-
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="slide" statusBarTranslucent>
       <View className="flex-1" style={{ backgroundColor: colors.background, paddingTop: insets.top }}>
-        <View className="items-center pt-6 pb-2">
+        <View className="items-center pt-6 pb-2 px-5">
           <View
             className="w-16 h-16 rounded-full items-center justify-center mb-3"
             style={{ backgroundColor: colors.primaryLight }}
@@ -79,14 +77,21 @@ export const IncomingBroadcastModal = () => {
             New Order Offer!
           </Text>
           <Text className="text-sm mt-0.5" style={{ color: colors.textMuted }}>
-            {pending.orderCode ?? `Order #${pending.orderId}`}
+            {offer?.order_code ?? pending.orderCode ?? `Order #${pending.orderId}`}
           </Text>
         </View>
 
-        <ScrollView className="flex-1 px-5 mt-2" showsVerticalScrollIndicator={false}>
+        <ScrollView
+          className="flex-1 px-5 mt-2"
+          contentContainerStyle={{ paddingBottom: insets.bottom + 24, flexGrow: !offer ? 1 : undefined }}
+          showsVerticalScrollIndicator={false}
+        >
           {!offer ? (
-            <View className="items-center justify-center py-10">
+            <View className="flex-1 items-center justify-center">
               <ActivityIndicator size="small" color={colors.primary} />
+              <Text className="text-sm mt-3" style={{ color: colors.textMuted }}>
+                Loading order details…
+              </Text>
             </View>
           ) : (
             <TailorOfferCard
@@ -98,17 +103,6 @@ export const IncomingBroadcastModal = () => {
             />
           )}
         </ScrollView>
-
-        <View
-          className="px-5 pt-1"
-          style={{ paddingBottom: insets.bottom + 16 }}
-        >
-          {acting ? (
-            <View className="items-center py-2">
-              <ActivityIndicator size="small" color={colors.primary} />
-            </View>
-          ) : null}
-        </View>
       </View>
     </Modal>
   );
