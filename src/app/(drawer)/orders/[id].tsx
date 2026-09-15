@@ -304,6 +304,25 @@ export default function OrderDetailsScreen() {
 
         <ProgressPhotosSection orderId={order.order_id} orderStatus={order.status} isTailor={isTailorRole} />
 
+        {isTailorRole && (order.status === ORDER_STATUS.TAILOR_ASSIGNED || order.status === ORDER_STATUS.PICKED_UP) ? (
+          <View
+            className="mb-4 flex-row items-start rounded-3xl p-4"
+            style={{ backgroundColor: colors.primaryLight }}
+          >
+            <Ionicons name="time-outline" size={18} color={colors.primary} style={{ marginTop: 1 }} />
+            <View className="ml-2.5 flex-1">
+              <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+                {t('orderDetail.waitingForClothTitle')}
+              </Text>
+              <Text className="text-xs mt-0.5" style={{ color: colors.textSecondary }}>
+                {order.status === ORDER_STATUS.PICKED_UP
+                  ? t('orderDetail.waitingForClothPickedUpHint')
+                  : t('orderDetail.waitingForClothAssignedHint')}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
         {isEmployeeRole && order.status === ORDER_STATUS.READY_FOR_DISPATCH ? (
           <View
             className="mb-4 flex-row items-start rounded-3xl p-4"

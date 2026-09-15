@@ -5,6 +5,7 @@ import { API_CONFIG } from '@/config/api';
 import { ENDPOINTS } from '@/services/endpoints';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { useAuthStore } from '@/store/authStore';
+import { incomingBroadcastQueue } from '@/store/incomingBroadcastStore';
 import { incomingOfferQueue, type IncomingOfferLocation } from '@/store/incomingOfferStore';
 import { toast } from '@/store/toastStore';
 import { wsStatus } from '@/store/wsStatusStore';
@@ -153,6 +154,20 @@ export function useAppSocket() {
           drop: (data.drop as IncomingOfferLocation | null | undefined) ?? null,
           expiresAt: approxExpiresAt,
           broadcastRound: null,
+        });
+      }
+
+      // Feed the tailor's full-screen incoming-broadcast popup
+      // (IncomingBroadcastModal.tsx). The WS payload carries almost nothing
+      // (order_id/order_code only - see broadcast_service.py's
+      // _notify_tailors), so the modal always resolves the real card from
+      // the now-invalidated ['broadcasts'] query above rather than from this
+      // payload.
+      if (notification.type === 'broadcast_offer') {
+        const data = notification.data ?? {};
+        incomingBroadcastQueue.enqueue({
+          orderId: String(data.order_id ?? ''),
+          orderCode: (data.order_code as string | null | undefined) ?? null,
         });
       }
 
