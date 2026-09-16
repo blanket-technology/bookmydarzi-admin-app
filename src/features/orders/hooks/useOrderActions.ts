@@ -179,12 +179,15 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
       // ever scheduled at order_accepted time. Previously mobile only
       // checked ORDER_ACCEPTED, so an order that reached TAILOR_ASSIGNED
       // without a scheduled pickup had no way to trigger one from here.
-      // assert_pickup_employee_assigned (order_authorization.py) now hard-
+      // assert_pickup_employee_assigned (order_authorization.py) hard-
       // requires AssignedEmployeeId on the order before schedule/confirm-
       // pickup or hand-to-tailor can succeed - admins included, no bypass.
-      // Surface that here the same way hand_to_tailor's own tailor_id check
-      // already does below, so tapping the button explains why it's
-      // disabled instead of failing server-side with no context.
+      // Schedule Pickup itself is never disabled for this though -
+      // SchedulePickupSheet now collects a Bridge employee as part of the
+      // same flow when nobody is assigned yet, so there's no invalid state
+      // to guard against here. Confirm Pickup / Hand to Tailor happen
+      // AFTER scheduling, so they still guard against the edge case where
+      // an employee still isn't assigned by then.
       const noBridgeEmployee = !order?.assigned_employee_id;
 
       if (status === ORDER_STATUS.ORDER_ACCEPTED || status === ORDER_STATUS.TAILOR_ASSIGNED) {
@@ -197,9 +200,9 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
           isLoading: schedulePickupMutation.isPending,
           run: () => {
             // Caller opens SchedulePickupSheet to choose instant vs
-            // scheduled (+ date/time slot for scheduled) - see [id].tsx.
+            // scheduled (+ date/time slot for scheduled), and to collect a
+            // Bridge employee when needed - see [id].tsx.
           },
-          disabledReason: noBridgeEmployee ? 'Assign a Bridge employee for pickup first' : undefined,
         });
       }
 

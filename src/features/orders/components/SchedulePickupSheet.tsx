@@ -1,7 +1,11 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { BottomSheet, Button, DateField, Pressable } from '@/components/ui';
-import { useSchedulePickupMutation } from '@/features/orders/hooks/useOrders';
+import { BottomSheet, Button, DateField, EmptyState, Pressable } from '@/components/ui';
+import {
+  useAssignPickupEmployeeMutation,
+  useBridgeEmployees,
+  useSchedulePickupMutation,
+} from '@/features/orders/hooks/useOrders';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -35,22 +39,41 @@ const TIME_SLOTS = buildTimeSlots();
  * despite the action being flagged requiresInput: true. This sheet gives it
  * the real instant/scheduled choice web already has (orderActions.js's
  * schedule_pickup_instant / schedule_pickup_scheduled).
+ *
+ * Also now requires picking a Bridge employee first when the order isn't
+ * already claimed (assignedEmployeeId null) - mirrors the web admin
+ * panel's OrderFullDetailsPage.jsx exactly: assert_pickup_employee_assigned
+ * (order_authorization.py, bmd) hard-requires AssignedEmployeeId before
+ * schedule-pickup will succeed, admins included, no bypass. If an
+ * employee already accepted the broadcast, this step is skipped entirely -
+ * only shown when nobody is assigned yet.
  */
 export const SchedulePickupSheet = ({
   visible,
   onClose,
   orderId,
+  assignedEmployeeId,
 }: {
   visible: boolean;
   onClose: () => void;
   orderId: string;
+  /** Order.assigned_employee_id - null/undefined means nobody has claimed
+   * the pickup yet, so this sheet must collect one before scheduling. */
+  assignedEmployeeId?: string | null;
 }) => {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
   const [mode, setMode] = useState<'instant' | 'scheduled'>('instant');
   const [date, setDate] = useState<string | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
+  const [pickupEmployeeId, setPickupEmployeeId] = useState<string | null>(null);
   const mutation = useSchedulePickupMutation();
+  const assignPickupEmployeeMutation = useAssignPickupEmployeeMutation();
+  const needsPickupEmployee = !assignedEmployeeId;
+  const { data: bridgeEmployeesData, isLoading: bridgeEmployeesLoading } = useBridgeEmployees(
+    visible && needsPickupEmployee,
+  );
+  const bridgeEmployees = bridgeEmployeesData ?? [];
 
   const today = useMemo(() => {
     const d = new Date();
@@ -58,10 +81,18 @@ export const SchedulePickupSheet = ({
     return d;
   }, []);
 
-  const canSubmit = mode === 'instant' || (!!date && !!slot);
+  const canSubmit =
+    (mode === 'instant' || (!!date && !!slot)) && (!needsPickupEmployee || !!pickupEmployeeId);
 
-  const handleSubmit = () => {
-    if (!canSubmit) return;
+  const resetAndClose = () => {
+    onClose();
+    setMode('instant');
+    setDate(null);
+    setSlot(null);
+    setPickupEmployeeId(null);
+  };
+
+  const submitSchedule = () => {
     const payload =
       mode === 'instant'
         ? { pickup_type: 'instant' as const }
@@ -72,16 +103,28 @@ export const SchedulePickupSheet = ({
           };
     mutation.mutate(
       { orderId, payload },
-      {
-        onSuccess: () => {
-          onClose();
-          setMode('instant');
-          setDate(null);
-          setSlot(null);
-        },
-      },
+      { onSuccess: resetAndClose },
     );
   };
+
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+    if (needsPickupEmployee && pickupEmployeeId) {
+      // Assign first, then schedule - two sequential calls, not one atomic
+      // backend endpoint, same reasoning as web's runOrderAction: if assign
+      // succeeds but schedule then fails, the order is left in a valid
+      // state (employee assigned, pickup not yet scheduled), not a broken
+      // one - retrying just re-submits this same sheet.
+      assignPickupEmployeeMutation.mutate(
+        { orderId, payload: { employee_id: pickupEmployeeId } },
+        { onSuccess: submitSchedule },
+      );
+      return;
+    }
+    submitSchedule();
+  };
+
+  const submitting = mutation.isPending || assignPickupEmployeeMutation.isPending;
 
   return (
     <BottomSheet
@@ -92,12 +135,59 @@ export const SchedulePickupSheet = ({
         <Button
           title={t('schedulePickup.title')}
           onPress={handleSubmit}
-          loading={mutation.isPending}
-          disabled={!canSubmit}
+          loading={submitting}
+          disabled={!canSubmit || submitting}
           fullWidth
         />
       }
     >
+      {needsPickupEmployee ? (
+        <View className="mb-4">
+          <Text className="text-sm font-medium mb-2" style={{ color: colors.textSecondary }}>
+            {t('assignBridgeEmployee.pickupTitle')}
+          </Text>
+          {bridgeEmployeesLoading ? (
+            <Text className="text-xs" style={{ color: colors.textMuted }}>
+              {t('common.loading')}
+            </Text>
+          ) : bridgeEmployees.length === 0 ? (
+            <EmptyState
+              icon="bicycle-outline"
+              title={t('assignBridgeEmployee.noEmployees')}
+              description={t('assignBridgeEmployee.noEmployeesBody')}
+            />
+          ) : (
+            <ScrollView style={{ maxHeight: 180 }}>
+              <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+                {bridgeEmployees.map((e) => {
+                  const active = pickupEmployeeId === e.employee_id;
+                  return (
+                    <Pressable
+                      key={e.employee_id}
+                      onPress={() => setPickupEmployeeId(e.employee_id)}
+                      haptic="selection"
+                      className="px-3 py-2 rounded-lg border"
+                      style={{
+                        borderColor: active ? colors.primary : colors.border,
+                        backgroundColor: active ? colors.primaryLight : colors.card,
+                      }}
+                    >
+                      <Text
+                        className="text-xs font-semibold"
+                        style={{ color: active ? colors.primary : colors.text }}
+                      >
+                        {e.full_name || `#${e.employee_id}`}
+                        {e.is_online ? '' : ` (${t('assignBridgeEmployee.offline')})`}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          )}
+        </View>
+      ) : null}
+
       <View className="flex-row mb-4" style={{ gap: 8 }}>
         {(['instant', 'scheduled'] as const).map((m) => {
           const active = mode === m;

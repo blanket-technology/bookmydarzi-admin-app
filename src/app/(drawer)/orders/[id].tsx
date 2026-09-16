@@ -10,7 +10,6 @@ import {
   useTriggerBroadcastMutation,
   useAssignTailorMutation,
   useAssignTailorEmployeeMutation,
-  useAssignPickupEmployeeMutation,
   useAssignDeliveryEmployeeMutation,
   useBridgeEmployees,
   useUpdateOrderStatusMutation,
@@ -69,7 +68,6 @@ export default function OrderDetailsScreen() {
   const { user, selectedRole } = useAuth();
 
   const [assignSheetVisible, setAssignSheetVisible] = useState(false);
-  const [assignPickupSheetVisible, setAssignPickupSheetVisible] = useState(false);
   const [assignDeliverySheetVisible, setAssignDeliverySheetVisible] = useState(false);
   const [schedulePickupSheetVisible, setSchedulePickupSheetVisible] = useState(false);
   const [statusSheetVisible, setStatusSheetVisible] = useState(false);
@@ -125,13 +123,11 @@ export default function OrderDetailsScreen() {
   const { data: employeeTailorsData } = useTailorsForEmployee(isEmployeeRole);
   const assignMutation = useAssignTailorMutation();
   const assignEmployeeMutation = useAssignTailorEmployeeMutation();
-  // Bridge/employee picker for the manual pickup/delivery assignment sheets
-  // below - lazily enabled only once one of those sheets is actually open.
-  const { data: bridgeEmployeesData } = useBridgeEmployees(
-    isStaffRole && (assignPickupSheetVisible || assignDeliverySheetVisible),
-  );
+  // Bridge/employee picker for the manual delivery-assignment sheet below -
+  // lazily enabled only once it's actually open. Pickup's own picker lives
+  // inside SchedulePickupSheet now (its own useBridgeEmployees call).
+  const { data: bridgeEmployeesData } = useBridgeEmployees(isStaffRole && assignDeliverySheetVisible);
   const bridgeEmployees = bridgeEmployeesData ?? [];
-  const assignPickupEmployeeMutation = useAssignPickupEmployeeMutation();
   const assignDeliveryEmployeeMutation = useAssignDeliveryEmployeeMutation();
   const statusMutation = useUpdateOrderStatusMutation();
   const triggerBroadcastMutation = useTriggerBroadcastMutation();
@@ -168,14 +164,6 @@ export default function OrderDetailsScreen() {
     // employee_assign_tailor). Different backend preconditions, same UI action.
     const mutation = isAdminRole ? assignMutation : assignEmployeeMutation;
     mutation.mutate({ orderId: order.order_id, payload: { tailor_id: tailorId } }, { onSuccess: () => setAssignSheetVisible(false) });
-  };
-
-  const handleAssignPickupEmployee = (employeeId: string) => {
-    if (!order) return;
-    assignPickupEmployeeMutation.mutate(
-      { orderId: order.order_id, payload: { employee_id: employeeId } },
-      { onSuccess: () => setAssignPickupSheetVisible(false) },
-    );
   };
 
   const handleAssignDeliveryEmployee = (employeeId: string) => {
@@ -523,37 +511,22 @@ export default function OrderDetailsScreen() {
           <AdminToolsSection onTriggerBroadcast={() => setBroadcastConfirmVisible(true)} triggering={triggerBroadcastMutation.isPending} />
         ) : null}
 
-        {/* Manual Bridge/employee assignment - always visible, same as the
-            Assign Tailor action, not conditionally hidden by status. The
-            backend still enforces which statuses actually accept an
-            assignment (assign_bridge_service.py's _PICKUP_ASSIGN_FROM /
-            _DELIVERY_ASSIGN_FROM) - tapping at an invalid status surfaces
-            that as a clear mutation error instead of the button being
-            hidden and looking like the feature doesn't exist. Mirrors the
-            web admin panel's OrderFullDetailsPage.jsx exactly. */}
-        {isStaffRole ? (
-          <View className="mb-3">
-            <Button
-              title={
-                order.assigned_employee_id
-                  ? `${t('assignBridgeEmployee.pickupTitle')} (#${order.assigned_employee_id})`
-                  : t('assignBridgeEmployee.pickupTitle')
-              }
-              variant="secondary"
-              onPress={() => setAssignPickupSheetVisible(true)}
-              fullWidth
-            />
-          </View>
-        ) : null}
+        {/* Pickup Bridge assignment is no longer a standalone always-visible
+            button - it's now required as part of Schedule Pickup itself
+            (SchedulePickupSheet) when nobody is assigned yet, matching the
+            web admin panel's OrderFullDetailsPage.jsx exactly.
 
-        {isStaffRole ? (
+            Delivery assignment appears here only once the order actually
+            reaches ready_for_dispatch and nobody has claimed it yet - this
+            is the manual override lever for when the automatic delivery
+            broadcast finds nobody, not a control that's visible long
+            before it can ever be used. */}
+        {isStaffRole &&
+        order.status === ORDER_STATUS.READY_FOR_DISPATCH &&
+        !order.delivery_employee_id ? (
           <View className="mb-3">
             <Button
-              title={
-                order.delivery_employee_id
-                  ? `${t('assignBridgeEmployee.deliveryTitle')} (#${order.delivery_employee_id})`
-                  : t('assignBridgeEmployee.deliveryTitle')
-              }
+              title={t('assignBridgeEmployee.deliveryTitle')}
               variant="secondary"
               onPress={() => setAssignDeliverySheetVisible(true)}
               fullWidth
@@ -565,13 +538,6 @@ export default function OrderDetailsScreen() {
 
       <AssignTailorSheet visible={assignSheetVisible} onClose={() => setAssignSheetVisible(false)} tailors={tailors} onAssign={handleAssign} />
       <AssignBridgeEmployeeSheet
-        visible={assignPickupSheetVisible}
-        onClose={() => setAssignPickupSheetVisible(false)}
-        title={t('assignBridgeEmployee.pickupTitle')}
-        employees={bridgeEmployees}
-        onAssign={handleAssignPickupEmployee}
-      />
-      <AssignBridgeEmployeeSheet
         visible={assignDeliverySheetVisible}
         onClose={() => setAssignDeliverySheetVisible(false)}
         title={t('assignBridgeEmployee.deliveryTitle')}
@@ -579,7 +545,12 @@ export default function OrderDetailsScreen() {
         onAssign={handleAssignDeliveryEmployee}
       />
 
-      <SchedulePickupSheet visible={schedulePickupSheetVisible} onClose={() => setSchedulePickupSheetVisible(false)} orderId={order.order_id} />
+      <SchedulePickupSheet
+        visible={schedulePickupSheetVisible}
+        onClose={() => setSchedulePickupSheetVisible(false)}
+        orderId={order.order_id}
+        assignedEmployeeId={order.assigned_employee_id}
+      />
 
       <CorrectStatusSheet visible={statusSheetVisible} onClose={() => setStatusSheetVisible(false)} onSelect={handleCorrectStatus} />
 
