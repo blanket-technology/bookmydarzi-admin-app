@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { Button, ConfirmModal, EmptyState, Header, Loader, Pressable, ScreenContent } from '@/components/ui';
-import { ORDER_STATUS, orderStatusLabel, PICKUP_ASSIGNABLE_UNCLAIMED_STATUSES } from '@/constants/orderStatus';
+import { ORDER_STATUS, orderStatusLabel } from '@/constants/orderStatus';
 import {
   useOrder,
   useOrderBroadcastStatus,
@@ -523,22 +523,15 @@ export default function OrderDetailsScreen() {
           <AdminToolsSection onTriggerBroadcast={() => setBroadcastConfirmVisible(true)} triggering={triggerBroadcastMutation.isPending} />
         ) : null}
 
-        {/* Manual Bridge/employee assignment - the lever for when no Bridge
-            employee accepts the automatic pickup/delivery broadcast, AND a
-            record-keeping fix for orders an admin walked through the pickup
-            pipeline without ever assigning anyone (every employee-action
-            endpoint - schedule/confirm pickup, hand to tailor, etc - lets
-            an admin bypass the "must be claimed" check, so an order can
-            reach picked_up/cloth_received/stitching/etc with
-            assigned_employee_id still unset - see assign_bridge_service.py's
-            _PICKUP_ASSIGN_FROM comment for the full explanation). Shown at
-            tailor_assigned (genuine reassignment allowed there) or at any
-            later pre-delivery status as long as nobody has been assigned
-            yet. Mirrors the web admin panel's OrderFullDetailsPage.jsx
-            exactly. */}
-        {isStaffRole &&
-        (order.status === ORDER_STATUS.TAILOR_ASSIGNED ||
-          (PICKUP_ASSIGNABLE_UNCLAIMED_STATUSES.has(order.status as OrderStatus) && !order.assigned_employee_id)) ? (
+        {/* Manual Bridge/employee assignment - always visible, same as the
+            Assign Tailor action, not conditionally hidden by status. The
+            backend still enforces which statuses actually accept an
+            assignment (assign_bridge_service.py's _PICKUP_ASSIGN_FROM /
+            _DELIVERY_ASSIGN_FROM) - tapping at an invalid status surfaces
+            that as a clear mutation error instead of the button being
+            hidden and looking like the feature doesn't exist. Mirrors the
+            web admin panel's OrderFullDetailsPage.jsx exactly. */}
+        {isStaffRole ? (
           <View className="mb-3">
             <Button
               title={
@@ -553,9 +546,7 @@ export default function OrderDetailsScreen() {
           </View>
         ) : null}
 
-        {isStaffRole &&
-        (order.status === ORDER_STATUS.READY_FOR_DISPATCH ||
-          (order.status === ORDER_STATUS.OUT_FOR_DELIVERY && !order.delivery_employee_id)) ? (
+        {isStaffRole ? (
           <View className="mb-3">
             <Button
               title={
