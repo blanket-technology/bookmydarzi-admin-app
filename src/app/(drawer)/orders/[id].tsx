@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { Button, ConfirmModal, EmptyState, Header, Loader, Pressable, ScreenContent } from '@/components/ui';
-import { ORDER_STATUS, orderStatusLabel } from '@/constants/orderStatus';
+import { ORDER_STATUS, orderStatusLabel, PICKUP_ASSIGNABLE_UNCLAIMED_STATUSES } from '@/constants/orderStatus';
 import {
   useOrder,
   useOrderBroadcastStatus,
@@ -524,19 +524,21 @@ export default function OrderDetailsScreen() {
         ) : null}
 
         {/* Manual Bridge/employee assignment - the lever for when no Bridge
-            employee accepts the automatic pickup/delivery broadcast. Pickup
-            is valid at tailor_assigned, and also at pickup_pending/
-            pickup_scheduled as long as nobody has claimed it yet - an admin
-            can schedule a pickup with no employee ever having accepted it
-            (schedule_pickup_employee_order's admin bypass), which would
-            otherwise strand the order with no way for any employee to ever
-            confirm it. See assign_bridge_service.py's _PICKUP_ASSIGN_FROM
-            for the full explanation. Mirrors the web admin panel's
-            OrderFullDetailsPage.jsx exactly. */}
+            employee accepts the automatic pickup/delivery broadcast, AND a
+            record-keeping fix for orders an admin walked through the pickup
+            pipeline without ever assigning anyone (every employee-action
+            endpoint - schedule/confirm pickup, hand to tailor, etc - lets
+            an admin bypass the "must be claimed" check, so an order can
+            reach picked_up/cloth_received/stitching/etc with
+            assigned_employee_id still unset - see assign_bridge_service.py's
+            _PICKUP_ASSIGN_FROM comment for the full explanation). Shown at
+            tailor_assigned (genuine reassignment allowed there) or at any
+            later pre-delivery status as long as nobody has been assigned
+            yet. Mirrors the web admin panel's OrderFullDetailsPage.jsx
+            exactly. */}
         {isStaffRole &&
         (order.status === ORDER_STATUS.TAILOR_ASSIGNED ||
-          ((order.status === ORDER_STATUS.PICKUP_PENDING || order.status === ORDER_STATUS.PICKUP_SCHEDULED) &&
-            !order.assigned_employee_id)) ? (
+          (PICKUP_ASSIGNABLE_UNCLAIMED_STATUSES.has(order.status as OrderStatus) && !order.assigned_employee_id)) ? (
           <View className="mb-3">
             <Button
               title={

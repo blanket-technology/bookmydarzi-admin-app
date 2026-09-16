@@ -114,6 +114,24 @@ export const ADMIN_CORRECTABLE_STATUS_OPTIONS: { label: string; value: OrderStat
     value,
   }));
 
+// Mirrors backend assign_bridge_service.py's _PICKUP_ASSIGN_FROM_UNCLAIMED_ONLY -
+// every pre-delivery status past tailor_assigned where a pickup employee can
+// still be manually attached, but ONLY as record-keeping (assigned_employee_id
+// must still be unset) - covers orders an admin walked through the pickup
+// pipeline via the employee-action endpoints' admin-bypass without ever
+// assigning anyone.
+export const PICKUP_ASSIGNABLE_UNCLAIMED_STATUSES = new Set<OrderStatus>([
+  ORDER_STATUS.ORDER_ACCEPTED,
+  ORDER_STATUS.PICKUP_PENDING,
+  ORDER_STATUS.PICKUP_SCHEDULED,
+  ORDER_STATUS.PICKED_UP,
+  ORDER_STATUS.CLOTH_RECEIVED_BY_TAILOR,
+  ORDER_STATUS.STITCHING_STARTED,
+  ORDER_STATUS.IN_PROGRESS,
+  ORDER_STATUS.FINAL_CHECK,
+  ORDER_STATUS.READY_FOR_DISPATCH,
+]);
+
 // Reads the module-level i18n language (kept in sync by useLanguageStore),
 // not a hook - this is a plain function called from many non-component
 // contexts (dashboard.tsx's OrderRow, list filter chips, etc.), where a
