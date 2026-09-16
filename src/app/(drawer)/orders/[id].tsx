@@ -524,12 +524,19 @@ export default function OrderDetailsScreen() {
         ) : null}
 
         {/* Manual Bridge/employee assignment - the lever for when no Bridge
-            employee accepts the automatic pickup/delivery broadcast. Only
-            valid at the same statuses the broadcast accept endpoints
-            themselves require (see assign_bridge_service.py's
-            _PICKUP_ASSIGN_FROM / _DELIVERY_ASSIGN_FROM), mirroring the web
-            admin panel's OrderFullDetailsPage.jsx exactly. */}
-        {isStaffRole && order.status === ORDER_STATUS.TAILOR_ASSIGNED ? (
+            employee accepts the automatic pickup/delivery broadcast. Pickup
+            is valid at tailor_assigned, and also at pickup_pending/
+            pickup_scheduled as long as nobody has claimed it yet - an admin
+            can schedule a pickup with no employee ever having accepted it
+            (schedule_pickup_employee_order's admin bypass), which would
+            otherwise strand the order with no way for any employee to ever
+            confirm it. See assign_bridge_service.py's _PICKUP_ASSIGN_FROM
+            for the full explanation. Mirrors the web admin panel's
+            OrderFullDetailsPage.jsx exactly. */}
+        {isStaffRole &&
+        (order.status === ORDER_STATUS.TAILOR_ASSIGNED ||
+          ((order.status === ORDER_STATUS.PICKUP_PENDING || order.status === ORDER_STATUS.PICKUP_SCHEDULED) &&
+            !order.assigned_employee_id)) ? (
           <View className="mb-3">
             <Button
               title={
