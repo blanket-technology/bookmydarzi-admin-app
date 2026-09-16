@@ -52,6 +52,11 @@ export const ENDPOINTS = {
     ORDERS: '/api/v1/admin/orders',
     ORDER_ASSIGN_TAILOR: (orderId: string) =>
       `/api/v1/admin/orders/${orderId}/assign-tailor`,
+    ORDER_ASSIGN_PICKUP_EMPLOYEE: (orderId: string) =>
+      `/api/v1/admin/orders/${orderId}/assign-pickup-employee`,
+    ORDER_ASSIGN_DELIVERY_EMPLOYEE: (orderId: string) =>
+      `/api/v1/admin/orders/${orderId}/assign-delivery-employee`,
+    BRIDGE_EMPLOYEES: '/api/v1/admin/bridge-employees',
     ORDER_MEASUREMENT: (orderId: string) =>
       `/api/v1/admin/orders/${orderId}/measurement`,
     ORDER_STATUS: (orderId: string) => `/api/v1/admin/orders/${orderId}/status`,

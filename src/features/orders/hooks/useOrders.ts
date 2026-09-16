@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import type {
   AdminCancelOrderRequest,
   AdminOrderMeasurementRequest,
+  AssignBridgeEmployeeRequest,
   AssignTailorRequest,
   CollectPaymentRequest,
   EmployeeAddOrderAddonRequest,
@@ -92,6 +93,59 @@ export const useAssignTailorMutation = () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(variables.orderId) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
       toast.success('Tailor assigned successfully');
+    },
+    onError: (error) => toast.error(formatApiErrorDetail(error)),
+  });
+};
+
+// Bridge/employee picker for the manual pickup/delivery assignment
+// mutations below - lazily enabled (pass true only once the picker sheet
+// opens) since it's not needed for the rest of the order-detail screen.
+export const useBridgeEmployees = (enabled = false) =>
+  useQuery({
+    queryKey: ['bridge-employees'],
+    queryFn: () => orderService.getBridgeEmployees(),
+    enabled,
+  });
+
+// Manual Bridge/employee assignment for the pickup and delivery legs - the
+// admin-panel lever for when no Bridge employee accepts the automatic
+// broadcast. Same invalidation/toast shape as useAssignTailorMutation.
+export const useAssignPickupEmployeeMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      payload,
+    }: {
+      orderId: string;
+      payload: AssignBridgeEmployeeRequest;
+    }) => orderService.assignPickupEmployee(orderId, payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(variables.orderId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
+      toast.success('Pickup employee assigned successfully');
+    },
+    onError: (error) => toast.error(formatApiErrorDetail(error)),
+  });
+};
+
+export const useAssignDeliveryEmployeeMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      payload,
+    }: {
+      orderId: string;
+      payload: AssignBridgeEmployeeRequest;
+    }) => orderService.assignDeliveryEmployee(orderId, payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(variables.orderId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
+      toast.success('Delivery employee assigned successfully');
     },
     onError: (error) => toast.error(formatApiErrorDetail(error)),
   });
