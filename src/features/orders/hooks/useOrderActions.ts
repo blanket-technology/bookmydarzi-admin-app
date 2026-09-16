@@ -179,6 +179,14 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
       // ever scheduled at order_accepted time. Previously mobile only
       // checked ORDER_ACCEPTED, so an order that reached TAILOR_ASSIGNED
       // without a scheduled pickup had no way to trigger one from here.
+      // assert_pickup_employee_assigned (order_authorization.py) now hard-
+      // requires AssignedEmployeeId on the order before schedule/confirm-
+      // pickup or hand-to-tailor can succeed - admins included, no bypass.
+      // Surface that here the same way hand_to_tailor's own tailor_id check
+      // already does below, so tapping the button explains why it's
+      // disabled instead of failing server-side with no context.
+      const noBridgeEmployee = !order?.assigned_employee_id;
+
       if (status === ORDER_STATUS.ORDER_ACCEPTED || status === ORDER_STATUS.TAILOR_ASSIGNED) {
         list.push({
           id: 'schedule_pickup',
@@ -191,6 +199,7 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
             // Caller opens SchedulePickupSheet to choose instant vs
             // scheduled (+ date/time slot for scheduled) - see [id].tsx.
           },
+          disabledReason: noBridgeEmployee ? 'Assign a Bridge employee for pickup first' : undefined,
         });
       }
 
@@ -203,6 +212,7 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
           requiresConfirmation: false,
           isLoading: confirmPickupMutation.isPending,
           run: () => confirmPickupMutation.mutate({ orderId, payload: undefined }),
+          disabledReason: noBridgeEmployee ? 'Assign a Bridge employee for pickup first' : undefined,
         });
       }
 
@@ -218,7 +228,11 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
           // Matches web (orderActions.js:197) - previously this button was
           // just enabled unconditionally even with no tailor on the order,
           // so tapping it would fail server-side with no explanation of why.
-          disabledReason: !order?.tailor_id ? 'Assign a tailor first' : undefined,
+          disabledReason: !order?.tailor_id
+            ? 'Assign a tailor first'
+            : noBridgeEmployee
+              ? 'Assign a Bridge employee for pickup first'
+              : undefined,
         });
       }
 

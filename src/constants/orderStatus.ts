@@ -98,6 +98,10 @@ export const ORDER_STATUS_OPTIONS: { label: string; value: string }[] = [
 // these are rejected by the generic admin PATCH .../status endpoint because
 // they're each owned by a dedicated flow (broadcast system, payment
 // verification, cancel-with-reason, employee delivery/complete endpoints).
+// picked_up/cloth_received_by_tailor are additionally blocked because their
+// dedicated endpoints now hard-require a Bridge employee already be
+// assigned (assert_pickup_employee_assigned, does not exempt admins) -
+// letting this generic endpoint set them would route around that gate.
 const ADMIN_BLOCKED_STATUSES = new Set<OrderStatus>([
   ORDER_STATUS.ORDER_PLACED,
   ORDER_STATUS.TAILOR_ASSIGNED,
@@ -106,6 +110,8 @@ const ADMIN_BLOCKED_STATUSES = new Set<OrderStatus>([
   ORDER_STATUS.CANCELLED,
   ORDER_STATUS.DELIVERED,
   ORDER_STATUS.OUT_FOR_DELIVERY,
+  ORDER_STATUS.PICKED_UP,
+  ORDER_STATUS.CLOTH_RECEIVED_BY_TAILOR,
 ]);
 
 export const ADMIN_CORRECTABLE_STATUS_OPTIONS: { label: string; value: OrderStatus }[] =
