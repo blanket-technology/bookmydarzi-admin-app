@@ -5,7 +5,9 @@ import type {
   AdminOrderItem,
   AdminOrderMeasurementRequest,
   AdminOrdersResponse,
+  AssignBridgeEmployeeRequest,
   AssignTailorRequest,
+  BridgeEmployeeListItem,
   CollectPaymentRequest,
   CollectPaymentResponse,
   EmployeeAddOrderAddonRequest,
@@ -126,6 +128,34 @@ export const orderService = {
       ENDPOINTS.ADMIN.ORDER_ASSIGN_TAILOR(orderId),
       payload,
     );
+    return data;
+  },
+
+  // Manual (non-broadcast) Bridge/employee assignment for the pickup and
+  // delivery legs - the admin-panel lever for when no Bridge employee
+  // accepts the automatic broadcast. Mirrors assignTailor's shape; see
+  // app/services/orders/assign_bridge_service.py on the backend.
+  assignPickupEmployee: async (orderId: string, payload: AssignBridgeEmployeeRequest) => {
+    const { data } = await apiClient.patch(
+      ENDPOINTS.ADMIN.ORDER_ASSIGN_PICKUP_EMPLOYEE(orderId),
+      payload,
+    );
+    return data;
+  },
+
+  assignDeliveryEmployee: async (orderId: string, payload: AssignBridgeEmployeeRequest) => {
+    const { data } = await apiClient.patch(
+      ENDPOINTS.ADMIN.ORDER_ASSIGN_DELIVERY_EMPLOYEE(orderId),
+      payload,
+    );
+    return data;
+  },
+
+  // Bridge/employee picker for the two assignment actions above - open to
+  // admin/superadmin/employee alike (unlike GET /admin/staff, admin-only),
+  // no PII beyond name (see StaffBridgeEmployeeListItem on the backend).
+  getBridgeEmployees: async (): Promise<BridgeEmployeeListItem[]> => {
+    const { data } = await apiClient.get(ENDPOINTS.ADMIN.BRIDGE_EMPLOYEES);
     return data;
   },
 

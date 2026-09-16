@@ -228,6 +228,16 @@ export interface AssignTailorRequest {
   tailor_id: string;
 }
 
+export interface AssignBridgeEmployeeRequest {
+  employee_id: string;
+}
+
+export interface BridgeEmployeeListItem {
+  employee_id: string;
+  full_name: string | null;
+  is_online: boolean;
+}
+
 export interface OrderStatusUpdateRequest {
   status: OrderStatus | string;
   notes?: string;

@@ -305,6 +305,14 @@
     "noAvailableBody": "Every tailor is currently busy. Try again shortly or reassign once someone frees up.",
     "available": "Available"
   },
+  "assignBridgeEmployee": {
+    "pickupTitle": "Assign Pickup Employee",
+    "deliveryTitle": "Assign Delivery Employee",
+    "noEmployees": "No Bridge employees found",
+    "noEmployeesBody": "No active Bridge/employee accounts exist yet.",
+    "online": "Online",
+    "offline": "Offline"
+  },
   "schedulePickup": {
     "title": "Schedule Pickup",
     "instant": "Instant",

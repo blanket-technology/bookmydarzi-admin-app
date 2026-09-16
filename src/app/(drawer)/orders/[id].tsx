@@ -10,6 +10,9 @@ import {
   useTriggerBroadcastMutation,
   useAssignTailorMutation,
   useAssignTailorEmployeeMutation,
+  useAssignPickupEmployeeMutation,
+  useAssignDeliveryEmployeeMutation,
+  useBridgeEmployees,
   useUpdateOrderStatusMutation,
   useDownloadInvoiceMutation,
 } from '@/features/orders/hooks/useOrders';
@@ -31,6 +34,7 @@ import { OrderItemsCard } from '@/features/orders/components/OrderItemsCard';
 import { BroadcastMonitorCard } from '@/features/orders/components/BroadcastMonitorCard';
 import { AdminToolsSection } from '@/features/orders/components/AdminToolsSection';
 import { AssignTailorSheet } from '@/features/orders/components/AssignTailorSheet';
+import { AssignBridgeEmployeeSheet } from '@/features/orders/components/AssignBridgeEmployeeSheet';
 import { SchedulePickupSheet } from '@/features/orders/components/SchedulePickupSheet';
 import { CorrectStatusSheet } from '@/features/orders/components/CorrectStatusSheet';
 import { RejectOrderSheet } from '@/features/orders/components/RejectOrderSheet';
@@ -65,6 +69,8 @@ export default function OrderDetailsScreen() {
   const { user, selectedRole } = useAuth();
 
   const [assignSheetVisible, setAssignSheetVisible] = useState(false);
+  const [assignPickupSheetVisible, setAssignPickupSheetVisible] = useState(false);
+  const [assignDeliverySheetVisible, setAssignDeliverySheetVisible] = useState(false);
   const [schedulePickupSheetVisible, setSchedulePickupSheetVisible] = useState(false);
   const [statusSheetVisible, setStatusSheetVisible] = useState(false);
   const [measurementManageSheetVisible, setMeasurementManageSheetVisible] = useState(false);
@@ -119,6 +125,14 @@ export default function OrderDetailsScreen() {
   const { data: employeeTailorsData } = useTailorsForEmployee(isEmployeeRole);
   const assignMutation = useAssignTailorMutation();
   const assignEmployeeMutation = useAssignTailorEmployeeMutation();
+  // Bridge/employee picker for the manual pickup/delivery assignment sheets
+  // below - lazily enabled only once one of those sheets is actually open.
+  const { data: bridgeEmployeesData } = useBridgeEmployees(
+    isStaffRole && (assignPickupSheetVisible || assignDeliverySheetVisible),
+  );
+  const bridgeEmployees = bridgeEmployeesData ?? [];
+  const assignPickupEmployeeMutation = useAssignPickupEmployeeMutation();
+  const assignDeliveryEmployeeMutation = useAssignDeliveryEmployeeMutation();
   const statusMutation = useUpdateOrderStatusMutation();
   const triggerBroadcastMutation = useTriggerBroadcastMutation();
   const downloadInvoiceMutation = useDownloadInvoiceMutation();
@@ -154,6 +168,22 @@ export default function OrderDetailsScreen() {
     // employee_assign_tailor). Different backend preconditions, same UI action.
     const mutation = isAdminRole ? assignMutation : assignEmployeeMutation;
     mutation.mutate({ orderId: order.order_id, payload: { tailor_id: tailorId } }, { onSuccess: () => setAssignSheetVisible(false) });
+  };
+
+  const handleAssignPickupEmployee = (employeeId: string) => {
+    if (!order) return;
+    assignPickupEmployeeMutation.mutate(
+      { orderId: order.order_id, payload: { employee_id: employeeId } },
+      { onSuccess: () => setAssignPickupSheetVisible(false) },
+    );
+  };
+
+  const handleAssignDeliveryEmployee = (employeeId: string) => {
+    if (!order) return;
+    assignDeliveryEmployeeMutation.mutate(
+      { orderId: order.order_id, payload: { employee_id: employeeId } },
+      { onSuccess: () => setAssignDeliverySheetVisible(false) },
+    );
   };
 
   const handleCorrectStatus = (status: OrderStatus) => {
@@ -492,10 +522,62 @@ export default function OrderDetailsScreen() {
         {isAdminRole ? (
           <AdminToolsSection onTriggerBroadcast={() => setBroadcastConfirmVisible(true)} triggering={triggerBroadcastMutation.isPending} />
         ) : null}
+
+        {/* Manual Bridge/employee assignment - the lever for when no Bridge
+            employee accepts the automatic pickup/delivery broadcast. Only
+            valid at the same statuses the broadcast accept endpoints
+            themselves require (see assign_bridge_service.py's
+            _PICKUP_ASSIGN_FROM / _DELIVERY_ASSIGN_FROM), mirroring the web
+            admin panel's OrderFullDetailsPage.jsx exactly. */}
+        {isStaffRole && order.status === ORDER_STATUS.TAILOR_ASSIGNED ? (
+          <View className="mb-3">
+            <Button
+              title={
+                order.assigned_employee_id
+                  ? `${t('assignBridgeEmployee.pickupTitle')} (#${order.assigned_employee_id})`
+                  : t('assignBridgeEmployee.pickupTitle')
+              }
+              variant="secondary"
+              onPress={() => setAssignPickupSheetVisible(true)}
+              fullWidth
+            />
+          </View>
+        ) : null}
+
+        {isStaffRole &&
+        (order.status === ORDER_STATUS.READY_FOR_DISPATCH ||
+          (order.status === ORDER_STATUS.OUT_FOR_DELIVERY && !order.delivery_employee_id)) ? (
+          <View className="mb-3">
+            <Button
+              title={
+                order.delivery_employee_id
+                  ? `${t('assignBridgeEmployee.deliveryTitle')} (#${order.delivery_employee_id})`
+                  : t('assignBridgeEmployee.deliveryTitle')
+              }
+              variant="secondary"
+              onPress={() => setAssignDeliverySheetVisible(true)}
+              fullWidth
+            />
+          </View>
+        ) : null}
         <View className="mb-8" />
       </ScreenContent>
 
       <AssignTailorSheet visible={assignSheetVisible} onClose={() => setAssignSheetVisible(false)} tailors={tailors} onAssign={handleAssign} />
+      <AssignBridgeEmployeeSheet
+        visible={assignPickupSheetVisible}
+        onClose={() => setAssignPickupSheetVisible(false)}
+        title={t('assignBridgeEmployee.pickupTitle')}
+        employees={bridgeEmployees}
+        onAssign={handleAssignPickupEmployee}
+      />
+      <AssignBridgeEmployeeSheet
+        visible={assignDeliverySheetVisible}
+        onClose={() => setAssignDeliverySheetVisible(false)}
+        title={t('assignBridgeEmployee.deliveryTitle')}
+        employees={bridgeEmployees}
+        onAssign={handleAssignDeliveryEmployee}
+      />
 
       <SchedulePickupSheet visible={schedulePickupSheetVisible} onClose={() => setSchedulePickupSheetVisible(false)} orderId={order.order_id} />
 
