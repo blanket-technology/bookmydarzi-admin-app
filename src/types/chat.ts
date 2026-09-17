@@ -49,6 +49,15 @@ export interface ChatMessagesResponse {
   count: number;
 }
 
+/** Local-only delivery state for an optimistically-appended message - not
+ * sent by the backend, set/cleared entirely on the client. Mirrors
+ * react_app's LocalChatMessage (useSupportChatStore.ts). */
+export type ChatDeliveryStatus = 'pending' | 'sent' | 'failed';
+
+export type LocalChatMessage = ChatMessage & {
+  deliveryStatus?: ChatDeliveryStatus;
+};
+
 export interface ChatQuickReply {
   id: number;
   title: string;
