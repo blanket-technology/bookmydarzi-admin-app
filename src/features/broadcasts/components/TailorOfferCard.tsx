@@ -275,7 +275,7 @@ export const TailorOfferCard = ({
             className="px-4 py-2 rounded-xl"
             style={{ backgroundColor: colors.primary, opacity: accepting || isExpired ? 0.6 : 1 }}
           >
-            <Text className="text-sm font-semibold text-white">{accepting ? 'Accepting…' : 'Accept'}</Text>
+            <Text className="text-sm font-semibold" style={{ color: colors.onPrimary }}>{accepting ? 'Accepting…' : 'Accept'}</Text>
           </Pressable>
         </View>
       </View>

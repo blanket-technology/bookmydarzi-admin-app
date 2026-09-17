@@ -6,10 +6,14 @@ import type { ChatMessage, ChatWsIncomingFrame, ChatWsOutgoingFrame } from '@/ty
 
 // There is no REST endpoint to send a chat message — sending is WebSocket-only
 // (see app/api/v1/endpoints/chat_ws.py _handle_send_message). This hook owns
-// one connection per open thread screen; it reconnects once on an
-// unexpected close but does not attempt sophisticated backoff — matching the
-// MVP scope agreed for this feature (view/send/assign/resolve/escalate only).
-const RECONNECT_DELAY_MS = 3000;
+// one connection per open thread screen. Reconnect uses exponential backoff
+// (matching react_app's useChatWS.ts, the customer app's proven pattern) so a
+// server restart/network blip doesn't hammer the endpoint with retries every
+// 3s indefinitely - it backs off up to 30s, and resets to 1s once a
+// connection actually succeeds.
+const RECONNECT_DELAY_INITIAL_MS = 1000;
+const RECONNECT_DELAY_MAX_MS = 30000;
+const HEARTBEAT_INTERVAL_MS = 25000;
 
 function wsUrl(sessionUuid: string): string {
   const httpBase = API_CONFIG.BASE_URL;
@@ -48,6 +52,8 @@ export function useChatSocket(
   const [peerTyping, setPeerTyping] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const heartbeatTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const reconnectDelayRef = useRef(RECONNECT_DELAY_INITIAL_MS);
   const mountedRef = useRef(true);
   const onMessageRef = useRef(onMessage);
   const onSendFailedRef = useRef(onSendFailed);
@@ -77,6 +83,13 @@ export function useChatSocket(
 
       socket.onopen = () => {
         try { socket.send(JSON.stringify({ type: 'auth', token })); } catch {}
+        reconnectDelayRef.current = RECONNECT_DELAY_INITIAL_MS;
+        if (heartbeatTimerRef.current) clearInterval(heartbeatTimerRef.current);
+        heartbeatTimerRef.current = setInterval(() => {
+          if (wsRef.current === socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ event: 'ping' }));
+          }
+        }, HEARTBEAT_INTERVAL_MS);
         if (mountedRef.current) setIsConnected(true);
       };
 
@@ -106,9 +119,15 @@ export function useChatSocket(
       };
 
       socket.onclose = () => {
+        if (heartbeatTimerRef.current) {
+          clearInterval(heartbeatTimerRef.current);
+          heartbeatTimerRef.current = null;
+        }
         if (!mountedRef.current) return;
         setIsConnected(false);
-        reconnectTimerRef.current = setTimeout(connect, RECONNECT_DELAY_MS);
+        const delay = reconnectDelayRef.current;
+        reconnectDelayRef.current = Math.min(delay * 2, RECONNECT_DELAY_MAX_MS);
+        reconnectTimerRef.current = setTimeout(connect, delay);
       };
 
       socket.onerror = () => {
@@ -121,6 +140,7 @@ export function useChatSocket(
     return () => {
       mountedRef.current = false;
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      if (heartbeatTimerRef.current) clearInterval(heartbeatTimerRef.current);
       wsRef.current?.close();
       wsRef.current = null;
     };

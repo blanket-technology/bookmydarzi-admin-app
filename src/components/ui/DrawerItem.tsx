@@ -53,7 +53,7 @@ export const DrawerItem = ({
           className="min-w-[20px] h-5 rounded-full items-center justify-center px-1.5 mr-1"
           style={{ backgroundColor: colors.error }}
         >
-          <Text className="text-white text-xs font-bold">
+          <Text className="text-xs font-bold" style={{ color: colors.onError }}>
             {badgeCount > 99 ? '99+' : badgeCount}
           </Text>
         </View>

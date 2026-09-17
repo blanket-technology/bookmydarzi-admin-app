@@ -38,7 +38,7 @@ export const PendingOfferCard = ({
         className="rounded-xl py-3 items-center"
         style={{ backgroundColor: colors.primary, opacity: accepting ? 0.6 : 1 }}
       >
-        <Text className="text-white font-semibold">
+        <Text className="font-semibold" style={{ color: colors.onPrimary }}>
           {accepting ? t('pendingOffer.accepting') : isPickup ? t('pendingOffer.acceptPickup') : t('pendingOffer.acceptDelivery')}
         </Text>
       </Pressable>

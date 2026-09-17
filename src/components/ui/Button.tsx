@@ -29,11 +29,14 @@ export const Button = ({
   }[size];
 
   const variantStyles = {
-    primary: { bg: colors.primary, text: '#ffffff', border: colors.primary },
+    // Previously hardcoded '#ffffff' - white text on this gold/amber
+    // background only hits ~2-3:1 contrast (fails WCAG AA's 4.5:1) in both
+    // themes. onPrimary/onError are dedicated tokens for exactly this pairing.
+    primary: { bg: colors.primary, text: colors.onPrimary, border: colors.primary },
     secondary: { bg: colors.primaryLight, text: colors.primary, border: colors.primaryLight },
     outline: { bg: 'transparent', text: colors.primary, border: colors.primary },
     ghost: { bg: 'transparent', text: colors.text, border: 'transparent' },
-    danger: { bg: colors.error, text: '#ffffff', border: colors.error },
+    danger: { bg: colors.error, text: colors.onError, border: colors.error },
   }[variant];
 
   return (

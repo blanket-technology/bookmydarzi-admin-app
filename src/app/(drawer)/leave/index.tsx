@@ -146,7 +146,7 @@ function MyLeaveScreen() {
             className="w-10 h-10 rounded-xl items-center justify-center"
             style={{ backgroundColor: colors.primary }}
           >
-            <Ionicons name="add" size={22} color="#fff" />
+            <Ionicons name="add" size={22} color={colors.onPrimary} />
           </Pressable>
         }
       />

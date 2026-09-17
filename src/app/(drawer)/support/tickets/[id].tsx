@@ -170,7 +170,7 @@ export default function SupportTicketDetailScreen() {
               className="w-11 h-11 rounded-full items-center justify-center mb-1"
               style={{ backgroundColor: colors.primary, opacity: !message.trim() ? 0.5 : 1 }}
             >
-              <Ionicons name="send" size={18} color="#fff" />
+              <Ionicons name="send" size={18} color={colors.onPrimary} />
             </Pressable>
           </View>
         )}
