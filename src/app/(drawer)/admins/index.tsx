@@ -70,7 +70,7 @@ export default function AdminsScreen() {
             className="w-10 h-10 rounded-xl items-center justify-center"
             style={{ backgroundColor: colors.primary }}
           >
-            <Text className="text-white text-xl font-bold">+</Text>
+            <Text className="text-xl font-bold" style={{ color: colors.onPrimary }}>+</Text>
           </Pressable>
         }
       />

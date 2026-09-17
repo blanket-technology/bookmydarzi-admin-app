@@ -292,7 +292,7 @@ export default function LoginScreen() {
                         backgroundColor: rememberMe ? '#B8923E' : 'transparent',
                       }}
                     >
-                      {rememberMe ? <Ionicons name="checkmark" size={12} color="#ffffff" /> : null}
+                      {rememberMe ? <Ionicons name="checkmark" size={12} color="#2C1A0E" /> : null}
                     </View>
                     <Text className="text-sm" style={{ color: '#8a7561' }}>
                       Remember me

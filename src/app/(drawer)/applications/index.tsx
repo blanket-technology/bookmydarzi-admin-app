@@ -136,7 +136,7 @@ export default function ApplicationsScreen() {
               className="flex-1 items-center py-2 rounded-xl"
               style={{ backgroundColor: colors.primary }}
             >
-              <Text className="text-xs font-bold text-white">Approve</Text>
+              <Text className="text-xs font-bold" style={{ color: colors.onPrimary }}>Approve</Text>
             </Pressable>
             <Pressable
               onPress={() => openReject(item)}

@@ -142,13 +142,13 @@ export default function OrdersScreen() {
             className="w-10 h-10 rounded-xl items-center justify-center border"
             style={{ backgroundColor: activeFilterCount > 0 ? colors.primary : colors.surface, borderColor: colors.border }}
           >
-            <Ionicons name="filter" size={20} color={activeFilterCount > 0 ? '#fff' : colors.text} />
+            <Ionicons name="filter" size={20} color={activeFilterCount > 0 ? colors.onPrimary : colors.text} />
             {activeFilterCount > 0 ? (
               <View
                 className="absolute -top-1 -right-1 w-4 h-4 rounded-full items-center justify-center"
                 style={{ backgroundColor: colors.error }}
               >
-                <Text className="text-[10px] font-bold text-white">{activeFilterCount}</Text>
+                <Text className="text-[10px] font-bold" style={{ color: colors.onError }}>{activeFilterCount}</Text>
               </View>
             ) : null}
           </Pressable>

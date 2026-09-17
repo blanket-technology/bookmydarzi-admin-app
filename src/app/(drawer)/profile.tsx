@@ -769,7 +769,7 @@ export default function ProfileScreen() {
                 <Ionicons
                   name={uploadPhotoMutation.isPending ? 'hourglass-outline' : 'camera'}
                   size={15}
-                  color="#fff"
+                  color={colors.onPrimary}
                 />
               </View>
             </View>

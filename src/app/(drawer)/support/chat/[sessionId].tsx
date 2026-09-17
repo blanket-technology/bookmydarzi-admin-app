@@ -238,7 +238,7 @@ export default function ChatThreadScreen() {
             className="flex-1 py-2.5 rounded-xl items-center"
             style={{ backgroundColor: colors.primary }}
           >
-            <Text className="text-sm font-medium" style={{ color: '#ffffff' }}>
+            <Text className="text-sm font-medium" style={{ color: colors.onPrimary }}>
               Resolve
             </Text>
           </Pressable>
@@ -338,7 +338,7 @@ export default function ChatThreadScreen() {
                 className="w-11 h-11 rounded-full items-center justify-center"
                 style={{ backgroundColor: colors.primary, opacity: draft.trim() ? 1 : 0.5 }}
               >
-                <Ionicons name="send" size={18} color="#ffffff" />
+                <Ionicons name="send" size={18} color={colors.onPrimary} />
               </Pressable>
             </View>
           )}

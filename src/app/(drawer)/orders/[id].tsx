@@ -563,6 +563,7 @@ export default function OrderDetailsScreen() {
         onClose={() => setCollectSheetVisible(false)}
         orderId={order.order_id}
         orderCode={order.order_code}
+        remainingAmount={order.remaining_amount}
       />
 
       <PaymentDetailsSheet

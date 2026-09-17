@@ -116,7 +116,7 @@ function ConversationsTab() {
                   className="rounded-full items-center justify-center px-1.5"
                   style={{ backgroundColor: colors.primary, minWidth: 18, height: 18 }}
                 >
-                  <Text className="text-[10px] font-bold text-white">
+                  <Text className="text-[10px] font-bold" style={{ color: colors.onPrimary }}>
                     {item.unread_count > 9 ? '9+' : item.unread_count}
                   </Text>
                 </View>
@@ -440,7 +440,7 @@ export default function SupportScreen() {
               className="w-10 h-10 rounded-xl items-center justify-center"
               style={{ backgroundColor: colors.primary }}
             >
-              <Text className="text-white text-xl font-bold">+</Text>
+              <Text className="text-xl font-bold" style={{ color: colors.onPrimary }}>+</Text>
             </Pressable>
           ) : activeTab === 'conversations' && canSeeConversations ? (
             <Pressable

@@ -114,7 +114,7 @@ function RequestRow({
             className="flex-1 py-2.5 rounded-xl items-center"
             style={{ backgroundColor: colors.primary, opacity: busy ? 0.6 : 1 }}
           >
-            <Text className="text-sm font-semibold text-white">Approve</Text>
+            <Text className="text-sm font-semibold" style={{ color: colors.onPrimary }}>Approve</Text>
           </Pressable>
         </View>
       ) : null}
