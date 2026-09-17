@@ -23,7 +23,7 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { toast } from '@/store/toastStore';
-import type { ChatMessage, ChatSessionStatus } from '@/types/chat';
+import type { ChatSessionStatus, LocalChatMessage } from '@/types/chat';
 import { formatDateTime } from '@/utils/errors';
 
 export default function ChatThreadScreen() {
@@ -32,10 +32,9 @@ export default function ChatThreadScreen() {
   const { contentMaxWidth } = useResponsive();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const listRef = useRef<FlatList<ChatMessage>>(null);
+  const listRef = useRef<FlatList<LocalChatMessage>>(null);
 
   const [draft, setDraft] = useState('');
-  const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
   const [confirmResolve, setConfirmResolve] = useState(false);
   const [confirmEscalate, setConfirmEscalate] = useState(false);
   const [liveStatus, setLiveStatus] = useState<ChatSessionStatus | null>(null);
@@ -55,17 +54,6 @@ export default function ChatThreadScreen() {
   const escalateMutation = useEscalateSessionMutation();
   const uploadAttachmentMutation = useUploadChatAttachmentMutation();
 
-  useEffect(() => {
-    if (data?.messages) setLocalMessages(data.messages);
-  }, [data]);
-
-  const handleIncomingMessage = useCallback((message: ChatMessage) => {
-    setLocalMessages((prev) => {
-      if (prev.some((m) => m.id === message.id)) return prev;
-      return [...prev, message];
-    });
-  }, []);
-
   // Without this, an assignment/resolution/status change made by another
   // agent (or the AI escalating) only reaches this open thread on the
   // inbox's next 20s poll - a second agent could be typing into an
@@ -80,12 +68,23 @@ export default function ChatThreadScreen() {
     [queryClient, sessionId],
   );
 
-  const { isConnected, peerTyping, sendMessage, sendTyping, sendReadReceipt } = useChatSocket(
-    sessionId,
-    handleIncomingMessage,
-    undefined,
-    handleSessionEvent,
-  );
+  const {
+    isConnected,
+    peerTyping,
+    messages: localMessages,
+    setInitialMessages,
+    sendMessage,
+    retryMessage,
+    sendTyping,
+    sendReadReceipt,
+  } = useChatSocket(sessionId, handleSessionEvent);
+
+  // Seeds the hook's message list from REST history once per load - the
+  // hook then owns appends/status updates from here on (WS frames, optimistic
+  // sends, ack timeouts, reconnect resends).
+  useEffect(() => {
+    if (data?.messages) setInitialMessages(data.messages);
+  }, [data, setInitialMessages]);
 
   const currentStatus = liveStatus ?? sessionDetail?.status;
   const isResolved = currentStatus === 'resolved' || currentStatus === 'closed';
@@ -101,15 +100,12 @@ export default function ChatThreadScreen() {
   const handleSend = () => {
     const body = draft.trim();
     if (!body) return;
-    // sendMessage returns null when the socket isn't actually open (e.g.
-    // reconnecting) — previously the draft was cleared unconditionally here,
-    // so the agent saw an empty composer as if the message sent while it was
-    // silently dropped. Keep the draft and tell them, instead.
-    const clientId = sendMessage(body);
-    if (!clientId) {
-      toast.error('Not connected — message not sent. Try again in a moment.');
-      return;
-    }
+    // sendMessage now always queues the message optimistically (marked
+    // "pending" even if the socket is closed) instead of silently dropping
+    // it - if the socket is down, the ack timeout marks it "failed" with a
+    // Retry affordance, and a later reconnect auto-resends anything still
+    // pending/failed. No more "not connected" toast needed here.
+    sendMessage(body);
     setDraft('');
     sendTyping(false);
   };
@@ -129,10 +125,7 @@ export default function ChatThreadScreen() {
         onSuccess: (res) => {
           // No caption required for an image send - matches the backend's
           // own "body OR attachment_id" rule (chat_ws.py's _handle_send_message).
-          const clientId = sendMessage('', res.url);
-          if (!clientId) {
-            toast.error('Not connected — image not sent. Try again in a moment.');
-          }
+          sendMessage('', res.url);
         },
       },
     );
@@ -143,9 +136,11 @@ export default function ChatThreadScreen() {
     assignMutation.mutate({ sessionUuid: sessionId, agentId: Number(user.id) });
   };
 
-  const renderItem = ({ item }: { item: ChatMessage }) => {
+  const renderItem = ({ item }: { item: LocalChatMessage }) => {
     const isAgent = item.sender_type === 'agent' || item.sender_type === 'ai';
     const imageUrl = item.message_type === 'image' ? (item.metadata?.attachment_id as string | undefined) : undefined;
+    const isFailed = item.deliveryStatus === 'failed';
+    const isPending = item.deliveryStatus === 'pending';
     return (
       <View className={`mb-3 flex-row ${isAgent ? 'justify-end' : 'justify-start'}`}>
         <View
@@ -154,6 +149,7 @@ export default function ChatThreadScreen() {
             backgroundColor: isAgent ? colors.primary : colors.surface,
             borderWidth: isAgent ? 0 : 1,
             borderColor: colors.border,
+            opacity: isPending ? 0.6 : 1,
           }}
         >
           {item.sender_type === 'ai' && (
@@ -171,12 +167,18 @@ export default function ChatThreadScreen() {
           {item.body ? (
             <Text style={{ color: isAgent ? '#ffffff' : colors.text }}>{item.body}</Text>
           ) : null}
-          <Text
-            className="text-[10px] mt-1"
-            style={{ color: isAgent ? '#e9d5ff' : colors.textMuted }}
-          >
-            {formatDateTime(item.created_at ?? undefined)}
-          </Text>
+          <View className="flex-row items-center mt-1 gap-2">
+            <Text style={{ color: isAgent ? '#e9d5ff' : colors.textMuted }} className="text-[10px]">
+              {isPending ? 'Sending…' : formatDateTime(item.created_at ?? undefined)}
+            </Text>
+            {isFailed && item.client_id && (
+              <Pressable onPress={() => retryMessage(item.client_id!)}>
+                <Text className="text-[10px] font-semibold" style={{ color: '#fca5a5' }}>
+                  Failed · Retry
+                </Text>
+              </Pressable>
+            )}
+          </View>
         </View>
       </View>
     );
@@ -262,7 +264,7 @@ export default function ChatThreadScreen() {
           <FlatList
             ref={listRef}
             data={localMessages}
-            keyExtractor={(item) => String(item.id ?? item.client_id)}
+            keyExtractor={(item) => String(item.client_id ?? item.id)}
             renderItem={renderItem}
             className="px-5"
             contentContainerStyle={{ paddingVertical: 12 }}
