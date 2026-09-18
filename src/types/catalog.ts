@@ -29,6 +29,9 @@ export interface StitchingTypeSummary {
   service_line_name?: string | null;
   category_id: string;
   category_name: string;
+  /** Repair/Resize/Restyle grouping, only meaningful for a Custom
+   * Alterations service. Null if not yet explicitly assigned. */
+  alteration_group?: 'repair' | 'resize' | 'restyle' | null;
 }
 
 export interface ServiceLineTree {
@@ -87,4 +90,5 @@ export interface ServicePayload {
   is_premium?: boolean;
   is_active?: boolean;
   highlights?: string[];
+  alteration_group?: 'repair' | 'resize' | 'restyle' | null;
 }

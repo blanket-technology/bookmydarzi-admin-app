@@ -35,6 +35,7 @@ const SERVICE_FORM = {
   display_order: '0',
   is_premium: false,
   is_active: true,
+  alteration_group: null as 'repair' | 'resize' | 'restyle' | null,
 };
 
 export default function CatalogScreen() {
@@ -63,7 +64,12 @@ export default function CatalogScreen() {
   const [serviceForm, setServiceForm] = useState(SERVICE_FORM);
   const [editingService, setEditingService] = useState<StitchingTypeSummary | null>(null);
   const [serviceParentCategoryId, setServiceParentCategoryId] = useState<string | null>(null);
+  const [serviceParentCategoryName, setServiceParentCategoryName] = useState<string | null>(null);
   const [serviceParentLineId, setServiceParentLineId] = useState<string | null>(null);
+  // Repair/Resize/Restyle grouping only means anything for a service under
+  // Custom Alterations - every other category's services are a stitching
+  // tier or product variant, not alteration work on an existing garment.
+  const isAlterationsCategory = serviceParentCategoryName === 'Custom Alterations';
 
   const [deleteCategoryTarget, setDeleteCategoryTarget] = useState<CategoryTree | null>(null);
   const [deleteLineTarget, setDeleteLineTarget] = useState<ServiceLineTree | null>(null);
@@ -163,16 +169,18 @@ export default function CatalogScreen() {
   };
 
   // ── Service handlers ────────────────────────────────────────────────────
-  const openNewService = (categoryId: string, lineId: string | null) => {
+  const openNewService = (categoryId: string, categoryName: string, lineId: string | null) => {
     setEditingService(null);
     setServiceParentCategoryId(categoryId);
+    setServiceParentCategoryName(categoryName);
     setServiceParentLineId(lineId);
     setServiceForm(SERVICE_FORM);
     setSheetKind('service');
   };
-  const openEditService = (categoryId: string, lineId: string | null, service: StitchingTypeSummary) => {
+  const openEditService = (categoryId: string, categoryName: string, lineId: string | null, service: StitchingTypeSummary) => {
     setEditingService(service);
     setServiceParentCategoryId(categoryId);
+    setServiceParentCategoryName(categoryName);
     setServiceParentLineId(lineId);
     setServiceForm({
       name: service.name,
@@ -183,6 +191,7 @@ export default function CatalogScreen() {
       display_order: String(service.display_order),
       is_premium: service.is_premium,
       is_active: service.is_active,
+      alteration_group: service.alteration_group ?? null,
     });
     setSheetKind('service');
   };
@@ -199,6 +208,7 @@ export default function CatalogScreen() {
       display_order: Math.max(0, Number(serviceForm.display_order) || 0),
       is_premium: serviceForm.is_premium,
       is_active: serviceForm.is_active,
+      alteration_group: isAlterationsCategory ? serviceForm.alteration_group : null,
     };
     if (editingService) {
       updateServiceMutation.mutate({ id: editingService.service_id, payload }, { onSuccess: () => setSheetKind(null) });
@@ -277,7 +287,7 @@ export default function CatalogScreen() {
                           {line.stitching_types.map((service) => (
                             <Pressable
                               key={service.service_id}
-                              onPress={() => openEditService(category.id, line.id, service)}
+                              onPress={() => openEditService(category.id, category.name, line.id, service)}
                               className="flex-row items-center justify-between py-2 pl-3"
                             >
                               <Text className="text-sm flex-1" style={{ color: colors.textSecondary }}>
@@ -288,7 +298,7 @@ export default function CatalogScreen() {
                               </Text>
                             </Pressable>
                           ))}
-                          <Pressable onPress={() => openNewService(category.id, line.id)} className="pl-3 py-1">
+                          <Pressable onPress={() => openNewService(category.id, category.name, line.id)} className="pl-3 py-1">
                             <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
                               + Add Service
                             </Text>
@@ -304,7 +314,7 @@ export default function CatalogScreen() {
                           {category.direct_services.map((service) => (
                             <Pressable
                               key={service.service_id}
-                              onPress={() => openEditService(category.id, null, service)}
+                              onPress={() => openEditService(category.id, category.name, null, service)}
                               className="flex-row items-center justify-between py-2"
                             >
                               <Text className="text-sm flex-1" style={{ color: colors.textSecondary }}>
@@ -324,7 +334,7 @@ export default function CatalogScreen() {
                             + Add Service Line
                           </Text>
                         </Pressable>
-                        <Pressable onPress={() => openNewService(category.id, null)}>
+                        <Pressable onPress={() => openNewService(category.id, category.name, null)}>
                           <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
                             + Add Direct Service
                           </Text>
@@ -428,6 +438,39 @@ export default function CatalogScreen() {
           </View>
         </View>
         <Input label="Display Order" value={serviceForm.display_order} onChangeText={(t) => setServiceForm((f) => ({ ...f, display_order: t }))} keyboardType="number-pad" />
+        {isAlterationsCategory ? (
+          <View className="mb-4">
+            <Text className="text-sm font-medium mb-2" style={{ color: colors.textSecondary }}>
+              Alteration Type
+            </Text>
+            <View className="flex-row" style={{ gap: 8 }}>
+              {(['repair', 'resize', 'restyle'] as const).map((group) => {
+                const selected = serviceForm.alteration_group === group;
+                return (
+                  <Pressable
+                    key={group}
+                    onPress={() => setServiceForm((f) => ({ ...f, alteration_group: selected ? null : group }))}
+                    className="flex-1 py-2.5 rounded-xl border items-center"
+                    style={{
+                      borderColor: selected ? colors.primary : colors.border,
+                      backgroundColor: selected ? colors.primary : colors.surface,
+                    }}
+                  >
+                    <Text
+                      className="text-xs font-semibold capitalize"
+                      style={{ color: selected ? colors.onPrimary : colors.textSecondary }}
+                    >
+                      {group}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text className="text-xs mt-1.5" style={{ color: colors.textMuted }}>
+              Controls which group this shows under on the customer app and website. Tap again to clear.
+            </Text>
+          </View>
+        ) : null}
         <View className="flex-row items-center justify-between mb-2">
           <Text style={{ color: colors.text }}>Premium</Text>
           <Switch value={serviceForm.is_premium} onValueChange={(v) => setServiceForm((f) => ({ ...f, is_premium: v }))} trackColor={{ true: colors.primary }} />
