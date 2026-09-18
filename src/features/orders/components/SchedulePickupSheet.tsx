@@ -161,15 +161,21 @@ export const SchedulePickupSheet = ({
               <View className="flex-row flex-wrap" style={{ gap: 8 }}>
                 {bridgeEmployees.map((e) => {
                   const active = pickupEmployeeId === e.employee_id;
+                  const offline = !e.is_online;
                   return (
                     <Pressable
                       key={e.employee_id}
-                      onPress={() => setPickupEmployeeId(e.employee_id)}
+                      onPress={() => {
+                        if (offline) return;
+                        setPickupEmployeeId(e.employee_id);
+                      }}
+                      disabled={offline}
                       haptic="selection"
                       className="px-3 py-2 rounded-lg border"
                       style={{
                         borderColor: active ? colors.primary : colors.border,
                         backgroundColor: active ? colors.primaryLight : colors.card,
+                        opacity: offline ? 0.45 : 1,
                       }}
                     >
                       <Text
@@ -177,7 +183,7 @@ export const SchedulePickupSheet = ({
                         style={{ color: active ? colors.primary : colors.text }}
                       >
                         {e.full_name || `#${e.employee_id}`}
-                        {e.is_online ? '' : ` (${t('assignBridgeEmployee.offline')})`}
+                        {offline ? ` (${t('assignBridgeEmployee.offline')})` : ''}
                       </Text>
                     </Pressable>
                   );
