@@ -40,6 +40,7 @@ export const QUERY_KEYS = {
   RETURN_BROADCASTS: (params?: Record<string, unknown>) => ['return-broadcasts', params] as const,
   LEAVE_REQUESTS: () => ['leave-requests'] as const,
   ADMIN_LEAVE_REQUESTS: (params?: Record<string, unknown>) => ['admin-leave-requests', params] as const,
+  ADMIN_REVIEWS: (params?: Record<string, unknown>) => ['admin-reviews', params] as const,
   RBAC_SCREENS: ['rbac-screens'] as const,
   RBAC_PERMISSIONS: ['rbac-permissions'] as const,
   RBAC_EFFECTIVE: (userId: number) => ['rbac-effective', userId] as const,

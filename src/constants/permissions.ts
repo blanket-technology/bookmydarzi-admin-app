@@ -368,6 +368,7 @@ export const mergeEffectivePermissions = (
 export const ROUTE_PERMISSION_MAP: Record<string, keyof AppPermissions> = {
   dashboard: 'dashboard',
   orders: 'orders',
+  reviews: 'orders',
   payments: 'payments',
   customers: 'users',
   tailors: 'tailors',

@@ -45,6 +45,7 @@ export default function DrawerLayout() {
         >
           <Drawer.Screen name="dashboard" options={{ title: 'Dashboard' }} />
           <Drawer.Screen name="orders" options={{ title: 'Orders' }} />
+          <Drawer.Screen name="reviews/index" options={{ title: 'Reviews' }} />
           <Drawer.Screen name="payments/index" options={{ title: 'Payments' }} />
           <Drawer.Screen name="broadcasts/index" options={{ title: 'Broadcasts' }} />
           <Drawer.Screen name="pickups/index" options={{ title: 'Pickups' }} />

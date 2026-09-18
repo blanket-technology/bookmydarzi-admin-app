@@ -155,6 +155,14 @@ export const ENDPOINTS = {
     ADMIN_APPROVE: (requestId: string) => `/api/v1/admin/leave-requests/${requestId}/approve`,
     ADMIN_REJECT: (requestId: string) => `/api/v1/admin/leave-requests/${requestId}/reject`,
   },
+  REVIEWS: {
+    // Admin/superadmin moderation - require_admin_permission(ADMIN,
+    // SUPERADMIN, screen="orders") (app/api/v1/endpoints/admin_reviews.py).
+    LIST: '/api/v1/admin/reviews',
+    HIDE: (reviewId: number) => `/api/v1/admin/reviews/${reviewId}/hide`,
+    UNHIDE: (reviewId: number) => `/api/v1/admin/reviews/${reviewId}/unhide`,
+    DELETE: (reviewId: number) => `/api/v1/admin/reviews/${reviewId}`,
+  },
   ORDERS: {
     MY_ORDERS: '/api/v1/orders/my-orders',
     DETAIL: (orderId: string) => `/api/v1/orders/${orderId}`,
