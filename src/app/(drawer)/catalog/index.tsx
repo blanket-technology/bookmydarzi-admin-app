@@ -16,6 +16,7 @@ import {
   useUpdateServiceMutation,
   useUploadCatalogImageMutation,
 } from '@/features/catalog/hooks/useCatalog';
+import { ServiceAddonsManagerSheet } from '@/features/catalog/components/ServiceAddonsManagerSheet';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { toast } from '@/store/toastStore';
@@ -70,6 +71,8 @@ export default function CatalogScreen() {
   // Custom Alterations - every other category's services are a stitching
   // tier or product variant, not alteration work on an existing garment.
   const isAlterationsCategory = serviceParentCategoryName === 'Custom Alterations';
+
+  const [addonsManagerVisible, setAddonsManagerVisible] = useState(false);
 
   const [deleteCategoryTarget, setDeleteCategoryTarget] = useState<CategoryTree | null>(null);
   const [deleteLineTarget, setDeleteLineTarget] = useState<ServiceLineTree | null>(null);
@@ -486,7 +489,23 @@ export default function CatalogScreen() {
           disabled={!serviceForm.name.trim()}
           fullWidth
         />
+        {editingService ? (
+          <Button
+            title="Manage Add-ons"
+            variant="outline"
+            className="mt-3"
+            onPress={() => setAddonsManagerVisible(true)}
+            fullWidth
+          />
+        ) : null}
       </BottomSheet>
+
+      <ServiceAddonsManagerSheet
+        visible={addonsManagerVisible}
+        onClose={() => setAddonsManagerVisible(false)}
+        serviceId={editingService?.service_id ?? null}
+        serviceName={editingService?.name ?? ''}
+      />
 
       <ConfirmModal
         visible={!!deleteCategoryTarget}

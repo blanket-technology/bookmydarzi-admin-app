@@ -153,12 +153,23 @@ function AdminPermissionEditor({ admin, onBack }: { admin: AdminStaffListItem; o
     const key = `${screen.id}-${perm.id}`;
     setBusyKey(key);
     try {
-      if (state === 'revoked') {
+      if (state === 'revoked' || state === 'granted-override') {
+        // Both states already have an explicit per-account override row
+        // (a revoke, or an extra grant beyond the role default) - clearing
+        // it returns the account to its role default, matching
+        // clear_override's contract ("account now follows its role
+        // default") rather than re-granting/re-revoking on top of it.
         const mappingId = findMappingId(screen, perm);
         if (mappingId) await clearMutation.mutateAsync(mappingId);
-      } else if (state === 'none' || state === 'granted-role') {
+      } else if (state === 'none') {
         await grantMutation.mutateAsync({ screenId: screen.id, permissionId: perm.id });
       } else {
+        // 'granted-role': the role already grants this by default, so the
+        // only meaningful action left is to explicitly block it for this
+        // one account (revoke_permission creates an override that wins
+        // over the role-level default - see its docstring). Previously
+        // this called grantMutation here too, a no-op re-grant that made
+        // it impossible to restrict one admin below their role's defaults.
         await revokeMutation.mutateAsync({ screenId: screen.id, permissionId: perm.id });
       }
     } finally {

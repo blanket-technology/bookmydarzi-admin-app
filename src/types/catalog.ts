@@ -14,6 +14,14 @@ export interface ServiceAddon {
   is_active: boolean;
 }
 
+export interface ServiceAddonPayload {
+  name: string;
+  description?: string;
+  price: number;
+  display_order?: number;
+  is_active?: boolean;
+}
+
 export interface StitchingTypeSummary {
   service_id: string;
   name: string;

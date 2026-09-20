@@ -31,6 +31,35 @@ interface NotificationFrame {
   data: NotificationItem;
 }
 
+// Mirrors final's adminWsService.js: the backend auto-joins every admin/
+// superadmin/employee connection to the "admin" room (see app/api/v1/
+// endpoints/ws.py), which fires these 4 event types in addition to
+// NOTIFICATION - previously unhandled here entirely, so orders/dashboard/
+// billing/homepage screens only ever refreshed on their own poll interval
+// or a manual pull-to-refresh, unlike final's web admin which updates live.
+interface NewOrderFrame {
+  event: 'NEW_ORDER';
+  data: { order_id: number; order_code: string; customer_id: number; total: number };
+}
+interface OrderStatusUpdatedFrame {
+  event: 'ORDER_STATUS_UPDATED';
+  data: { order_id: number; order_code: string; status: string };
+}
+interface BillingUpdatedFrame {
+  event: 'BILLING_UPDATED';
+  data: unknown;
+}
+interface HomeUpdatedFrame {
+  event: 'HOME_UPDATED';
+  data: unknown;
+}
+type AppSocketFrame =
+  | NotificationFrame
+  | NewOrderFrame
+  | OrderStatusUpdatedFrame
+  | BillingUpdatedFrame
+  | HomeUpdatedFrame;
+
 export function useAppSocket() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const queryClient = useQueryClient();
@@ -202,6 +231,31 @@ export function useAppSocket() {
       }
     };
 
+    const handleNewOrder = (data: NewOrderFrame['data']) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD, refetchType: 'none' });
+      toast.success(`New order received: ${data.order_code ?? `#${data.order_id}`}`);
+    };
+
+    const handleOrderStatusUpdated = (data: OrderStatusUpdatedFrame['data']) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      if (data.order_id) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(String(data.order_id)) });
+      }
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD, refetchType: 'none' });
+      const status = (data.status ?? '').replace(/_/g, ' ');
+      toast.info(`Order ${data.order_code ?? `#${data.order_id}`} → ${status}`);
+    };
+
+    const handleBillingUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.BILLING_SETTINGS });
+    };
+
+    const handleHomeUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOMEPAGE_BANNERS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOMEPAGE_OFFERS });
+    };
+
     const connect = () => {
       if (!shouldConnectRef.current) return;
       const token = useAuthStore.getState().accessToken;
@@ -222,7 +276,7 @@ export function useAppSocket() {
       };
 
       socket.onmessage = (event) => {
-        let frame: NotificationFrame;
+        let frame: AppSocketFrame;
         try {
           frame = JSON.parse(event.data as string);
         } catch {
@@ -230,6 +284,14 @@ export function useAppSocket() {
         }
         if (frame.event === 'NOTIFICATION' && frame.data) {
           handleNotification(frame.data);
+        } else if (frame.event === 'NEW_ORDER' && frame.data) {
+          handleNewOrder(frame.data);
+        } else if (frame.event === 'ORDER_STATUS_UPDATED' && frame.data) {
+          handleOrderStatusUpdated(frame.data);
+        } else if (frame.event === 'BILLING_UPDATED') {
+          handleBillingUpdated();
+        } else if (frame.event === 'HOME_UPDATED') {
+          handleHomeUpdated();
         }
       };
 

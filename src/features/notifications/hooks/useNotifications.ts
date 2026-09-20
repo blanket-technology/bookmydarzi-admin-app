@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { notificationService } from '@/features/notifications/services/notificationService';
-import type { NotificationsQueryParams } from '@/types/notifications';
+import type { BroadcastNotificationRequest, NotificationsQueryParams } from '@/types/notifications';
 import { toast } from '@/store/toastStore';
 import { formatApiErrorDetail } from '@/utils/errors';
 
@@ -55,3 +55,13 @@ export const useMarkAllNotificationsReadMutation = () => {
     onError: (error) => toast.error(formatApiErrorDetail(error)),
   });
 };
+
+// Admin-only: send a push notification to every user of a role. Mirrors
+// final's BroadcastModal.jsx / sendBroadcast. Rate-limited 5/minute
+// server-side (admin.py's broadcast_notification).
+export const useSendBroadcastMutation = () =>
+  useMutation({
+    mutationFn: (payload: BroadcastNotificationRequest) => notificationService.broadcast(payload),
+    onSuccess: (res) => toast.success(res.message),
+    onError: (error) => toast.error(formatApiErrorDetail(error)),
+  });

@@ -1,16 +1,22 @@
 import { useState } from 'react';
 import { ScrollView, Switch, Text, View } from 'react-native';
-import { Badge, BottomSheet, Button, ConfirmModal, EmptyState, Header, Input, Loader, Pressable } from '@/components/ui';
+import { Badge, BottomSheet, Button, ConfirmModal, EmptyState, Header, Input, Loader, Pressable, Tabs, type TabItem } from '@/components/ui';
 import {
   useCreateServiceAreaMutation,
   useDeleteServiceAreaMutation,
   useServiceAreas,
   useUpdateServiceAreaMutation,
 } from '@/features/serviceAreas/hooks/useServiceAreas';
+import { ServiceAreaInterestsList } from '@/features/serviceAreas/components/ServiceAreaInterestsList';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { ServiceArea } from '@/types/serviceAreas';
 import { formatApiErrorDetail } from '@/utils/errors';
+
+const TABS: TabItem[] = [
+  { id: 'areas', label: 'Areas', icon: 'map-outline' },
+  { id: 'interests', label: 'Interest Leads', icon: 'location-outline' },
+];
 
 const EMPTY_FORM = { name: '', latitude: '', longitude: '', radius_km: '10', is_active: true };
 
@@ -22,6 +28,7 @@ export default function ServiceAreasScreen() {
   const updateMutation = useUpdateServiceAreaMutation();
   const deleteMutation = useDeleteServiceAreaMutation();
 
+  const [activeTab, setActiveTab] = useState('areas');
   const [sheetVisible, setSheetVisible] = useState(false);
   const [editingItem, setEditingItem] = useState<ServiceArea | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -77,26 +84,33 @@ export default function ServiceAreasScreen() {
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Header
         title="Service Areas"
-        subtitle={`${areas.length} areas`}
+        subtitle={activeTab === 'areas' ? `${areas.length} areas` : undefined}
         rightAction={
-          <Pressable
-            onPress={openNew}
-            className="w-10 h-10 rounded-xl items-center justify-center"
-            style={{ backgroundColor: colors.primary }}
-          >
-            <Text className="text-xl font-bold" style={{ color: colors.onPrimary }}>+</Text>
-          </Pressable>
+          activeTab === 'areas' ? (
+            <Pressable
+              onPress={openNew}
+              className="w-10 h-10 rounded-xl items-center justify-center"
+              style={{ backgroundColor: colors.primary }}
+            >
+              <Text className="text-xl font-bold" style={{ color: colors.onPrimary }}>+</Text>
+            </Pressable>
+          ) : undefined
         }
       />
+      <Tabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
       <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
-        {isLoading ? (
+        {activeTab === 'interests' ? (
+          <ScrollView showsVerticalScrollIndicator={false} className="pt-4">
+            <ServiceAreaInterestsList />
+          </ScrollView>
+        ) : isLoading ? (
           <Loader message="Loading service areas..." />
         ) : isError ? (
           <EmptyState title="Failed to load service areas" description={formatApiErrorDetail(error)} actionLabel="Retry" onAction={() => refetch()} />
         ) : areas.length === 0 ? (
           <EmptyState icon="map-outline" title="No service areas yet" />
         ) : (
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false} className="pt-4">
             {areas.map((item) => (
               <Pressable
                 key={item.id}

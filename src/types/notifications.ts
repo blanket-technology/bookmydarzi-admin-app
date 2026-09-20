@@ -49,6 +49,30 @@ export interface NotificationsQueryParams {
   type?: string[];
 }
 
+// Mirrors app/schemas/notification.py's BroadcastNotificationRequest/
+// Response - admin-only, rate-limited 5/minute (see admin.py's
+// broadcast_notification). Mirrors final's BroadcastModal.jsx.
+export interface BroadcastNotificationRequest {
+  title: string;
+  body: string;
+  type: string;
+  target_role: 'user' | 'tailor' | 'employee' | 'admin' | 'superadmin';
+}
+
+export interface BroadcastNotificationResponse {
+  message: string;
+  recipients: number;
+}
+
+export const BROADCAST_TYPES = ['promo', 'system', 'order_update', 'payment', 'support', 'chat'] as const;
+
+export const BROADCAST_TARGET_ROLES: { value: BroadcastNotificationRequest['target_role']; label: string }[] = [
+  { value: 'user', label: 'All Customers' },
+  { value: 'tailor', label: 'All Tailors' },
+  { value: 'employee', label: 'All Employees' },
+  { value: 'admin', label: 'All Admins' },
+];
+
 /**
  * Role-aware grouping for the notification screen - separates "needs
  * attention" staff items from routine order/payment/support updates, so
