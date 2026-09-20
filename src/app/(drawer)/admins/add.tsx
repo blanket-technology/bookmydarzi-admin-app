@@ -17,7 +17,13 @@ const adminSchema = z.object({
   lastName: z.string().min(2, 'Last name is required'),
   email: z.string().email('Valid email required'),
   mobile: z.string().regex(/^[6-9]\d{9}$/, 'Valid 10-digit mobile required'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  // Mirrors backend's StaffCreateRequest.validate_password (app/schemas/
+  // staff.py) exactly - min 6 chars, 1 uppercase, 1 digit.
+  password: z
+    .string()
+    .min(6, 'Password must be at least 6 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
 });
 
 type AdminFormData = z.infer<typeof adminSchema>;

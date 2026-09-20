@@ -23,6 +23,14 @@ export default function CancellationPolicyScreen() {
 
   const policies = [...(data ?? [])].sort((a, b) => a.SortOrder - b.SortOrder);
 
+  // Mirrors backend's CancellationPolicyUpdate.PenaltyPct (app/schemas/
+  // cancellation.py: ge=0, le=100) - previously unvalidated client-side, so
+  // e.g. 150 or a negative value would 422 with no inline indication why.
+  const isPenaltyPctInvalid =
+    allowed &&
+    penaltyPct.trim() !== '' &&
+    (Number.isNaN(Number(penaltyPct)) || Number(penaltyPct) < 0 || Number(penaltyPct) > 100);
+
   const openEdit = (policy: CancellationPolicyItem) => {
     setEditing(policy);
     setPenaltyPct(policy.PenaltyPct != null ? String(policy.PenaltyPct) : '');
@@ -31,7 +39,7 @@ export default function CancellationPolicyScreen() {
   };
 
   const handleSave = () => {
-    if (!editing) return;
+    if (!editing || isPenaltyPctInvalid) return;
     updateMutation.mutate(
       {
         stage: editing.OrderStage,
@@ -111,6 +119,7 @@ export default function CancellationPolicyScreen() {
           onChangeText={setPenaltyPct}
           keyboardType="decimal-pad"
           editable={allowed}
+          error={isPenaltyPctInvalid ? 'Enter a value between 0 and 100' : undefined}
         />
         <Input
           label="Description"
@@ -122,6 +131,7 @@ export default function CancellationPolicyScreen() {
           title="Save"
           onPress={handleSave}
           loading={updateMutation.isPending}
+          disabled={isPenaltyPctInvalid}
           fullWidth
         />
       </BottomSheet>

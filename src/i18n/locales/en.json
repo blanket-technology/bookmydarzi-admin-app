@@ -328,6 +328,7 @@
   "cancelOrder": {
     "title": "Cancel Order",
     "reason": "Reason",
+    "reasonTooShort": "Reason must be at least 5 characters",
     "loadingPreview": "Loading refund details…",
     "previewUnavailable": "Could not load cancellation preview.",
     "paymentType": "Payment type",

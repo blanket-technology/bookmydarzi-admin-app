@@ -328,6 +328,7 @@
   "cancelOrder": {
     "title": "ऑर्डर रद्द करें",
     "reason": "कारण",
+    "reasonTooShort": "कारण कम से कम 5 अक्षर का होना चाहिए",
     "loadingPreview": "रिफंड विवरण लोड हो रहा है…",
     "previewUnavailable": "रद्दीकरण पूर्वावलोकन लोड नहीं हो सका।",
     "paymentType": "भुगतान प्रकार",
