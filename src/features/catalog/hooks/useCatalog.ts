@@ -3,7 +3,7 @@ import { QUERY_KEYS } from '@/constants/queryKeys';
 import { catalogService } from '@/services/catalogService';
 import { toast } from '@/store/toastStore';
 import { getMutationError } from '@/utils/errors';
-import type { CategoryPayload, ServiceLinePayload, ServicePayload } from '@/types/catalog';
+import type { CategoryPayload, ServiceAddonPayload, ServiceLinePayload, ServicePayload } from '@/types/catalog';
 
 export const useCatalogTree = (enabled = true) =>
   useQuery({
@@ -105,3 +105,50 @@ export const useUploadCatalogImageMutation = () =>
       catalogService.uploadImage(uri, fileName, mimeType),
     onError: (error) => toast.error(getMutationError(error)),
   });
+
+// Per-service add-on management - mirrors final's AddonsManagerPanel.jsx.
+// Distinct from useServiceAddons (public, active-only, in useOrders.ts) -
+// this is the admin CRUD surface, including inactive add-ons.
+export const useAdminServiceAddons = (serviceId: string | number, enabled = true) =>
+  useQuery({
+    queryKey: QUERY_KEYS.ADMIN_SERVICE_ADDONS(serviceId),
+    queryFn: () => catalogService.getAdminServiceAddons(serviceId),
+    enabled: enabled && !!serviceId,
+  });
+
+export const useCreateServiceAddonMutation = (serviceId: string | number) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: ServiceAddonPayload) => catalogService.createServiceAddon(serviceId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN_SERVICE_ADDONS(serviceId) });
+      toast.success('Add-on created');
+    },
+    onError: (error) => toast.error(getMutationError(error)),
+  });
+};
+
+export const useUpdateServiceAddonMutation = (serviceId: string | number) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ addonId, payload }: { addonId: string | number; payload: Partial<ServiceAddonPayload> }) =>
+      catalogService.updateServiceAddon(serviceId, addonId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN_SERVICE_ADDONS(serviceId) });
+      toast.success('Add-on updated');
+    },
+    onError: (error) => toast.error(getMutationError(error)),
+  });
+};
+
+export const useDeleteServiceAddonMutation = (serviceId: string | number) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (addonId: string | number) => catalogService.deleteServiceAddon(serviceId, addonId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN_SERVICE_ADDONS(serviceId) });
+      toast.success('Add-on deleted');
+    },
+    onError: (error) => toast.error(getMutationError(error)),
+  });
+};

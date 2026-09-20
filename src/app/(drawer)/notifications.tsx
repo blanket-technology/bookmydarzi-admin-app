@@ -8,6 +8,7 @@ import {
   useMarkNotificationReadMutation,
   useNotifications,
 } from '@/features/notifications/hooks/useNotifications';
+import { BroadcastNotificationSheet } from '@/features/notifications/components/BroadcastNotificationSheet';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
@@ -122,6 +123,8 @@ export default function NotificationsScreen() {
   const { user } = useAuth();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [broadcastVisible, setBroadcastVisible] = useState(false);
+  const canBroadcast = user?.role === 'admin' || user?.role === 'superadmin';
 
   const params = useMemo(
     () => ({ page, limit: LIMIT, type: notificationTypeFilterForRole(user?.role) }),
@@ -228,20 +231,35 @@ export default function NotificationsScreen() {
           data && data.unread_count > 0 ? t('notifications.unreadCount', { count: data.unread_count }) : t('notifications.stayUpdated')
         }
         rightAction={
-          data && data.unread_count > 0 ? (
-            <Pressable
-              onPress={() => markAllReadMutation.mutate()}
-              disabled={markAllReadMutation.isPending}
-              className="px-3 py-2 rounded-xl border"
-              style={{ borderColor: colors.border, backgroundColor: colors.surface }}
-            >
-              <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
-                {t('notifications.markAllRead')}
-              </Text>
-            </Pressable>
+          data && data.unread_count > 0 || canBroadcast ? (
+            <View className="flex-row items-center" style={{ gap: 8 }}>
+              {canBroadcast ? (
+                <Pressable
+                  onPress={() => setBroadcastVisible(true)}
+                  className="w-9 h-9 rounded-xl items-center justify-center"
+                  style={{ backgroundColor: colors.primary }}
+                >
+                  <Ionicons name="megaphone-outline" size={17} color={colors.onPrimary} />
+                </Pressable>
+              ) : null}
+              {data && data.unread_count > 0 ? (
+                <Pressable
+                  onPress={() => markAllReadMutation.mutate()}
+                  disabled={markAllReadMutation.isPending}
+                  className="px-3 py-2 rounded-xl border"
+                  style={{ borderColor: colors.border, backgroundColor: colors.surface }}
+                >
+                  <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
+                    {t('notifications.markAllRead')}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
           ) : undefined
         }
       />
+
+      <BroadcastNotificationSheet visible={broadcastVisible} onClose={() => setBroadcastVisible(false)} />
 
       <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
         <SearchBar value={search} onChangeText={setSearch} placeholder={t('notifications.searchPlaceholder')} />

@@ -3,6 +3,7 @@ import { ENDPOINTS } from '@/services/endpoints';
 import type {
   ServiceArea,
   ServiceAreaCreateRequest,
+  ServiceAreaInterestsResponse,
   ServiceAreaUpdateRequest,
 } from '@/types/serviceAreas';
 
@@ -27,6 +28,15 @@ export const serviceAreasService = {
 
   delete: async (id: number) => {
     const { data } = await apiClient.delete(ENDPOINTS.LOCATION.ADMIN_SERVICE_AREA_DETAIL(String(id)));
+    return data;
+  },
+
+  // Read-only lead list - mirrors final's useServiceAreaInterests.js.
+  listInterests: async (params: { skip: number; limit: number }): Promise<ServiceAreaInterestsResponse> => {
+    const { data } = await apiClient.get<ServiceAreaInterestsResponse>(
+      ENDPOINTS.LOCATION.ADMIN_SERVICE_AREA_INTERESTS,
+      { params },
+    );
     return data;
   },
 };

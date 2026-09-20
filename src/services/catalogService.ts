@@ -4,6 +4,7 @@ import type {
   CatalogTreeResponse,
   CategoryPayload,
   ServiceAddon,
+  ServiceAddonPayload,
   ServiceLinePayload,
   ServicePayload,
 } from '@/types/catalog';
@@ -79,5 +80,37 @@ export const catalogService = {
   getServiceAddons: async (serviceId: string | number): Promise<ServiceAddon[]> => {
     const { data } = await apiClient.get<ServiceAddon[]>(ENDPOINTS.CATALOG.SERVICE_ADDONS(serviceId));
     return data;
+  },
+
+  // Admin: every add-on for a service including inactive ones, plus CRUD -
+  // mirrors final's AddonsManagerPanel.jsx. Used by the catalog screen's
+  // per-service add-on manager, distinct from getServiceAddons above.
+  getAdminServiceAddons: async (serviceId: string | number): Promise<ServiceAddon[]> => {
+    const { data } = await apiClient.get<ServiceAddon[]>(ENDPOINTS.CATALOG.ADMIN_SERVICE_ADDONS(serviceId));
+    return data;
+  },
+  createServiceAddon: async (
+    serviceId: string | number,
+    payload: ServiceAddonPayload,
+  ): Promise<ServiceAddon> => {
+    const { data } = await apiClient.post<ServiceAddon>(
+      ENDPOINTS.CATALOG.ADMIN_SERVICE_ADDONS(serviceId),
+      payload,
+    );
+    return data;
+  },
+  updateServiceAddon: async (
+    serviceId: string | number,
+    addonId: string | number,
+    payload: Partial<ServiceAddonPayload>,
+  ): Promise<ServiceAddon> => {
+    const { data } = await apiClient.patch<ServiceAddon>(
+      ENDPOINTS.CATALOG.ADMIN_SERVICE_ADDON_DETAIL(serviceId, addonId),
+      payload,
+    );
+    return data;
+  },
+  deleteServiceAddon: async (serviceId: string | number, addonId: string | number): Promise<void> => {
+    await apiClient.delete(ENDPOINTS.CATALOG.ADMIN_SERVICE_ADDON_DETAIL(serviceId, addonId));
   },
 };

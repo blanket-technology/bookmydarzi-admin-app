@@ -48,3 +48,12 @@ export const useDeleteServiceAreaMutation = () => {
     onError: (error) => toast.error(getMutationError(error)),
   });
 };
+
+// Read-only "notify me" lead list - mirrors final's ServiceAreasPage.jsx's
+// interests tab.
+export const useServiceAreaInterests = (skip: number, limit: number, enabled = true) =>
+  useQuery({
+    queryKey: QUERY_KEYS.SERVICE_AREA_INTERESTS({ skip, limit }),
+    queryFn: () => serviceAreasService.listInterests({ skip, limit }),
+    enabled,
+  });

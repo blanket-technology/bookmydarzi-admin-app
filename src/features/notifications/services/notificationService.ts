@@ -1,6 +1,8 @@
 import apiClient from '@/config/axios';
 import { ENDPOINTS } from '@/services/endpoints';
 import type {
+  BroadcastNotificationRequest,
+  BroadcastNotificationResponse,
   NotificationListResponse,
   NotificationItem,
   NotificationsQueryParams,
@@ -52,5 +54,13 @@ export const notificationService = {
     platform: 'android' | 'ios' | 'web',
   ): Promise<void> => {
     await apiClient.delete(ENDPOINTS.NOTIFICATIONS.DEVICE_TOKENS, { data: { token, platform } });
+  },
+
+  broadcast: async (payload: BroadcastNotificationRequest): Promise<BroadcastNotificationResponse> => {
+    const { data } = await apiClient.post<BroadcastNotificationResponse>(
+      ENDPOINTS.NOTIFICATIONS.ADMIN_BROADCAST,
+      payload,
+    );
+    return data;
   },
 };

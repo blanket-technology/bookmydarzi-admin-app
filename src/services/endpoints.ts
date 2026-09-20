@@ -95,6 +95,7 @@ export const ENDPOINTS = {
   LOCATION: {
     ADMIN_SERVICE_AREAS: '/api/v1/location/admin/service-areas',
     ADMIN_SERVICE_AREA_DETAIL: (areaId: string) => `/api/v1/location/admin/service-areas/${areaId}`,
+    ADMIN_SERVICE_AREA_INTERESTS: '/api/v1/location/admin/service-area-interests',
   },
   EMPLOYEE: {
     ORDER_ACCEPT: (orderId: string) => `/api/v1/employee/orders/${orderId}/accept`,
@@ -211,6 +212,9 @@ export const ENDPOINTS = {
     SERVICES: '/api/v1/catalog/services',
     SERVICE_DETAIL: (serviceId: string) => `/api/v1/catalog/services/${serviceId}`,
     SERVICE_ADDONS: (serviceId: string | number) => `/api/v1/catalog/services/${serviceId}/addons`,
+    ADMIN_SERVICE_ADDONS: (serviceId: string | number) => `/api/v1/catalog/admin/services/${serviceId}/addons`,
+    ADMIN_SERVICE_ADDON_DETAIL: (serviceId: string | number, addonId: string | number) =>
+      `/api/v1/catalog/admin/services/${serviceId}/addons/${addonId}`,
   },
   NOTIFICATIONS: {
     LIST: '/api/v1/notifications',
@@ -218,6 +222,7 @@ export const ENDPOINTS = {
     MARK_READ: (notificationId: string) => `/api/v1/notifications/${notificationId}/read`,
     MARK_ALL_READ: '/api/v1/notifications/read-all',
     DEVICE_TOKENS: '/api/v1/notifications/device-tokens',
+    ADMIN_BROADCAST: '/api/v1/admin/notifications/broadcast',
   },
   CHAT: {
     SESSIONS: '/api/v1/admin/chat/sessions',
