@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { applicationService } from '@/services/applicationService';
-import type { ApplicationsQueryParams, RejectApplicationRequest } from '@/types/applications';
+import type {
+  ApplicationsQueryParams,
+  CreateTailorApplicationRequest,
+  RejectApplicationRequest,
+} from '@/types/applications';
 import { toast } from '@/store/toastStore';
 import { formatApiErrorDetail } from '@/utils/errors';
 
@@ -38,6 +42,19 @@ export const useApproveApplicationMutation = () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
       toast.success('Application approved');
+    },
+    onError: (error) => toast.error(formatApiErrorDetail(error)),
+  });
+};
+
+export const useCreateApplicationMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateTailorApplicationRequest) =>
+      applicationService.createApplication(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      toast.success('Tailor application submitted - approve it here to create the account');
     },
     onError: (error) => toast.error(formatApiErrorDetail(error)),
   });
