@@ -151,6 +151,26 @@ export const useAssignDeliveryEmployeeMutation = () => {
   });
 };
 
+export const useAssignReturnEmployeeMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      payload,
+    }: {
+      orderId: string;
+      payload: AssignBridgeEmployeeRequest;
+    }) => orderService.assignReturnEmployee(orderId, payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(variables.orderId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
+      toast.success('Return employee assigned successfully');
+    },
+    onError: (error) => toast.error(formatApiErrorDetail(error)),
+  });
+};
+
 // Employee-scoped tailor assignment — PATCH /employee/orders/{id}/assign-tailor,
 // distinct endpoint from useAssignTailorMutation above (admin-only route).
 export const useAssignTailorEmployeeMutation = () => {

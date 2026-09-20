@@ -11,6 +11,7 @@ import {
   useAssignTailorMutation,
   useAssignTailorEmployeeMutation,
   useAssignDeliveryEmployeeMutation,
+  useAssignReturnEmployeeMutation,
   useBridgeEmployees,
   useUpdateOrderStatusMutation,
   useDownloadInvoiceMutation,
@@ -69,6 +70,7 @@ export default function OrderDetailsScreen() {
 
   const [assignSheetVisible, setAssignSheetVisible] = useState(false);
   const [assignDeliverySheetVisible, setAssignDeliverySheetVisible] = useState(false);
+  const [assignReturnSheetVisible, setAssignReturnSheetVisible] = useState(false);
   const [schedulePickupSheetVisible, setSchedulePickupSheetVisible] = useState(false);
   const [statusSheetVisible, setStatusSheetVisible] = useState(false);
   const [measurementManageSheetVisible, setMeasurementManageSheetVisible] = useState(false);
@@ -123,12 +125,16 @@ export default function OrderDetailsScreen() {
   const { data: employeeTailorsData } = useTailorsForEmployee(isEmployeeRole);
   const assignMutation = useAssignTailorMutation();
   const assignEmployeeMutation = useAssignTailorEmployeeMutation();
-  // Bridge/employee picker for the manual delivery-assignment sheet below -
-  // lazily enabled only once it's actually open. Pickup's own picker lives
-  // inside SchedulePickupSheet now (its own useBridgeEmployees call).
-  const { data: bridgeEmployeesData } = useBridgeEmployees(isStaffRole && assignDeliverySheetVisible);
+  // Bridge/employee picker for the manual delivery/return-assignment sheets
+  // below - lazily enabled only once one of them is actually open. Pickup's
+  // own picker lives inside SchedulePickupSheet now (its own
+  // useBridgeEmployees call).
+  const { data: bridgeEmployeesData } = useBridgeEmployees(
+    isStaffRole && (assignDeliverySheetVisible || assignReturnSheetVisible),
+  );
   const bridgeEmployees = bridgeEmployeesData ?? [];
   const assignDeliveryEmployeeMutation = useAssignDeliveryEmployeeMutation();
+  const assignReturnEmployeeMutation = useAssignReturnEmployeeMutation();
   const statusMutation = useUpdateOrderStatusMutation();
   const triggerBroadcastMutation = useTriggerBroadcastMutation();
   const downloadInvoiceMutation = useDownloadInvoiceMutation();
@@ -171,6 +177,14 @@ export default function OrderDetailsScreen() {
     assignDeliveryEmployeeMutation.mutate(
       { orderId: order.order_id, payload: { employee_id: employeeId } },
       { onSuccess: () => setAssignDeliverySheetVisible(false) },
+    );
+  };
+
+  const handleAssignReturnEmployee = (employeeId: string) => {
+    if (!order) return;
+    assignReturnEmployeeMutation.mutate(
+      { orderId: order.order_id, payload: { employee_id: employeeId } },
+      { onSuccess: () => setAssignReturnSheetVisible(false) },
     );
   };
 
@@ -533,6 +547,24 @@ export default function OrderDetailsScreen() {
             />
           </View>
         ) : null}
+
+        {/* Same override lever as delivery above, for the return leg - when
+            no Bridge employee accepts the automatic return broadcast, staff
+            previously had no way to force an assignment (only a deduped
+            admin notification), matching the exact gap already fixed on
+            the web admin panel's OrderFullDetailsPage.jsx. */}
+        {isStaffRole &&
+        order.status === ORDER_STATUS.RETURN_PENDING &&
+        !order.return_employee_id ? (
+          <View className="mb-3">
+            <Button
+              title={t('assignBridgeEmployee.returnTitle')}
+              variant="secondary"
+              onPress={() => setAssignReturnSheetVisible(true)}
+              fullWidth
+            />
+          </View>
+        ) : null}
         <View className="mb-8" />
       </ScreenContent>
 
@@ -543,6 +575,14 @@ export default function OrderDetailsScreen() {
         title={t('assignBridgeEmployee.deliveryTitle')}
         employees={bridgeEmployees}
         onAssign={handleAssignDeliveryEmployee}
+      />
+
+      <AssignBridgeEmployeeSheet
+        visible={assignReturnSheetVisible}
+        onClose={() => setAssignReturnSheetVisible(false)}
+        title={t('assignBridgeEmployee.returnTitle')}
+        employees={bridgeEmployees}
+        onAssign={handleAssignReturnEmployee}
       />
 
       <SchedulePickupSheet
