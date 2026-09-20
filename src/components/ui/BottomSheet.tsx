@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Pressable } from '@/components/ui/Pressable';
 import { useTheme } from '@/hooks/useTheme';
+import { useOpenSheetStore } from '@/store/openSheetStore';
 
 interface BottomSheetProps {
   visible: boolean;
@@ -46,10 +47,29 @@ export const BottomSheet = ({
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
+  const incrementOpenSheets = useOpenSheetStore((s) => s.increment);
+  const decrementOpenSheets = useOpenSheetStore((s) => s.decrement);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [contentKey]);
+
+  // Registers this sheet as "open" in the global counter for as long as
+  // `visible` is true, so any screen's ScreenContent can disable its own
+  // scroll while at least one sheet is open anywhere. Keyed on `visible`
+  // itself (not mount/unmount) - callers keep <BottomSheet visible={x} />
+  // present in JSX and just toggle the prop, so the component instance
+  // persists across opens/closes; only its rendered OUTPUT becomes null
+  // below (see that comment). RN's Modal does not reliably block the
+  // background screen from being dragged/scrolled underneath it in every
+  // case, so this is enforced explicitly. The cleanup fires whenever
+  // `visible` flips back to false or the component unmounts outright
+  // (navigate-away mid-open), so the count can never get stuck above zero.
+  useEffect(() => {
+    if (!visible) return undefined;
+    incrementOpenSheets();
+    return () => decrementOpenSheets();
+  }, [visible, incrementOpenSheets, decrementOpenSheets]);
 
   // Unmounting when closed (rather than always rendering with visible=false)
   // stops the sheet's own content from being what briefly flashes on screen

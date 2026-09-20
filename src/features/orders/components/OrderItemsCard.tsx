@@ -61,7 +61,12 @@ export const OrderItemsCard = ({
             ) : null}
           </View>
           <View className="flex-row" style={{ gap: 6 }}>
-            {canAddAddon && !['delivered', 'cancelled', 'order_rejected'].includes(order.status) ? (
+            {/* Backend (employee_add_order_addon) only allows this while the
+                garment is still on its way to the tailor, before stitching
+                begins - matches this component's own gate so the button
+                doesn't show up as a dead end that 422s once the order has
+                moved past pickup (e.g. already out for delivery). */}
+            {canAddAddon && ['pickup_scheduled', 'pickup_pending', 'picked_up', 'cloth_received_by_tailor'].includes(order.status) ? (
               <Pressable
                 onPress={() =>
                   onAddAddon?.({
