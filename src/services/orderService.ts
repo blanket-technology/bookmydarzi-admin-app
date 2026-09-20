@@ -151,7 +151,18 @@ export const orderService = {
     return data;
   },
 
-  // Bridge/employee picker for the two assignment actions above - open to
+  // Same manual-override lever as pickup/delivery above, for the return leg
+  // (post-cancellation reverse trip) - see assign_bridge_service.py's
+  // assign_return_employee on the backend.
+  assignReturnEmployee: async (orderId: string, payload: AssignBridgeEmployeeRequest) => {
+    const { data } = await apiClient.patch(
+      ENDPOINTS.ADMIN.ORDER_ASSIGN_RETURN_EMPLOYEE(orderId),
+      payload,
+    );
+    return data;
+  },
+
+  // Bridge/employee picker for the three assignment actions above - open to
   // admin/superadmin/employee alike (unlike GET /admin/staff, admin-only),
   // no PII beyond name (see StaffBridgeEmployeeListItem on the backend).
   getBridgeEmployees: async (): Promise<BridgeEmployeeListItem[]> => {

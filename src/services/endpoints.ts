@@ -56,6 +56,8 @@ export const ENDPOINTS = {
       `/api/v1/admin/orders/${orderId}/assign-pickup-employee`,
     ORDER_ASSIGN_DELIVERY_EMPLOYEE: (orderId: string) =>
       `/api/v1/admin/orders/${orderId}/assign-delivery-employee`,
+    ORDER_ASSIGN_RETURN_EMPLOYEE: (orderId: string) =>
+      `/api/v1/admin/orders/${orderId}/assign-return-employee`,
     BRIDGE_EMPLOYEES: '/api/v1/admin/bridge-employees',
     ORDER_MEASUREMENT: (orderId: string) =>
       `/api/v1/admin/orders/${orderId}/measurement`,

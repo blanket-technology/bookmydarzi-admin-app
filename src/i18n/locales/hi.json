@@ -308,6 +308,7 @@
   "assignBridgeEmployee": {
     "pickupTitle": "पिकअप कर्मचारी असाइन करें",
     "deliveryTitle": "डिलीवरी कर्मचारी असाइन करें",
+    "returnTitle": "रिटर्न कर्मचारी असाइन करें",
     "noEmployees": "कोई ब्रिज कर्मचारी नहीं मिला",
     "noEmployeesBody": "अभी तक कोई सक्रिय ब्रिज/कर्मचारी खाता मौजूद नहीं है।",
     "online": "ऑनलाइन",

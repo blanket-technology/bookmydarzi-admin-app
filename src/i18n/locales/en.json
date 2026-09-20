@@ -308,6 +308,7 @@
   "assignBridgeEmployee": {
     "pickupTitle": "Assign Pickup Employee",
     "deliveryTitle": "Assign Delivery Employee",
+    "returnTitle": "Assign Return Employee",
     "noEmployees": "No Bridge employees found",
     "noEmployeesBody": "No active Bridge/employee accounts exist yet.",
     "online": "Online",
