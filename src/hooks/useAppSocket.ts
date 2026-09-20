@@ -43,7 +43,17 @@ interface NewOrderFrame {
 }
 interface OrderStatusUpdatedFrame {
   event: 'ORDER_STATUS_UPDATED';
-  data: { order_id: number; order_code: string; status: string };
+  data: {
+    order_id: number;
+    order_code: string;
+    status: string;
+    // Present only when this event was fired for a balance-payment
+    // success (status_service.py's _settle_balance path) - the
+    // fulfilment `status` itself doesn't change there, so this field is
+    // what actually distinguishes "customer just paid the balance online"
+    // from a real status transition.
+    payment_status?: string;
+  };
 }
 interface BillingUpdatedFrame {
   event: 'BILLING_UPDATED';
@@ -243,8 +253,19 @@ export function useAppSocket() {
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(String(data.order_id)) });
       }
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD, refetchType: 'none' });
-      const status = (data.status ?? '').replace(/_/g, ' ');
-      toast.info(`Order ${data.order_code ?? `#${data.order_id}`} → ${status}`);
+      const code = data.order_code ?? `#${data.order_id}`;
+      if (data.payment_status === 'fully_paid') {
+        // Balance-payment success (status_service.py's _settle_balance) -
+        // the fulfilment status itself didn't change, so the generic
+        // "Order X → <status>" phrasing below would be misleading/no-op
+        // looking. Surface what actually happened: the delivery person can
+        // now see the order is paid and confirm handover without waiting
+        // on a manual refresh.
+        toast.success(`Order ${code} — balance paid online, ready to hand over`);
+      } else {
+        const status = (data.status ?? '').replace(/_/g, ' ');
+        toast.info(`Order ${code} → ${status}`);
+      }
     };
 
     const handleBillingUpdated = () => {

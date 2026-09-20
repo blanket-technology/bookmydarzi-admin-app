@@ -298,22 +298,26 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
           },
         });
 
-        // Same gate as manage_measurement above (any non-excluded status,
-        // while assigned to this employee) - the natural moment to notice
-        // "customer also wants a button fixed" is the same pickup visit
-        // where measurements are collected. See AddOrderAddonSheet /
-        // POST /employee/orders/{id}/addons.
-        list.push({
-          id: 'add_addon',
-          label: 'Add Extra Service',
-          tone: 'secondary',
-          requiresInput: true,
-          requiresConfirmation: false,
-          isLoading: false,
-          run: () => {
-            // Opens AddOrderAddonSheet.
-          },
-        });
+        // Unlike manage_measurement, this is NOT "any non-excluded status" -
+        // the backend (employee_add_order_addon, app/services/orders/
+        // employee_order_service.py) only allows adding an add-on while the
+        // garment is still on its way to the tailor, before stitching
+        // begins. Previously this reused manage_measurement's loose gate,
+        // so the button stayed visible all the way through delivery (e.g.
+        // "Out for Delivery"/COD collection) and 422'd if tapped there.
+        if (['pickup_scheduled', 'pickup_pending', 'picked_up', 'cloth_received_by_tailor'].includes(status)) {
+          list.push({
+            id: 'add_addon',
+            label: 'Add Extra Service',
+            tone: 'secondary',
+            requiresInput: true,
+            requiresConfirmation: false,
+            isLoading: false,
+            run: () => {
+              // Opens AddOrderAddonSheet.
+            },
+          });
+        }
       }
 
       // Tailor assignment and payment viewing, employee-only here (isAdmin
