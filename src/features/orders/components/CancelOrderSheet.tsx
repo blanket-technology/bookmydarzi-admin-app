@@ -35,13 +35,19 @@ export const CancelOrderSheet = ({
   // any - warns before confirming a separate, independent cancellation.
   const { data: existingCancellation } = useOrderCancellationRecord(orderId, visible);
 
+  // Mirrors backend's AdminCancelOrderRequest.reason (app/schemas/
+  // cancellation.py: min_length=5) - previously any non-empty reason
+  // (even 1 char) enabled Save, and a too-short reason 422'd with no
+  // field-level indication why.
+  const isReasonTooShort = reason.trim().length > 0 && reason.trim().length < 5;
+
   const reset = () => {
     setReason('');
     setWaivePenalty(false);
   };
 
   const handleCancel = () => {
-    if (!reason.trim()) return;
+    if (reason.trim().length < 5) return;
     cancelMutation.mutate(
       { orderId, payload: { reason, waive_penalty: waivePenalty } },
       { onSuccess: () => { onClose(); reset(); } },
@@ -59,7 +65,7 @@ export const CancelOrderSheet = ({
           variant="danger"
           onPress={handleCancel}
           loading={cancelMutation.isPending}
-          disabled={!reason.trim() || loadingPreview}
+          disabled={reason.trim().length < 5 || loadingPreview}
           fullWidth
         />
       }
@@ -160,7 +166,13 @@ export const CancelOrderSheet = ({
         </Pressable>
       ) : null}
 
-      <Input label={t('cancelOrder.reason')} value={reason} onChangeText={setReason} multiline />
+      <Input
+        label={t('cancelOrder.reason')}
+        value={reason}
+        onChangeText={setReason}
+        multiline
+        error={isReasonTooShort ? t('cancelOrder.reasonTooShort') : undefined}
+      />
     </BottomSheet>
   );
 };

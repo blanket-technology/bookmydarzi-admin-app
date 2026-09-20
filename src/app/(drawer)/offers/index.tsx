@@ -111,6 +111,20 @@ export default function OffersScreen() {
     form.discount_type === 'percentage' &&
     (Number(form.discount_percent) <= 0 || Number(form.discount_percent) > 100 || Number.isNaN(Number(form.discount_percent)));
 
+  // Mirrors backend's OfferCreate._validate_discount (app/schemas/
+  // home_admin.py) for the flat branch - discount_amount must be positive,
+  // and min_order_value must exceed it (a flat coupon can't discount more
+  // than or equal to its own qualifying minimum). Previously unvalidated
+  // client-side entirely, so Save was always enabled here and every bad
+  // flat offer round-tripped a raw 422.
+  const flatDiscountAmount = Number(form.discount_amount) || 0;
+  const flatMinOrderValue = Number(form.min_order_value) || 0;
+  const isDiscountAmountInvalid =
+    form.discount_type === 'flat' && (flatDiscountAmount <= 0 || Number.isNaN(Number(form.discount_amount)));
+  const isMinOrderValueInvalid =
+    form.discount_type === 'flat' && !isDiscountAmountInvalid && flatMinOrderValue <= flatDiscountAmount;
+  const isFlatDiscountInvalid = isDiscountAmountInvalid || isMinOrderValueInvalid;
+
   const buildPayload = () => ({
     title: form.title.trim() || undefined,
     description: form.description.trim() || undefined,
@@ -125,7 +139,7 @@ export default function OffersScreen() {
   });
 
   const handleSave = () => {
-    if (!form.title.trim() || isDiscountPercentInvalid) return;
+    if (!form.title.trim() || isDiscountPercentInvalid || isFlatDiscountInvalid) return;
     if (editingItem) {
       updateMutation.mutate(
         { id: editingItem.Id, payload: { ...buildPayload(), title: form.title.trim(), is_active: form.is_active } },
@@ -263,15 +277,17 @@ export default function OffersScreen() {
             value={form.discount_amount}
             onChangeText={(t) => setForm((f) => ({ ...f, discount_amount: t }))}
             keyboardType="number-pad"
+            error={isDiscountAmountInvalid ? 'Enter a positive discount amount' : undefined}
           />
         )}
 
         <Input
-          label="Minimum order value (₹, optional)"
+          label={form.discount_type === 'flat' ? 'Minimum order value (₹)' : 'Minimum order value (₹, optional)'}
           value={form.min_order_value}
           onChangeText={(t) => setForm((f) => ({ ...f, min_order_value: t }))}
           keyboardType="number-pad"
           placeholder="No minimum"
+          error={isMinOrderValueInvalid ? 'Must be greater than the discount amount' : undefined}
         />
 
         <DateField
@@ -307,7 +323,7 @@ export default function OffersScreen() {
           title={editingItem ? 'Save Changes' : 'Create Offer'}
           onPress={handleSave}
           loading={createMutation.isPending || updateMutation.isPending}
-          disabled={!form.title.trim() || isDiscountPercentInvalid}
+          disabled={!form.title.trim() || isDiscountPercentInvalid || isFlatDiscountInvalid}
           fullWidth
         />
       </BottomSheet>

@@ -21,7 +21,16 @@ const staffSchema = z.object({
   lastName: z.string().min(2, 'Last name is required'),
   email: z.string().email('Valid email required'),
   mobile: z.string().regex(/^[6-9]\d{9}$/, 'Valid 10-digit mobile required'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  // Mirrors backend's StaffCreateRequest.validate_password (app/schemas/
+  // staff.py) exactly - min 6 chars, 1 uppercase, 1 digit. Was previously
+  // min(8) with no character-class checks, so an all-lowercase 8+ char
+  // password passed client-side and 422'd server-side with no field-level
+  // indication why.
+  password: z
+    .string()
+    .min(6, 'Password must be at least 6 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
   role: z.enum(['employee', 'admin']),
 });
 
