@@ -58,6 +58,27 @@ export interface RejectApplicationRequest {
   reason: string;
 }
 
+/** Admin "Add Tailor" fast-path (POST /admin/tailor-applications, multipart)
+ * - creates a PENDING TailorApplication, not a live account; approving it
+ * (existing approveApplication) is what actually creates the User+Tailor
+ * rows. Mirrors the public /tailor/apply shape minus login credentials,
+ * which this pipeline never collects (see AdminTailorApplicationCreateRequest
+ * on the backend). */
+export interface CreateTailorApplicationRequest {
+  full_name: string;
+  email: string;
+  phone: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  experience_years?: number;
+  specialization?: string;
+  aadhaarFront?: { uri: string; fileName?: string; mimeType?: string };
+  aadhaarBack?: { uri: string; fileName?: string; mimeType?: string };
+  panCard?: { uri: string; fileName?: string; mimeType?: string };
+}
+
 export interface ApplicationActionResponse {
   message?: string;
   application_id?: number;

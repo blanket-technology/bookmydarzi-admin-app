@@ -141,12 +141,19 @@ export default function OrderDetailsScreen() {
   const markReturnInTransitMutation = useMarkReturnInTransitMutation();
   const markReturnCompleteMutation = useMarkReturnCompleteMutation();
 
-  // Return leg (post-cancellation reverse trip) - only meaningful once THIS
-  // employee has accepted the order's return broadcast (return_employee_id
-  // set). RETURN_PENDING (not yet accepted by anyone) is handled by the
-  // banner below instead, pointing at the Returns queue.
+  // Return leg (post-cancellation reverse trip) progression buttons
+  // (Mark In Transit / Mark Complete) below. Two ways in: the employee who
+  // actually accepted the return broadcast progressing their own job, OR
+  // an admin/superadmin stepping in - previously admin had no lever at all
+  // once a return was assigned (same dead end just fixed for assignment
+  // itself, and the same override pattern this screen already uses for
+  // delivery: mark_return_in_transit/mark_return_complete are already
+  // admin/superadmin-permitted server-side via employee.py's
+  // _employee_only role list, despite the name).
   const isMyReturn =
-    isEmployeeRole && !!order?.return_employee_id && String(order.return_employee_id) === String(user?.id ?? '');
+    !!order?.return_employee_id &&
+    (isAdminRole ||
+      (isEmployeeRole && String(order.return_employee_id) === String(user?.id ?? '')));
 
   // Tailor-assignment broadcast tracker - only meaningful to admins who manage
   // tailor search. Hidden from Bridge/employee, whose job is pickup/delivery,

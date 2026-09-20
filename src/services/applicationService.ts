@@ -3,10 +3,26 @@ import { ENDPOINTS } from '@/services/endpoints';
 import type {
   ApplicationActionResponse,
   ApplicationsQueryParams,
+  CreateTailorApplicationRequest,
   RejectApplicationRequest,
   TailorApplicationDetail,
   TailorApplicationsResponse,
 } from '@/types/applications';
+
+type SubmitResponse = { message: string; application_id: number; status: string };
+
+const appendFile = (
+  form: FormData,
+  field: string,
+  file?: { uri: string; fileName?: string; mimeType?: string },
+) => {
+  if (!file) return;
+  form.append(field, {
+    uri: file.uri,
+    name: file.fileName ?? `${field}-${Date.now()}.jpg`,
+    type: file.mimeType ?? 'image/jpeg',
+  } as unknown as Blob);
+};
 
 // Backend stores/returns Status as uppercase ("PENDING"/"APPROVED"/
 // "REJECTED" — see app/models/tailor_application.py's Status column
@@ -62,6 +78,31 @@ export const applicationService = {
     const { data } = await apiClient.patch<ApplicationActionResponse>(
       ENDPOINTS.ADMIN.TAILOR_APPLICATION_REJECT(applicationId),
       payload,
+    );
+    return data;
+  },
+
+  createApplication: async (payload: CreateTailorApplicationRequest): Promise<SubmitResponse> => {
+    const form = new FormData();
+    form.append('full_name', payload.full_name);
+    form.append('email', payload.email);
+    form.append('phone', payload.phone);
+    if (payload.address) form.append('address', payload.address);
+    if (payload.city) form.append('city', payload.city);
+    if (payload.state) form.append('state', payload.state);
+    if (payload.pincode) form.append('pincode', payload.pincode);
+    if (payload.specialization) form.append('specialization', payload.specialization);
+    if (payload.experience_years != null) {
+      form.append('experience_years', String(payload.experience_years));
+    }
+    appendFile(form, 'aadhaar_front', payload.aadhaarFront);
+    appendFile(form, 'aadhaar_back', payload.aadhaarBack);
+    appendFile(form, 'pan_card', payload.panCard);
+
+    const { data } = await apiClient.post<SubmitResponse>(
+      ENDPOINTS.ADMIN.TAILOR_APPLICATIONS,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
     );
     return data;
   },

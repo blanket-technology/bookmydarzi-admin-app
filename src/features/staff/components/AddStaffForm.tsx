@@ -1,12 +1,20 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { z } from 'zod';
-import { Button, Header, Input, PasswordInput, RoleSelector, ScreenContent } from '@/components/ui';
-import type { LoginRole } from '@/constants/roles';
+import { Button, Header, Input, PasswordInput, Pressable, ScreenContent } from '@/components/ui';
 import { useCreateStaffMutation } from '@/features/staff/hooks/useStaff';
 import { useTheme } from '@/hooks/useTheme';
+
+// Only employee/admin are selectable here - tailor is not a creatable role
+// via POST /admin/staff (see the interface doc below), so this form uses its
+// own restricted picker rather than the shared RoleSelector, which also
+// offers "Tailor" for the login-role-selection use case elsewhere.
+const CREATABLE_ROLES: { label: string; value: 'employee' | 'admin' }[] = [
+  { label: 'Employee', value: 'employee' },
+  { label: 'Admin', value: 'admin' },
+];
 
 const staffSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -14,18 +22,19 @@ const staffSchema = z.object({
   email: z.string().email('Valid email required'),
   mobile: z.string().regex(/^[6-9]\d{9}$/, 'Valid 10-digit mobile required'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  role: z.enum(['employee', 'tailor', 'admin']),
+  role: z.enum(['employee', 'admin']),
 });
 
 type StaffFormData = z.infer<typeof staffSchema>;
 
 interface AddStaffFormProps {
-  /** POST /admin/staff accepts employee/tailor/admin uniformly (see
-   * admin_service.create_staff, which returns a Tailor row alongside the
-   * User when role === "tailor") - this form is shared by the Bridge and
-   * Tailors sections rather than duplicated, differing only in which role
-   * is preselected/locked and the header copy. */
-  lockedRole?: Extract<LoginRole, 'employee' | 'tailor' | 'admin'>;
+  /** POST /admin/staff accepts employee/admin/superadmin only - tailor is
+   * deliberately NOT creatable here (see staff_service.py's module
+   * docstring on the backend). Tailor accounts are only ever created by
+   * approving a TailorApplication (AddTailorApplicationForm), so every
+   * tailor - admin-added or self-applied - goes through the one review
+   * queue. */
+  lockedRole?: 'employee' | 'admin';
   title: string;
   subtitle: string;
 }
@@ -147,15 +156,34 @@ export function AddStaffForm({ lockedRole, title, subtitle }: AddStaffFormProps)
             )}
           />
           {lockedRole ? null : (
-            <RoleSelector
-              label="Staff Role"
-              value={selectedRole as LoginRole}
-              onChange={(role) => setValue('role', role, { shouldValidate: true })}
-              error={errors.role?.message}
-            />
+            <View className="mb-4">
+              <Text className="text-sm font-medium text-slate-500 mb-2">Staff Role</Text>
+              <View className="flex-row gap-2">
+                {CREATABLE_ROLES.map((role) => {
+                  const selected = selectedRole === role.value;
+                  return (
+                    <Pressable
+                      key={role.value}
+                      onPress={() => setValue('role', role.value, { shouldValidate: true })}
+                      haptic="selection"
+                      className={`flex-1 py-3 rounded-2xl border items-center ${
+                        selected ? 'bg-primary-50 border-primary-600' : 'border-slate-200 bg-white'
+                      }`}
+                    >
+                      <Text className={`text-sm font-semibold ${selected ? 'text-primary-700' : 'text-slate-600'}`}>
+                        {role.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              {errors.role?.message ? (
+                <Text className="text-xs text-red-500 mt-1.5">{errors.role.message}</Text>
+              ) : null}
+            </View>
           )}
           <Button
-            title={lockedRole === 'tailor' ? 'Create Tailor' : 'Create Staff'}
+            title="Create Staff"
             onPress={handleSubmit(onSubmit)}
             loading={createMutation.isPending}
             fullWidth
