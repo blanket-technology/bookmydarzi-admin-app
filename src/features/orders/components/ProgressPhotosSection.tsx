@@ -50,7 +50,14 @@ export const ProgressPhotosSection = ({
 
   const canUpload = isTailor && PHOTO_UPLOAD_STAGES.includes(orderStatus as OrderStatus);
   const photos = data?.photos ?? [];
+  const [uploadingCount, setUploadingCount] = useState(0);
 
+  // Backend has no batch-upload endpoint (upload_order_photo takes exactly
+  // one UploadFile per call) - picking multiple here just means calling
+  // that same single-file mutation once per selected photo, sequentially
+  // (not parallel) so a failure partway through doesn't leave the tailor
+  // unsure which of several concurrent requests actually landed. Mirrors
+  // UpdateProgressSheet.tsx's identical sequenced-upload pattern.
   const handlePickAndUpload = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
@@ -61,10 +68,11 @@ export const ProgressPhotosSection = ({
       mediaTypes: ['images'],
       quality: 0.8,
       allowsEditing: false,
+      allowsMultipleSelection: true,
+      selectionLimit: 10,
     });
-    if (result.canceled || !result.assets?.[0]) return;
+    if (result.canceled || !result.assets?.length) return;
 
-    const asset = result.assets[0];
     // Default the photo's stage to the order's current status — these
     // stages are already the only ones canUpload allows, so the value is
     // always a valid ProgressPhotoStage.
@@ -72,12 +80,19 @@ export const ProgressPhotosSection = ({
       ? (orderStatus as ProgressPhotoStage)
       : 'in_progress';
 
-    uploadMutation.mutate({
-      uri: asset.uri,
-      fileName: asset.fileName ?? undefined,
-      mimeType: asset.mimeType ?? 'image/jpeg',
-      stage,
-    });
+    setUploadingCount(result.assets.length);
+    try {
+      for (const asset of result.assets) {
+        await uploadMutation.mutateAsync({
+          uri: asset.uri,
+          fileName: asset.fileName ?? undefined,
+          mimeType: asset.mimeType ?? 'image/jpeg',
+          stage,
+        });
+      }
+    } finally {
+      setUploadingCount(0);
+    }
   };
 
   return (
@@ -141,7 +156,7 @@ export const ProgressPhotosSection = ({
               title={t('progressPhotos.uploadPhoto')}
               variant="outline"
               onPress={handlePickAndUpload}
-              loading={uploadMutation.isPending}
+              loading={uploadingCount > 0}
               fullWidth
             />
           ) : null}

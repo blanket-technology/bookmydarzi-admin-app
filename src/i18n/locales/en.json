@@ -288,7 +288,7 @@
     "loadingPhotos": "Loading photos...",
     "couldNotLoad": "Could not load progress photos.",
     "noPhotosYet": "No progress photos uploaded yet.",
-    "uploadPhoto": "Upload Photo",
+    "uploadPhoto": "Upload Photos",
     "modalTitle": "Progress Photo"
   },
   "updateProgress": {
