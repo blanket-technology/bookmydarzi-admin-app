@@ -32,7 +32,12 @@ const SERVICE_FORM = {
   description: '',
   image_url: '',
   base_price: '0',
+  // Delivery time is either whole days (most services) or, for a rush
+  // alteration, a handful of hours (6hr/12hr) - only one is ever active;
+  // deliveryUnit tracks which the form shows/submits.
+  deliveryUnit: 'days' as 'days' | 'hours',
   estimated_delivery_days: '7',
+  estimated_delivery_hours: '6',
   display_order: '0',
   is_premium: false,
   is_active: true,
@@ -190,7 +195,9 @@ export default function CatalogScreen() {
       description: service.description ?? '',
       image_url: service.image_url ?? '',
       base_price: String(service.base_price),
+      deliveryUnit: service.estimated_delivery_hours ? 'hours' : 'days',
       estimated_delivery_days: String(service.estimated_delivery_days),
+      estimated_delivery_hours: String(service.estimated_delivery_hours ?? 6),
       display_order: String(service.display_order),
       is_premium: service.is_premium,
       is_active: service.is_active,
@@ -208,6 +215,12 @@ export default function CatalogScreen() {
       image_url: serviceForm.image_url || undefined,
       base_price: Math.max(0, Number(serviceForm.base_price) || 0),
       estimated_delivery_days: Math.max(1, Number(serviceForm.estimated_delivery_days) || 7),
+      // Only one of these is ever meaningful - the backend treats hours as
+      // taking precedence over days whenever set (eta_service.py), so
+      // switching back to "Days" mode explicitly sends hours=null to clear
+      // any previously-set rush turnaround.
+      estimated_delivery_hours:
+        serviceForm.deliveryUnit === 'hours' ? Math.max(1, Number(serviceForm.estimated_delivery_hours) || 6) : null,
       display_order: Math.max(0, Number(serviceForm.display_order) || 0),
       is_premium: serviceForm.is_premium,
       is_active: serviceForm.is_active,
@@ -432,13 +445,55 @@ export default function CatalogScreen() {
           onPress={() => pickAndUploadImage((url) => setServiceForm((f) => ({ ...f, image_url: url })))}
           fullWidth
         />
-        <View className="flex-row" style={{ gap: 12 }}>
-          <View className="flex-1">
-            <Input label="Base Price (₹)" value={serviceForm.base_price} onChangeText={(t) => setServiceForm((f) => ({ ...f, base_price: t }))} keyboardType="number-pad" />
+        <Input label="Base Price (₹)" value={serviceForm.base_price} onChangeText={(t) => setServiceForm((f) => ({ ...f, base_price: t }))} keyboardType="number-pad" />
+        <View className="mb-4">
+          <Text className="text-sm font-medium mb-2" style={{ color: colors.textSecondary }}>
+            Delivery Time
+          </Text>
+          <View className="flex-row" style={{ gap: 8 }}>
+            {(['days', 'hours'] as const).map((unit) => {
+              const selected = serviceForm.deliveryUnit === unit;
+              return (
+                <Pressable
+                  key={unit}
+                  onPress={() => setServiceForm((f) => ({ ...f, deliveryUnit: unit }))}
+                  className="px-4 py-2.5 rounded-xl border items-center"
+                  style={{
+                    borderColor: selected ? colors.primary : colors.border,
+                    backgroundColor: selected ? colors.primary : colors.surface,
+                  }}
+                >
+                  <Text
+                    className="text-xs font-semibold capitalize"
+                    style={{ color: selected ? colors.onPrimary : colors.textSecondary }}
+                  >
+                    {unit}
+                  </Text>
+                </Pressable>
+              );
+            })}
+            <View className="flex-1">
+              {serviceForm.deliveryUnit === 'hours' ? (
+                <Input
+                  value={serviceForm.estimated_delivery_hours}
+                  onChangeText={(t) => setServiceForm((f) => ({ ...f, estimated_delivery_hours: t }))}
+                  keyboardType="number-pad"
+                  placeholder="e.g. 6, 12, 24"
+                />
+              ) : (
+                <Input
+                  value={serviceForm.estimated_delivery_days}
+                  onChangeText={(t) => setServiceForm((f) => ({ ...f, estimated_delivery_days: t }))}
+                  keyboardType="number-pad"
+                />
+              )}
+            </View>
           </View>
-          <View className="flex-1">
-            <Input label="Delivery Days" value={serviceForm.estimated_delivery_days} onChangeText={(t) => setServiceForm((f) => ({ ...f, estimated_delivery_days: t }))} keyboardType="number-pad" />
-          </View>
+          <Text className="text-xs mt-1.5" style={{ color: colors.textSecondary }}>
+            {serviceForm.deliveryUnit === 'hours'
+              ? 'Rush turnaround (e.g. a 6-hour alteration) - shown to the customer as a same-day ETA.'
+              : 'Whole-day turnaround, used for most services.'}
+          </Text>
         </View>
         <Input label="Display Order" value={serviceForm.display_order} onChangeText={(t) => setServiceForm((f) => ({ ...f, display_order: t }))} keyboardType="number-pad" />
         {isAlterationsCategory ? (
