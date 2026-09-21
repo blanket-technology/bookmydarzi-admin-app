@@ -91,6 +91,11 @@ export const ENDPOINTS = {
     AUDIT_LOG_FILTERS: '/api/v1/admin/audit-logs/filters',
     BILLING_SETTINGS: '/api/v1/admin/settings/billing',
     DASHBOARD_EXPORT: '/api/v1/admin/dashboard/export',
+    PAYOUTS: '/api/v1/admin/payouts',
+    PAYOUT_MARK_PAID: (payoutId: string) => `/api/v1/admin/payouts/${payoutId}/mark-paid`,
+    PAYOUT_SUMMARY: (tailorId: string) => `/api/v1/admin/payouts/summary/${tailorId}`,
+    COMMISSION_RATES: '/api/v1/admin/commission-rates',
+    COMMISSION_RATE_DETAIL: (rateId: string) => `/api/v1/admin/commission-rates/${rateId}`,
   },
   LOCATION: {
     ADMIN_SERVICE_AREAS: '/api/v1/location/admin/service-areas',

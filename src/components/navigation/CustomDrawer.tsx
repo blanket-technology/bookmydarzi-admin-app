@@ -62,6 +62,7 @@ const MENU_ITEMS: {
   },
   { label: 'FAQs', icon: 'help-circle-outline', route: '/(drawer)/faqs', permission: 'faqs' },
   { label: 'Billing', icon: 'card-outline', route: '/(drawer)/billing', permission: 'billing' },
+  { label: 'Tailor Payouts', icon: 'wallet-outline', route: '/(drawer)/payouts', permission: 'payouts' },
   {
     label: 'Notifications',
     icon: 'notifications-outline',
