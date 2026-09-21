@@ -28,6 +28,10 @@ export interface StitchingTypeSummary {
   description?: string | null;
   base_price: number;
   estimated_delivery_days: number;
+  /** Sub-day turnaround override (e.g. a 6hr/12hr rush alteration). When
+   * set, this takes precedence over estimated_delivery_days for both ETA
+   * calculation and display. Null for every service still quoted in days. */
+  estimated_delivery_hours?: number | null;
   display_order: number;
   is_premium: boolean;
   is_active: boolean;
@@ -94,6 +98,7 @@ export interface ServicePayload {
   image_url?: string;
   base_price?: number;
   estimated_delivery_days?: number;
+  estimated_delivery_hours?: number | null;
   display_order?: number;
   is_premium?: boolean;
   is_active?: boolean;
