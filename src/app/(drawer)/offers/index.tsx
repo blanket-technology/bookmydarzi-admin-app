@@ -41,6 +41,7 @@ const EMPTY_FORM = {
   discount_percent: '10',
   discount_amount: '',
   min_order_value: '',
+  max_uses: '',
   coupon_code: '',
   image_url: '',
   valid_from: '',
@@ -79,6 +80,7 @@ export default function OffersScreen() {
       discount_percent: String(item.DiscountPercent ?? 0),
       discount_amount: item.DiscountAmount != null ? String(item.DiscountAmount) : '',
       min_order_value: item.MinOrderValue ? String(item.MinOrderValue) : '',
+      max_uses: item.MaxUses ? String(item.MaxUses) : '',
       coupon_code: item.CouponCode ?? '',
       image_url: item.ImageUrl ?? '',
       valid_from: toDateOnly(item.ValidFrom) ?? '',
@@ -132,6 +134,7 @@ export default function OffersScreen() {
     discount_percent: form.discount_type === 'percentage' ? clampedDiscountPercent : undefined,
     discount_amount: form.discount_type === 'flat' ? Math.max(0, Number(form.discount_amount) || 0) || undefined : undefined,
     min_order_value: Math.max(0, Number(form.min_order_value) || 0),
+    max_uses: form.max_uses.trim() ? Math.max(1, Number(form.max_uses) || 1) : undefined,
     coupon_code: form.coupon_code.trim() || undefined,
     image_url: form.image_url.trim() || undefined,
     valid_from: form.valid_from ? isoDateToStartOfDay(form.valid_from) : undefined,
@@ -205,6 +208,14 @@ export default function OffersScreen() {
                 {item.MinOrderValue ? (
                   <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
                     Min order {formatCurrency(item.MinOrderValue)}
+                  </Text>
+                ) : null}
+                {item.MaxUses ? (
+                  <Text
+                    className="text-xs mt-1 font-semibold"
+                    style={{ color: (item.UsageCount ?? 0) >= item.MaxUses ? colors.error : colors.textMuted }}
+                  >
+                    {item.UsageCount ?? 0}/{item.MaxUses} used
                   </Text>
                 ) : null}
                 {item.ValidUntil ? (
@@ -288,6 +299,14 @@ export default function OffersScreen() {
           keyboardType="number-pad"
           placeholder="No minimum"
           error={isMinOrderValueInvalid ? 'Must be greater than the discount amount' : undefined}
+        />
+
+        <Input
+          label="Max uses, platform-wide (optional)"
+          value={form.max_uses}
+          onChangeText={(t) => setForm((f) => ({ ...f, max_uses: t }))}
+          keyboardType="number-pad"
+          placeholder="Unlimited"
         />
 
         <DateField

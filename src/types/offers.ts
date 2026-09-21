@@ -8,6 +8,10 @@ export interface OfferItem {
   DiscountPercent: number;
   DiscountAmount?: number | null;
   MinOrderValue?: number | null;
+  /** Platform-wide redemption cap across every customer - null = unlimited. */
+  MaxUses?: number | null;
+  /** Redemptions so far - only populated by the list endpoint when MaxUses is set. */
+  UsageCount?: number | null;
   CouponCode?: string | null;
   ImageUrl?: string | null;
   ValidFrom?: string | null;
@@ -23,6 +27,7 @@ export interface OfferCreateRequest {
   discount_percent?: number;
   discount_amount?: number;
   min_order_value?: number;
+  max_uses?: number;
   coupon_code?: string;
   image_url?: string;
   tailor_id?: number;
@@ -37,6 +42,7 @@ export interface OfferUpdateRequest {
   discount_percent?: number;
   discount_amount?: number;
   min_order_value?: number;
+  max_uses?: number;
   coupon_code?: string;
   image_url?: string;
   tailor_id?: number;
