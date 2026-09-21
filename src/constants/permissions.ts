@@ -85,6 +85,11 @@ export interface AppPermissions {
    * /admin/settings/billing routes, require_admin_permission(SUPERADMIN
    * only, screen="system_config") — stricter than most admin screens. */
   billing: boolean;
+  /** Tailor commission rates & payouts — app/api/v1/endpoints/admin_payouts.py,
+   * require_admin_permission(SUPERADMIN only, screen="tailor_payouts"). A
+   * payout amount reveals the platform's commission split, same
+   * sensitivity class as billing/analytics above. */
+  payouts: boolean;
 }
 
 /** Full admin access — all modules visible, except registering other admins
@@ -128,6 +133,7 @@ const ADMIN_PERMISSIONS: AppPermissions = {
   // list on _require_admin_billing excludes plain ADMIN) - false here even
   // though this is otherwise the "full admin" permission set.
   billing: false,
+  payouts: false,
 };
 
 /** Superadmin: everything an admin has, plus admin-account management and
@@ -139,6 +145,7 @@ const SUPERADMIN_PERMISSIONS: AppPermissions = {
   analytics: true,
   rolesPermissions: true,
   billing: true,
+  payouts: true,
 };
 
 /** Matches pre-RBAC employee drawer routes.
@@ -181,6 +188,7 @@ const EMPLOYEE_PERMISSIONS: AppPermissions = {
   rolesPermissions: false,
   faqs: false,
   billing: false,
+  payouts: false,
 };
 
 /** Matches pre-RBAC tailor drawer routes */
@@ -224,6 +232,7 @@ const TAILOR_PERMISSIONS: AppPermissions = {
   rolesPermissions: false,
   faqs: false,
   billing: false,
+  payouts: false,
 };
 
 /** Most restrictive default — used when the role cannot be resolved at all. */
@@ -256,6 +265,7 @@ const NO_PERMISSIONS: AppPermissions = {
   rolesPermissions: false,
   faqs: false,
   billing: false,
+  payouts: false,
 };
 
 const normalizeRole = (role?: string | null): string | undefined => {
@@ -339,6 +349,7 @@ const RBAC_SCREEN_TO_MODULE: Partial<Record<string, (keyof AppPermissions)[]>> =
   roles_permissions: ['rolesPermissions'],
   support_faqs: ['faqs'],
   system_config: ['billing'],
+  tailor_payouts: ['payouts'],
 };
 
 /**
@@ -395,6 +406,7 @@ export const ROUTE_PERMISSION_MAP: Record<string, keyof AppPermissions> = {
   'roles-permissions': 'rolesPermissions',
   faqs: 'faqs',
   billing: 'billing',
+  payouts: 'payouts',
 };
 
 export const getDefaultRouteForRole = (

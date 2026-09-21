@@ -56,4 +56,7 @@ export const QUERY_KEYS = {
   BILLING_SETTINGS: ['billing-settings'] as const,
   MY_KYC: (role: string) => ['my-kyc', role] as const,
   EMPLOYEE_ONLINE_STATUS: ['employee-online-status'] as const,
+  PAYOUTS: (params?: Record<string, unknown>) => ['payouts', params] as const,
+  PAYOUT_SUMMARY: (tailorId: string) => ['payout-summary', tailorId] as const,
+  COMMISSION_RATES: (tailorId?: string) => ['commission-rates', tailorId] as const,
 } as const;
