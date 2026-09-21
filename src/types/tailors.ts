@@ -55,6 +55,15 @@ export interface TailorWorkloadItem {
   pending_orders?: number;
   completed_orders?: number;
   utilization_percentage?: number;
+  /** Live customer-rating average (Tailor.Rating) - 0 for no ratings yet. */
+  rating?: number;
+  /** % of (completed + cancelled) orders completed - null when the
+   * tailor has no orders with a real outcome yet. */
+  completion_rate_percent?: number | null;
+  /** % of delivered orders (with a comparable OriginalExpectedDeliveryDate)
+   * delivered on or before the original promised date - null when there's
+   * no comparable data yet. */
+  on_time_delivery_rate_percent?: number | null;
 }
 
 export interface AdminTailorsResponse {
