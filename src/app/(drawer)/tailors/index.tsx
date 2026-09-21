@@ -20,9 +20,13 @@ const WorkloadRow = ({ item, colors }: { item: TailorWorkloadItem; colors: Retur
     <View className="ml-3 flex-1">
       <Text className="font-bold" style={{ color: colors.text }}>
         {item.tailor_name ?? `Tailor #${item.tailor_id}`}
+        {!!item.rating && item.rating > 0 && (
+          <Text style={{ color: '#f59e0b', fontWeight: '600' }}> ★ {item.rating}</Text>
+        )}
       </Text>
       <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
         {item.utilization_percentage ?? 0}% utilized
+        {item.completion_rate_percent != null && ` · ${item.completion_rate_percent}% completion`}
       </Text>
     </View>
     <View className="flex-row" style={{ gap: 16 }}>
