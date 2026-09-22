@@ -74,6 +74,9 @@ export interface CreateTailorApplicationRequest {
   pincode?: string;
   experience_years?: number;
   specialization?: string;
+  /** ServiceSubCategory ids from the checklist - what broadcast routing
+   * actually matches against. See SpecializationChecklist.tsx. */
+  specializationSubCategoryIds?: number[];
   aadhaarFront?: { uri: string; fileName?: string; mimeType?: string };
   aadhaarBack?: { uri: string; fileName?: string; mimeType?: string };
   panCard?: { uri: string; fileName?: string; mimeType?: string };
