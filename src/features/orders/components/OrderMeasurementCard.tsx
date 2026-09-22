@@ -1,5 +1,7 @@
-import { Text, View } from 'react-native';
-import { Card } from '@/components/ui';
+import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
+import { Image, Text, View } from 'react-native';
+import { Card, Modal, Pressable } from '@/components/ui';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import type { AdminOrderItem } from '@/types/orders';
@@ -20,11 +22,16 @@ export const OrderMeasurementCard = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   // Single-item orders don't render OrderItemsCard (see that component's
   // own docstring), so this is the only card that gets a chance to show
   // what add-ons were selected - without it the tailor/bridge had no way
   // to see "+ Button Replacement" etc. on a one-item order at all.
   const addons = order.items?.[0]?.addons;
+  // Same reasoning: a single-item order's reference photo lives at
+  // order.reference_photo_url (top-level), not per-item - see that field's
+  // own docstring in types/orders.ts.
+  const referencePhotoUrl = order.reference_photo_url ?? order.items?.[0]?.reference_photo_url ?? null;
 
   const addonsBlock =
     addons && addons.length > 0 ? (
@@ -38,13 +45,38 @@ export const OrderMeasurementCard = ({
       </View>
     ) : null;
 
+  const referencePhotoBlock = referencePhotoUrl ? (
+    <Pressable
+      onPress={() => setPreviewUrl(referencePhotoUrl)}
+      className="flex-row items-center mb-4 px-2.5 py-1.5 rounded-xl self-start"
+      style={{ backgroundColor: colors.primaryLight }}
+    >
+      <Ionicons name="image-outline" size={14} color={colors.primary} />
+      <Text className="text-xs font-semibold ml-1.5" style={{ color: colors.primary }}>
+        {t('orderItems.viewReferencePhoto')}
+      </Text>
+    </Pressable>
+  ) : null;
+
+  const photoModal = (
+    <Modal visible={!!previewUrl} onClose={() => setPreviewUrl(null)} title={t('orderItems.referencePhoto')}>
+      {previewUrl ? (
+        <Image
+          source={{ uri: previewUrl }}
+          style={{ width: '100%', aspectRatio: 1, borderRadius: 16 }}
+          resizeMode="contain"
+        />
+      ) : null}
+    </Modal>
+  );
+
   if (!order.measurement) {
     // Previously returned null outright for non-tailor roles when no
     // measurement existed yet, which also hid any selected add-ons from
     // Admin/Superadmin/Employee - add-ons are relevant to everyone, not
     // just the "measurement not collected" explainer, so render the card
     // whenever there's an addons block even if measurements aren't ready.
-    if (!isTailorRole && !addonsBlock) return null;
+    if (!isTailorRole && !addonsBlock && !referencePhotoBlock) return null;
     return (
       <Card className="mb-4">
         <Text className="font-bold mb-1" style={{ color: colors.text }}>
@@ -56,6 +88,8 @@ export const OrderMeasurementCard = ({
           </Text>
         ) : null}
         {addonsBlock}
+        {referencePhotoBlock}
+        {photoModal}
       </Card>
     );
   }
@@ -67,6 +101,7 @@ export const OrderMeasurementCard = ({
         {t('measurement.title')}
       </Text>
       {addonsBlock}
+      {referencePhotoBlock}
       <Text className="text-xs mb-1" style={{ color: colors.textMuted }}>
         {m.profile_name}
       </Text>
@@ -80,6 +115,7 @@ export const OrderMeasurementCard = ({
       {m.height != null ? <DetailRow label={t('measurement.height')} value={`${m.height} in`} colors={colors} /> : null}
       {m.fit_preference ? <DetailRow label={t('measurement.fitPreference')} value={capitalize(m.fit_preference)} colors={colors} /> : null}
       {m.notes ? <DetailRow label={t('measurement.notes')} value={m.notes} colors={colors} /> : null}
+      {photoModal}
     </Card>
   );
 };

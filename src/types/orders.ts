@@ -70,6 +70,12 @@ export interface OrderLineItem {
   person_name: string | null;
   gender: string | null;
   has_measurement: boolean;
+  /** Customer's own note for this specific garment, if any. */
+  notes?: string | null;
+  /** Customer-supplied design reference photo (Designer/premium tiers
+   * only), extracted server-side from StitchingPreferences so it can be
+   * rendered as an actual image instead of raw JSON text. */
+  reference_photo_url?: string | null;
   /** Optional extras selected at booking time (e.g. Button Replacement,
    * Shoulder Adjustment) - already folded into `price` above, listed here
    * so the tailor/bridge actually knows what extra work to do. */
@@ -106,6 +112,10 @@ export interface AdminOrderItem {
   fabric_notes?: string | null;
   customization_notes?: string | null;
   cloth_details?: string | null;
+  /** Customer-supplied reference photo for a single-item/direct order
+   * (multi-item orders carry it per-item on items[].reference_photo_url
+   * instead - see OrderLineItem). */
+  reference_photo_url?: string | null;
   assigned_employee_id?: string;
   /** Staff-only display name for assigned_employee_id (pickup-leg claim) -
    * never present on a customer-facing response even when the id is set. */
@@ -171,6 +181,8 @@ export interface RawOrderItemSummary {
   person_name?: string | null;
   gender?: string | null;
   has_measurement: boolean;
+  notes?: string | null;
+  reference_photo_url?: string | null;
   addons?: OrderItemAddon[];
 }
 
@@ -208,6 +220,7 @@ export interface MyOrderItem {
   FabricNotes?: string | null;
   CustomizationNotes?: string | null;
   ClothDetails?: string | null;
+  ReferencePhotoUrl?: string | null;
   AssignedEmployeeId?: number | null;
   AssignedEmployeeName?: string | null;
   DeliveryEmployeeId?: number | null;
