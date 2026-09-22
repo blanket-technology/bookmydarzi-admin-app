@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Text, View } from 'react-native';
+import { SUPPORT_PHONE_NUMBER } from '@/constants/support';
 import { Button, ConfirmModal, EmptyState, Header, Loader, Pressable, ScreenContent } from '@/components/ui';
 import { ORDER_STATUS, orderStatusLabel } from '@/constants/orderStatus';
 import {
@@ -372,6 +373,25 @@ export default function OrderDetailsScreen() {
               </Text>
               <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
                 {t('orderDetail.contactSupportHint')}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </Pressable>
+        ) : null}
+
+        {isTailorRole ? (
+          <Pressable
+            onPress={() => Linking.openURL(`tel:${SUPPORT_PHONE_NUMBER}`).catch(() => {})}
+            className="flex-row items-center rounded-2xl px-4 py-3 mb-4 border"
+            style={{ borderColor: colors.border, backgroundColor: colors.card }}
+          >
+            <Ionicons name="call-outline" size={18} color={colors.primary} />
+            <View className="ml-2.5 flex-1">
+              <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+                {t('orderDetail.callSupport')}
+              </Text>
+              <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
+                {t('orderDetail.callSupportHint')}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />

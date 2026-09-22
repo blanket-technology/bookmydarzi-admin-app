@@ -226,6 +226,8 @@
     "waitingForClothPickedUpHint": "The cloth has been picked up and is on its way to you. Stitching actions will appear here once it's handed over.",
     "contactSupport": "Contact Support",
     "contactSupportHint": "Have a question about this order? Our support team will relay it to the customer for you.",
+    "callSupport": "Call Support",
+    "callSupportHint": "Prefer to talk? Call our support line directly.",
     "actions": "Actions",
     "confirmActionMessage": "Are you sure you want to {{action}}?",
     "forceRestartBroadcast": "Force Restart Broadcast",
@@ -256,7 +258,8 @@
     "addExtra": "+ Extra",
     "fill": "Fill",
     "viewReferencePhoto": "View reference photo",
-    "referencePhoto": "Reference Photo"
+    "referencePhoto": "Reference Photo",
+    "playVoiceNote": "Play voice note"
   },
   "orderNotes": {
     "title": "Order Notes",

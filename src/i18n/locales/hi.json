@@ -226,6 +226,8 @@
     "waitingForClothPickedUpHint": "कपड़ा उठा लिया गया है और आपकी ओर आ रहा है। सौंपे जाने के बाद यहां सिलाई से जुड़े कार्य दिखाई देंगे।",
     "contactSupport": "सहायता से संपर्क करें",
     "contactSupportHint": "इस ऑर्डर के बारे में कोई सवाल है? हमारी सहायता टीम इसे ग्राहक तक पहुंचाएगी।",
+    "callSupport": "सहायता को कॉल करें",
+    "callSupportHint": "बात करना पसंद करते हैं? सीधे हमारी सहायता लाइन पर कॉल करें।",
     "actions": "कार्य",
     "confirmActionMessage": "क्या आप वाकई {{action}} करना चाहते हैं?",
     "forceRestartBroadcast": "ब्रॉडकास्ट फिर से शुरू करें",
@@ -256,7 +258,8 @@
     "addExtra": "+ अतिरिक्त",
     "fill": "भरें",
     "viewReferencePhoto": "संदर्भ फ़ोटो देखें",
-    "referencePhoto": "संदर्भ फ़ोटो"
+    "referencePhoto": "संदर्भ फ़ोटो",
+    "playVoiceNote": "वॉइस नोट चलाएं"
   },
   "orderNotes": {
     "title": "ऑर्डर टिप्पणी",

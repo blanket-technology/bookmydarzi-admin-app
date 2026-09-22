@@ -116,6 +116,10 @@ export interface AdminOrderItem {
    * (multi-item orders carry it per-item on items[].reference_photo_url
    * instead - see OrderLineItem). */
   reference_photo_url?: string | null;
+  /** Optional voice-note recording (order-level only) - an alternative to
+   * typed notes for a customer who finds speaking easier, or a tailor who
+   * reads slowly. */
+  voice_note_url?: string | null;
   assigned_employee_id?: string;
   /** Staff-only display name for assigned_employee_id (pickup-leg claim) -
    * never present on a customer-facing response even when the id is set. */
@@ -221,6 +225,7 @@ export interface MyOrderItem {
   CustomizationNotes?: string | null;
   ClothDetails?: string | null;
   ReferencePhotoUrl?: string | null;
+  VoiceNoteUrl?: string | null;
   AssignedEmployeeId?: number | null;
   AssignedEmployeeName?: string | null;
   DeliveryEmployeeId?: number | null;
