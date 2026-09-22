@@ -175,6 +175,7 @@ export const ENDPOINTS = {
     MY_ORDERS: '/api/v1/orders/my-orders',
     DETAIL: (orderId: string) => `/api/v1/orders/${orderId}`,
     UPDATE_STATUS: (orderId: string) => `/api/v1/orders/${orderId}/status`,
+    COMPLETE_REPAIR: (orderId: string) => `/api/v1/orders/${orderId}/complete-repair`,
     PHOTOS: (orderId: string) => `/api/v1/orders/${orderId}/photos`,
     INVOICE: (orderId: string) => `/api/v1/orders/${orderId}/invoice`,
     BROADCAST_STATUS: (orderId: string) => `/api/v1/tailor/orders/${orderId}/broadcast/status`,

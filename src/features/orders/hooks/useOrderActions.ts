@@ -8,6 +8,7 @@ import {
   useCancelOrderMutation,
   useCollectPaymentMutation,
   useCompleteOrderMutation,
+  useCompleteRepairMutation,
   useConfirmPickupMutation,
   useHandToTailorMutation,
   useRejectOrderMutation,
@@ -30,6 +31,7 @@ export type OrderActionId =
   | 'collect_cod'
   | 'complete'
   | 'assign_tailor'
+  | 'complete_repair'
   | 'cancel'
   | 'correct_status'
   | 'update_measurement'
@@ -97,6 +99,7 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
   // instead (admin_update_order_status, which now also accepts EMPLOYEE).
   const tailorStitchingMutation = useUpdateStitchingStatusMutation();
   const staffStitchingMutation = useUpdateOrderStatusMutation();
+  const completeRepairMutation = useCompleteRepairMutation();
 
   const normalizedRole = String(role ?? '').toLowerCase();
   const isAdmin = normalizedRole === 'admin' || normalizedRole === 'superadmin';
@@ -366,6 +369,23 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
     // EMPLOYEE) and admin.py's admin_update_order_status (now accepting
     // EMPLOYEE too) already allow this server-side; this was previously
     // tailor-only client-side with no equivalent staff action at all.
+    // Tailor-only: repair completion is a dedicated two-step server
+    // transition (IN_REPAIR -> REPAIR_COMPLETED -> INSPECTION_WINDOW, see
+    // repair_service.complete_repair), not a plain status PATCH - so this
+    // isn't folded into the stitchingStageFor map below, which only drives
+    // the generic single-hop PATCH mutations.
+    if (isTailor && status === ORDER_STATUS.IN_REPAIR) {
+      list.push({
+        id: 'complete_repair',
+        label: 'Mark Repair Complete',
+        tone: 'primary',
+        requiresInput: false,
+        requiresConfirmation: false,
+        isLoading: completeRepairMutation.isPending,
+        run: () => completeRepairMutation.mutate({ orderId: String(orderId) }),
+      });
+    }
+
     if (isTailor || canUseEmployeeActions) {
       // Server enforces strict sequential progression for tailors
       // (order_status_rules.py); staff bypass that graph entirely, but the

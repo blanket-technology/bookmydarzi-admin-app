@@ -18,6 +18,9 @@ export type OrderStatus =
   | 'ready_for_dispatch'
   | 'out_for_delivery'
   | 'delivered'
+  | 'inspection_window'
+  | 'in_repair'
+  | 'repair_completed'
   | 'completed'
   | 'cancelled'
   | 'return_pending'
@@ -120,6 +123,14 @@ export interface AdminOrderItem {
    * typed notes for a customer who finds speaking easier, or a tailor who
    * reads slowly. */
   voice_note_url?: string | null;
+  /** Most recent post-delivery inspection-window issue report, if any -
+   * present only once the order has entered the repair sub-flow. */
+  latest_repair_request?: {
+    issue_description: string;
+    issue_photo_urls?: string[] | null;
+    reported_at: string;
+    resolved_at?: string | null;
+  } | null;
   assigned_employee_id?: string;
   /** Staff-only display name for assigned_employee_id (pickup-leg claim) -
    * never present on a customer-facing response even when the id is set. */
@@ -226,6 +237,12 @@ export interface MyOrderItem {
   ClothDetails?: string | null;
   ReferencePhotoUrl?: string | null;
   VoiceNoteUrl?: string | null;
+  LatestRepairRequest?: {
+    issue_description: string;
+    issue_photo_urls?: string[] | null;
+    reported_at: string;
+    resolved_at?: string | null;
+  } | null;
   AssignedEmployeeId?: number | null;
   AssignedEmployeeName?: string | null;
   DeliveryEmployeeId?: number | null;

@@ -235,6 +235,22 @@ export const useUpdateStitchingStatusMutation = () => {
   });
 };
 
+// Tailor-only: marks an IN_REPAIR order's repair done - see
+// orderService.completeRepair.
+export const useCompleteRepairMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderId }: { orderId: string }) => orderService.completeRepair(orderId),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(variables.orderId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
+      toast.success('Repair marked complete');
+    },
+    onError: (error) => toast.error(formatApiErrorDetail(error)),
+  });
+};
+
 export const useUpdateOrderMeasurementMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
