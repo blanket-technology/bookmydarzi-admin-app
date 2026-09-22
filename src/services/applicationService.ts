@@ -92,6 +92,9 @@ export const applicationService = {
     if (payload.state) form.append('state', payload.state);
     if (payload.pincode) form.append('pincode', payload.pincode);
     if (payload.specialization) form.append('specialization', payload.specialization);
+    if (payload.specializationSubCategoryIds?.length) {
+      form.append('specialization_sub_category_ids', payload.specializationSubCategoryIds.join(','));
+    }
     if (payload.experience_years != null) {
       form.append('experience_years', String(payload.experience_years));
     }

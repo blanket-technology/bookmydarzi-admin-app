@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Button, Card, Header, Input, Pressable, ScreenContent } from '@/components/ui';
 import { StaffDocumentPickerSheet } from '@/features/staffDetail/components/StaffDocumentPickerSheet';
+import { SpecializationChecklist } from '@/features/applications/components/SpecializationChecklist';
 import { useCreateApplicationMutation } from '@/features/applications/hooks/useApplications';
 import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/store/toastStore';
@@ -34,7 +35,7 @@ export function AddTailorApplicationForm() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [specialization, setSpecialization] = useState('');
+  const [specializationIds, setSpecializationIds] = useState<number[]>([]);
   const [city, setCity] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -73,6 +74,9 @@ export function AddTailorApplicationForm() {
     if (fullName.trim().length < 2) next.fullName = 'Full name is required';
     if (!isValidEmail(email)) next.email = 'Valid email required';
     if (!isValidMobile(phone)) next.phone = 'Valid 10-digit mobile required';
+    if (specializationIds.length === 0) {
+      next.specialization = 'Select at least one specialization - this is how orders get routed to this tailor';
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -85,7 +89,7 @@ export function AddTailorApplicationForm() {
         email: email.trim(),
         phone: phone.trim(),
         city: city.trim() || undefined,
-        specialization: specialization.trim() || undefined,
+        specializationSubCategoryIds: specializationIds,
         aadhaarFront: files.aadhaarFront,
         aadhaarBack: files.aadhaarBack,
         panCard: files.panCard,
@@ -115,8 +119,15 @@ export function AddTailorApplicationForm() {
           keyboardType="phone-pad"
           maxLength={10}
         />
-        <Input label="Specialization (optional)" value={specialization} onChangeText={setSpecialization} />
         <Input label="City (optional)" value={city} onChangeText={setCity} />
+
+        <View className="mt-2 mb-4">
+          <SpecializationChecklist
+            selectedIds={specializationIds}
+            onChange={setSpecializationIds}
+            error={errors.specialization}
+          />
+        </View>
 
         <Text className="text-sm font-semibold mt-2 mb-2" style={{ color: colors.text }}>
           KYC Documents
