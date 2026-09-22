@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { broadcastService } from '@/services/broadcastService';
+import { trackBroadcastAccepted, trackBroadcastDeclined } from '@/services/mixpanelService';
 import { toast } from '@/store/toastStore';
 import { getMutationError } from '@/utils/errors';
 
@@ -24,7 +25,8 @@ export const useAcceptBroadcastMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (orderId: string) => broadcastService.accept(orderId),
-    onSuccess: () => {
+    onSuccess: (_data, orderId) => {
+      trackBroadcastAccepted({ order_id: orderId });
       queryClient.invalidateQueries({ queryKey: ['broadcasts'] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast.success('Order accepted');
@@ -37,7 +39,8 @@ export const useDeclineBroadcastMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (orderId: string) => broadcastService.decline(orderId),
-    onSuccess: () => {
+    onSuccess: (_data, orderId) => {
+      trackBroadcastDeclined({ order_id: orderId });
       queryClient.invalidateQueries({ queryKey: ['broadcasts'] });
       toast.info('Offer declined');
     },

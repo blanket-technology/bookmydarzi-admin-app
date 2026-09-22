@@ -18,9 +18,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { AppProviders } from '@/providers/AppProviders';
 import { initSentry } from '@/services/sentryService';
+import { initMixpanel } from '@/services/mixpanelService';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 initSentry();
+initMixpanel();
 
 function RootLayoutNav() {
   const { isDark, colors } = useTheme();

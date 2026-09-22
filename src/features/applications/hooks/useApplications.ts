@@ -8,6 +8,7 @@ import type {
 } from '@/types/applications';
 import { toast } from '@/store/toastStore';
 import { formatApiErrorDetail } from '@/utils/errors';
+import { trackTailorApplicationSubmitted } from '@/services/mixpanelService';
 
 export const useApplications = (
   params?: ApplicationsQueryParams,
@@ -52,7 +53,8 @@ export const useCreateApplicationMutation = () => {
   return useMutation({
     mutationFn: (payload: CreateTailorApplicationRequest) =>
       applicationService.createApplication(payload),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      trackTailorApplicationSubmitted({ application_id: data.application_id });
       queryClient.invalidateQueries({ queryKey: ['applications'] });
       toast.success('Tailor application submitted - approve it here to create the account');
     },
