@@ -64,6 +64,7 @@ function normalizeOrderResponse(item: MyOrderItem): AdminOrderItem {
     customization_notes: item.CustomizationNotes ?? null,
     cloth_details: item.ClothDetails ?? null,
     reference_photo_url: item.ReferencePhotoUrl ?? null,
+    voice_note_url: item.VoiceNoteUrl ?? null,
     assigned_employee_id: item.AssignedEmployeeId != null ? String(item.AssignedEmployeeId) : undefined,
     assigned_employee_name: item.AssignedEmployeeName ?? null,
     delivery_employee_id: item.DeliveryEmployeeId != null ? String(item.DeliveryEmployeeId) : undefined,

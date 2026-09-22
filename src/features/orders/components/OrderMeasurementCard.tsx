@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useState } from 'react';
 import { Image, Text, View } from 'react-native';
 import { Card, Modal, Pressable } from '@/components/ui';
@@ -7,6 +8,38 @@ import { useTheme } from '@/hooks/useTheme';
 import type { AdminOrderItem } from '@/types/orders';
 import { capitalize } from '@/utils/errors';
 import { DetailRow } from './DetailRow';
+
+/** Play/pause chip for the order's voice note (if any) - lets a tailor who
+ * reads slowly listen to the customer's spoken instructions instead of
+ * relying on typed notes alone. */
+const VoiceNoteChip = ({ url, colors, label }: { url: string; colors: any; label: string }) => {
+  const player = useAudioPlayer({ uri: url });
+  const status = useAudioPlayerStatus(player);
+
+  const toggle = () => {
+    if (status.playing) {
+      player.pause();
+    } else {
+      if (status.didJustFinish || status.currentTime >= status.duration) {
+        player.seekTo(0);
+      }
+      player.play();
+    }
+  };
+
+  return (
+    <Pressable
+      onPress={toggle}
+      className="flex-row items-center mb-4 px-2.5 py-1.5 rounded-xl self-start"
+      style={{ backgroundColor: colors.primaryLight }}
+    >
+      <Ionicons name={status.playing ? 'pause' : 'play'} size={14} color={colors.primary} />
+      <Text className="text-xs font-semibold ml-1.5" style={{ color: colors.primary }}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+};
 
 /** Single-item measurement snapshot card. Shows the recorded values once
  * present; for a tailor with nothing recorded yet, shows the "Bridge
@@ -32,6 +65,7 @@ export const OrderMeasurementCard = ({
   // order.reference_photo_url (top-level), not per-item - see that field's
   // own docstring in types/orders.ts.
   const referencePhotoUrl = order.reference_photo_url ?? order.items?.[0]?.reference_photo_url ?? null;
+  const voiceNoteUrl = order.voice_note_url ?? null;
 
   const addonsBlock =
     addons && addons.length > 0 ? (
@@ -58,6 +92,10 @@ export const OrderMeasurementCard = ({
     </Pressable>
   ) : null;
 
+  const voiceNoteBlock = voiceNoteUrl ? (
+    <VoiceNoteChip url={voiceNoteUrl} colors={colors} label={t('orderItems.playVoiceNote')} />
+  ) : null;
+
   const photoModal = (
     <Modal visible={!!previewUrl} onClose={() => setPreviewUrl(null)} title={t('orderItems.referencePhoto')}>
       {previewUrl ? (
@@ -76,7 +114,7 @@ export const OrderMeasurementCard = ({
     // Admin/Superadmin/Employee - add-ons are relevant to everyone, not
     // just the "measurement not collected" explainer, so render the card
     // whenever there's an addons block even if measurements aren't ready.
-    if (!isTailorRole && !addonsBlock && !referencePhotoBlock) return null;
+    if (!isTailorRole && !addonsBlock && !referencePhotoBlock && !voiceNoteBlock) return null;
     return (
       <Card className="mb-4">
         <Text className="font-bold mb-1" style={{ color: colors.text }}>
@@ -89,6 +127,7 @@ export const OrderMeasurementCard = ({
         ) : null}
         {addonsBlock}
         {referencePhotoBlock}
+        {voiceNoteBlock}
         {photoModal}
       </Card>
     );
@@ -102,6 +141,7 @@ export const OrderMeasurementCard = ({
       </Text>
       {addonsBlock}
       {referencePhotoBlock}
+      {voiceNoteBlock}
       <Text className="text-xs mb-1" style={{ color: colors.textMuted }}>
         {m.profile_name}
       </Text>
