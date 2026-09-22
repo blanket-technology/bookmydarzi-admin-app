@@ -254,7 +254,9 @@
     "notMeasured": "माप नहीं लिया गया",
     "forPerson": "{{name}} के लिए",
     "addExtra": "+ अतिरिक्त",
-    "fill": "भरें"
+    "fill": "भरें",
+    "viewReferencePhoto": "संदर्भ फ़ोटो देखें",
+    "referencePhoto": "संदर्भ फ़ोटो"
   },
   "orderNotes": {
     "title": "ऑर्डर टिप्पणी",

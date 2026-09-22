@@ -1,5 +1,7 @@
-import { Text, View } from 'react-native';
-import { Card, Pressable } from '@/components/ui';
+import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
+import { Image, Text, View } from 'react-native';
+import { Card, Modal, Pressable } from '@/components/ui';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import type { AdminOrderItem } from '@/types/orders';
@@ -26,6 +28,7 @@ export const OrderItemsCard = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   return (
     <Card className="mb-4">
@@ -49,6 +52,23 @@ export const OrderItemsCard = ({
               {' · '}
               {item.has_measurement ? t('orderItems.measured') : t('orderItems.notMeasured')}
             </Text>
+            {item.notes ? (
+              <Text className="text-xs mt-1" style={{ color: colors.textSecondary }}>
+                {item.notes}
+              </Text>
+            ) : null}
+            {item.reference_photo_url ? (
+              <Pressable
+                onPress={() => setPreviewUrl(item.reference_photo_url!)}
+                className="flex-row items-center mt-1.5 px-2 py-1 rounded-lg self-start"
+                style={{ backgroundColor: colors.primaryLight }}
+              >
+                <Ionicons name="image-outline" size={12} color={colors.primary} />
+                <Text className="text-[11px] font-semibold ml-1" style={{ color: colors.primary }}>
+                  {t('orderItems.viewReferencePhoto')}
+                </Text>
+              </Pressable>
+            ) : null}
             {item.addons && item.addons.length > 0 ? (
               <View className="mt-1.5">
                 {item.addons.map((addon, aIdx) => (
@@ -106,6 +126,16 @@ export const OrderItemsCard = ({
           </View>
         </View>
       ))}
+
+      <Modal visible={!!previewUrl} onClose={() => setPreviewUrl(null)} title={t('orderItems.referencePhoto')}>
+        {previewUrl ? (
+          <Image
+            source={{ uri: previewUrl }}
+            style={{ width: '100%', aspectRatio: 1, borderRadius: 16 }}
+            resizeMode="contain"
+          />
+        ) : null}
+      </Modal>
     </Card>
   );
 };

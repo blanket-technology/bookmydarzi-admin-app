@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { Image, Text, View } from 'react-native';
-import { Badge, Pressable } from '@/components/ui';
+import { Badge, Modal, Pressable } from '@/components/ui';
 import { DetailRow } from '@/features/orders/components/DetailRow';
 import { useTheme } from '@/hooks/useTheme';
 import type { BroadcastItem, BroadcastOffer } from '@/types/broadcasts';
@@ -53,7 +53,15 @@ const MEASUREMENT_FIELDS: { key: keyof NonNullable<BroadcastItem['measurement']>
  * measurements, everything the tailor actually needs to judge and later
  * stitch the job. Deliberately no customer identity or price - see
  * broadcast.py's _privacy_safe_order docstring. */
-const GarmentItemCard = ({ item, index }: { item: BroadcastItem; index: number }) => {
+const GarmentItemCard = ({
+  item,
+  index,
+  onViewReferencePhoto,
+}: {
+  item: BroadcastItem;
+  index: number;
+  onViewReferencePhoto: (url: string) => void;
+}) => {
   const { colors } = useTheme();
   const m = item.measurement;
 
@@ -103,6 +111,19 @@ const GarmentItemCard = ({ item, index }: { item: BroadcastItem; index: number }
         </Text>
       ) : null}
 
+      {item.reference_photo_url ? (
+        <Pressable
+          onPress={() => onViewReferencePhoto(item.reference_photo_url!)}
+          className="flex-row items-center mt-2 px-2.5 py-1.5 rounded-xl self-start"
+          style={{ backgroundColor: colors.primaryLight }}
+        >
+          <Ionicons name="image-outline" size={14} color={colors.primary} />
+          <Text className="text-xs font-semibold ml-1.5" style={{ color: colors.primary }}>
+            View reference photo
+          </Text>
+        </Pressable>
+      ) : null}
+
       {item.addons && item.addons.length > 0 ? (
         <Text className="text-xs mt-1" style={{ color: colors.textSecondary }}>
           Add-ons: {item.addons.map((a) => a.name).join(', ')}
@@ -144,6 +165,7 @@ export const TailorOfferCard = ({
   const countdown = useCountdown(offer.expires_at);
   const urgency = URGENCY_BADGE[offer.urgency_level ?? 'standard'] ?? URGENCY_BADGE.standard;
   const isExpired = countdown === 'Expired';
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const tatDays = offer.tat_days;
   const tatIsTight = tatDays != null && tatDays <= 1;
@@ -207,7 +229,7 @@ export const TailorOfferCard = ({
       {offer.items && offer.items.length > 0 ? (
         <View className="mb-1">
           {offer.items.map((item, index) => (
-            <GarmentItemCard key={index} item={item} index={index} />
+            <GarmentItemCard key={index} item={item} index={index} onViewReferencePhoto={setPreviewUrl} />
           ))}
         </View>
       ) : null}
@@ -247,9 +269,25 @@ export const TailorOfferCard = ({
             <Text className="text-xs" style={{ color: colors.textSecondary }}>
               Design notes:{' '}
               {Object.entries(offer.stitching_preferences)
+                // reference_photo_url is rendered as an actual photo below
+                // instead - showing it here too would duplicate it as a raw,
+                // unclickable URL string.
+                .filter(([key]) => key !== 'reference_photo_url')
                 .map(([key, value]) => `${key}: ${value}`)
                 .join(', ')}
             </Text>
+          ) : null}
+          {offer.reference_photo_url ? (
+            <Pressable
+              onPress={() => setPreviewUrl(offer.reference_photo_url!)}
+              className="flex-row items-center mt-2 px-2.5 py-1.5 rounded-xl self-start"
+              style={{ backgroundColor: colors.primaryLight }}
+            >
+              <Ionicons name="image-outline" size={14} color={colors.primary} />
+              <Text className="text-xs font-semibold ml-1.5" style={{ color: colors.primary }}>
+                View reference photo
+              </Text>
+            </Pressable>
           ) : null}
         </View>
       ) : null}
@@ -279,6 +317,16 @@ export const TailorOfferCard = ({
           </Pressable>
         </View>
       </View>
+
+      <Modal visible={!!previewUrl} onClose={() => setPreviewUrl(null)} title="Reference Photo">
+        {previewUrl ? (
+          <Image
+            source={{ uri: previewUrl }}
+            style={{ width: '100%', aspectRatio: 1, borderRadius: 16 }}
+            resizeMode="contain"
+          />
+        ) : null}
+      </Modal>
     </View>
   );
 };

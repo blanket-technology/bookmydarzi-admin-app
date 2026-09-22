@@ -31,6 +31,11 @@ export interface BroadcastItem {
   /** Customer's own note for this specific garment, if any. */
   notes?: string | null;
   stitching_preferences?: Record<string, unknown> | null;
+  /** Customer-supplied design reference photo (Designer/premium tiers
+   * only), extracted server-side from stitching_preferences so it can be
+   * rendered as an actual image instead of flattened "key: value" text -
+   * see broadcast.py's extract_reference_photo_url. */
+  reference_photo_url?: string | null;
   measurement?: BroadcastItemMeasurement | null;
   addons?: BroadcastItemAddon[];
 }
@@ -63,6 +68,11 @@ export interface BroadcastOffer {
   /** JSON object on the backend (Order.StitchingPreferences), e.g.
    * {"collar": "mandarin", "sleeve": "full"} - never a plain string. */
   stitching_preferences?: Record<string, unknown> | null;
+  /** Order-level reference photo (single-item/direct orders only - a
+   * multi-item order's reference photo lives per-item on
+   * items[].reference_photo_url instead). See BroadcastItem's field of
+   * the same name. */
+  reference_photo_url?: string | null;
   // Optional even though the backend always sends it now - defends against
   // a stale cached response (from before this field existed) or an app
   // build still running against an older deployed backend, either of which

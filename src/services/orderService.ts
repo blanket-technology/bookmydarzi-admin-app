@@ -63,6 +63,7 @@ function normalizeOrderResponse(item: MyOrderItem): AdminOrderItem {
     fabric_notes: item.FabricNotes ?? null,
     customization_notes: item.CustomizationNotes ?? null,
     cloth_details: item.ClothDetails ?? null,
+    reference_photo_url: item.ReferencePhotoUrl ?? null,
     assigned_employee_id: item.AssignedEmployeeId != null ? String(item.AssignedEmployeeId) : undefined,
     assigned_employee_name: item.AssignedEmployeeName ?? null,
     delivery_employee_id: item.DeliveryEmployeeId != null ? String(item.DeliveryEmployeeId) : undefined,
@@ -83,6 +84,8 @@ function normalizeOrderResponse(item: MyOrderItem): AdminOrderItem {
       person_name: raw.person_name ?? null,
       gender: raw.gender ?? null,
       has_measurement: raw.has_measurement ?? false,
+      notes: raw.notes ?? null,
+      reference_photo_url: raw.reference_photo_url ?? null,
     })),
   };
 }

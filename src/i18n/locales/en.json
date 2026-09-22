@@ -254,7 +254,9 @@
     "notMeasured": "Not measured",
     "forPerson": "for {{name}}",
     "addExtra": "+ Extra",
-    "fill": "Fill"
+    "fill": "Fill",
+    "viewReferencePhoto": "View reference photo",
+    "referencePhoto": "Reference Photo"
   },
   "orderNotes": {
     "title": "Order Notes",
