@@ -29,6 +29,7 @@ import { PendingOfferCard } from '@/features/orders/components/PendingOfferCard'
 import { OrderSummaryCard } from '@/features/orders/components/OrderSummaryCard';
 import { OrderAddressCard } from '@/features/orders/components/OrderAddressCard';
 import { OrderNotesCard } from '@/features/orders/components/OrderNotesCard';
+import { RepairRequestCard } from '@/features/orders/components/RepairRequestCard';
 import { OrderNotesEditSheet } from '@/features/orders/components/OrderNotesEditSheet';
 import { OrderMeasurementCard } from '@/features/orders/components/OrderMeasurementCard';
 import { OrderItemsCard } from '@/features/orders/components/OrderItemsCard';
@@ -354,6 +355,8 @@ export default function OrderDetailsScreen() {
         {!isTailorRole ? <OrderAddressCard order={order} /> : null}
 
         <OrderNotesCard order={order} isAdminRole={isAdminRole} onEdit={() => setNotesSheetVisible(true)} />
+
+        <RepairRequestCard order={order} />
 
         {isTailorRole ? (
           <Pressable

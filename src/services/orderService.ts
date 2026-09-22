@@ -65,6 +65,7 @@ function normalizeOrderResponse(item: MyOrderItem): AdminOrderItem {
     cloth_details: item.ClothDetails ?? null,
     reference_photo_url: item.ReferencePhotoUrl ?? null,
     voice_note_url: item.VoiceNoteUrl ?? null,
+    latest_repair_request: item.LatestRepairRequest ?? null,
     assigned_employee_id: item.AssignedEmployeeId != null ? String(item.AssignedEmployeeId) : undefined,
     assigned_employee_name: item.AssignedEmployeeName ?? null,
     delivery_employee_id: item.DeliveryEmployeeId != null ? String(item.DeliveryEmployeeId) : undefined,
@@ -193,6 +194,15 @@ export const orderService = {
   // sequential progression (see order_status_rules.assert_role_may_transition).
   updateStitchingStatus: async (orderId: string, payload: OrderStatusUpdateRequest) => {
     const { data } = await apiClient.patch(ENDPOINTS.ORDERS.UPDATE_STATUS(orderId), payload);
+    return data;
+  },
+
+  // Tailor-only: marks an IN_REPAIR order's repair done, chaining straight
+  // into a fresh INSPECTION_WINDOW (server-side, see repair_service.
+  // complete_repair) - distinct from updateStitchingStatus since this isn't
+  // a plain status PATCH, it's a dedicated two-step transition.
+  completeRepair: async (orderId: string) => {
+    const { data } = await apiClient.post(ENDPOINTS.ORDERS.COMPLETE_REPAIR(orderId));
     return data;
   },
 
