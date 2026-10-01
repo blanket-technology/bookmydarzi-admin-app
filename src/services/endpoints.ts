@@ -140,6 +140,28 @@ export const ENDPOINTS = {
       `/api/v1/employee/orders/${orderId}/return-broadcast/decline`,
     RETURN_IN_TRANSIT: (orderId: string) => `/api/v1/employee/orders/${orderId}/return/in-transit`,
     RETURN_COMPLETE: (orderId: string) => `/api/v1/employee/orders/${orderId}/return/complete`,
+    // Repair-pickup broadcast (garment at customer's home -> tailor, post-
+    // delivery repair loop), mirrors pickup's geography.
+    REPAIR_PICKUP_BROADCASTS: '/api/v1/employee/repair-pickup-broadcasts',
+    REPAIR_PICKUP_BROADCAST_ACCEPT: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/repair-pickup-broadcast/accept`,
+    REPAIR_PICKUP_BROADCAST_DECLINE: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/repair-pickup-broadcast/decline`,
+    REPAIR_PICKUP_IN_TRANSIT: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/repair-pickup/in-transit`,
+    REPAIR_PICKUP_DELIVERED_TO_TAILOR: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/repair-pickup/delivered-to-tailor`,
+    // Repair-delivery broadcast (repaired garment at tailor -> customer),
+    // mirrors delivery's geography.
+    REPAIR_DELIVERY_BROADCASTS: '/api/v1/employee/repair-delivery-broadcasts',
+    REPAIR_DELIVERY_BROADCAST_ACCEPT: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/repair-delivery-broadcast/accept`,
+    REPAIR_DELIVERY_BROADCAST_DECLINE: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/repair-delivery-broadcast/decline`,
+    REPAIR_DELIVERY_IN_TRANSIT: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/repair-delivery/in-transit`,
+    REPAIR_DELIVERY_COMPLETE: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/repair-delivery/complete`,
     MY_BRIDGE_PROFILE: '/api/v1/employee/me/bridge-profile',
     MY_KYC: '/api/v1/employee/me/kyc',
   },

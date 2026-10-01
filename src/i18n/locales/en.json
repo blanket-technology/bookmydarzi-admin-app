@@ -472,6 +472,36 @@
     "markComplete": "Mark Returned",
     "acceptedBanner": "You've accepted this return. Pick up the item from the tailor, then mark it in transit."
   },
+  "repairPickups": {
+    "title": "Repair Pickups",
+    "repairPickupOrder": "Repair Pickup",
+    "pickupCustomer": "Pickup — customer",
+    "dropTailor": "Drop — tailor",
+    "locationNotAvailable": "Location not available",
+    "willReceiveOffers": "You will receive nearby repair-pickup offers.",
+    "goOnlineHint": "Go online to start receiving repair-pickup offers.",
+    "toggleOnlineHint": "Toggle online above to start receiving nearby repair-pickup offers.",
+    "newOffersWillAppear": "New repair-pickup offers near you will appear here.",
+    "declineOfferMessage": "Decline this repair-pickup offer? It will be sent to the next available Bridge employee.",
+    "markInTransit": "Mark In Transit",
+    "markDeliveredToTailor": "Mark Delivered To Tailor",
+    "acceptedBanner": "You've accepted this repair pickup. Collect the item from the customer, then mark it in transit."
+  },
+  "repairDeliveries": {
+    "title": "Repair Deliveries",
+    "repairDeliveryOrder": "Repair Delivery",
+    "pickupTailor": "Pickup — tailor",
+    "dropCustomer": "Drop — customer",
+    "locationNotAvailable": "Location not available",
+    "willReceiveOffers": "You will receive nearby repair-delivery offers.",
+    "goOnlineHint": "Go online to start receiving repair-delivery offers.",
+    "toggleOnlineHint": "Toggle online above to start receiving nearby repair-delivery offers.",
+    "newOffersWillAppear": "New repair-delivery offers near you will appear here.",
+    "declineOfferMessage": "Decline this repair-delivery offer? It will be sent to the next available Bridge employee.",
+    "markInTransit": "Mark In Transit",
+    "markComplete": "Mark Delivered",
+    "acceptedBanner": "You've accepted this repair delivery. Collect the repaired item from the tailor, then mark it in transit."
+  },
   "notifications": {
     "justNow": "Just now",
     "minutesAgo": "{{minutes}}m ago",
