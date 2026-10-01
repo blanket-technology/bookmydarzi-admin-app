@@ -9,6 +9,8 @@ import { useBroadcastOffers } from '@/features/broadcasts/hooks/useBroadcasts';
 import { useDeliveryBroadcastOffers } from '@/features/deliveries/hooks/useDeliveries';
 import { usePickupBroadcastOffers } from '@/features/pickups/hooks/usePickups';
 import { useReturnBroadcastOffers } from '@/features/returns/hooks/useReturns';
+import { useRepairPickupBroadcastOffers } from '@/features/repairPickups/hooks/useRepairPickups';
+import { useRepairDeliveryBroadcastOffers } from '@/features/repairDeliveries/hooks/useRepairDeliveries';
 import { useLogoutMutation } from '@/features/auth/hooks/useAuthMutations';
 import { useUnreadNotificationCount } from '@/features/notifications/hooks/useNotifications';
 import { usePendingChatCount } from '@/features/chat/hooks/useChat';
@@ -34,6 +36,8 @@ const MENU_ITEMS: {
   { label: 'Pickups', icon: 'cube-outline', route: '/(drawer)/pickups', permission: 'deliveries' },
   { label: 'Deliveries', icon: 'bicycle-outline', route: '/(drawer)/deliveries', permission: 'deliveries' },
   { label: 'Returns', icon: 'return-up-back-outline', route: '/(drawer)/returns', permission: 'deliveries' },
+  { label: 'Repair Pickups', icon: 'construct-outline', route: '/(drawer)/repair-pickups', permission: 'deliveries' },
+  { label: 'Repair Deliveries', icon: 'build-outline', route: '/(drawer)/repair-deliveries', permission: 'deliveries' },
   { label: 'Leave', icon: 'calendar-outline', route: '/(drawer)/leave', permission: 'leave' },
   { label: 'Customers', icon: 'people-outline', route: '/(drawer)/customers', permission: 'users' },
   { label: 'Tailors', icon: 'cut-outline', route: '/(drawer)/tailors', permission: 'tailors' },
@@ -112,6 +116,12 @@ export const CustomDrawer = (props: DrawerContentComponentProps) => {
   const { data: returnBroadcastsData } = useReturnBroadcastOffers(
     isAuthenticated && permissions.deliveries,
   );
+  const { data: repairPickupBroadcastsData } = useRepairPickupBroadcastOffers(
+    isAuthenticated && permissions.deliveries,
+  );
+  const { data: repairDeliveryBroadcastsData } = useRepairDeliveryBroadcastOffers(
+    isAuthenticated && permissions.deliveries,
+  );
 
   const visibleItems = MENU_ITEMS.filter((item) => permissions[item.permission]);
 
@@ -179,7 +189,11 @@ export const CustomDrawer = (props: DrawerContentComponentProps) => {
                         ? deliveryBroadcastsData?.total
                         : item.route === '/(drawer)/returns'
                           ? returnBroadcastsData?.total
-                          : undefined
+                          : item.route === '/(drawer)/repair-pickups'
+                            ? repairPickupBroadcastsData?.total
+                            : item.route === '/(drawer)/repair-deliveries'
+                              ? repairDeliveryBroadcastsData?.total
+                              : undefined
             }
           />
         ))}

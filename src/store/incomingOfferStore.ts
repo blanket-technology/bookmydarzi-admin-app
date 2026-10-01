@@ -13,7 +13,7 @@ import { create } from 'zustand';
 // wsStatusStore.ts, so non-component callers (useAppSocket.ts) can enqueue
 // without needing a hook.
 
-export type IncomingOfferKind = 'pickup' | 'delivery' | 'return';
+export type IncomingOfferKind = 'pickup' | 'delivery' | 'return' | 'repair_pickup' | 'repair_delivery';
 
 export interface IncomingOfferLocation {
   full_name?: string | null;

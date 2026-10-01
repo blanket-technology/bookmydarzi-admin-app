@@ -21,6 +21,16 @@ import {
   useDeclineReturnBroadcastMutation,
   useReturnBroadcastOffers,
 } from '@/features/returns/hooks/useReturns';
+import {
+  useAcceptRepairPickupBroadcastMutation,
+  useDeclineRepairPickupBroadcastMutation,
+  useRepairPickupBroadcastOffers,
+} from '@/features/repairPickups/hooks/useRepairPickups';
+import {
+  useAcceptRepairDeliveryBroadcastMutation,
+  useDeclineRepairDeliveryBroadcastMutation,
+  useRepairDeliveryBroadcastOffers,
+} from '@/features/repairDeliveries/hooks/useRepairDeliveries';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
@@ -66,6 +76,12 @@ export const IncomingOfferModal = () => {
   const { data: pickupOffersData } = usePickupBroadcastOffers(staffEnabled && offer?.kind === 'pickup');
   const { data: deliveryOffersData } = useDeliveryBroadcastOffers(staffEnabled && offer?.kind === 'delivery');
   const { data: returnOffersData } = useReturnBroadcastOffers(staffEnabled && offer?.kind === 'return');
+  const { data: repairPickupOffersData } = useRepairPickupBroadcastOffers(
+    staffEnabled && offer?.kind === 'repair_pickup',
+  );
+  const { data: repairDeliveryOffersData } = useRepairDeliveryBroadcastOffers(
+    staffEnabled && offer?.kind === 'repair_delivery',
+  );
 
   // order_id comes back as a number from these list endpoints
   // (employee.py: "order_id": order.Id) while offer.orderId is always a
@@ -74,7 +90,18 @@ export const IncomingOfferModal = () => {
   const resolvedPickupOffer = pickupOffersData?.broadcasts.find((b) => String(b.order_id) === String(offer?.orderId));
   const resolvedDeliveryOffer = deliveryOffersData?.broadcasts.find((b) => String(b.order_id) === String(offer?.orderId));
   const resolvedReturnOffer = returnOffersData?.broadcasts.find((b) => String(b.order_id) === String(offer?.orderId));
-  const resolvedOffer = resolvedPickupOffer ?? resolvedDeliveryOffer ?? resolvedReturnOffer;
+  const resolvedRepairPickupOffer = repairPickupOffersData?.broadcasts.find(
+    (b) => String(b.order_id) === String(offer?.orderId),
+  );
+  const resolvedRepairDeliveryOffer = repairDeliveryOffersData?.broadcasts.find(
+    (b) => String(b.order_id) === String(offer?.orderId),
+  );
+  const resolvedOffer =
+    resolvedPickupOffer ??
+    resolvedDeliveryOffer ??
+    resolvedReturnOffer ??
+    resolvedRepairPickupOffer ??
+    resolvedRepairDeliveryOffer;
 
   const pickup: IncomingOfferLocation | null | undefined =
     offer?.kind === 'pickup' ? resolvedPickupOffer?.pickup ?? offer?.pickup ?? null : offer?.pickup ?? null;
@@ -89,6 +116,10 @@ export const IncomingOfferModal = () => {
   const declineDelivery = useDeclineDeliveryBroadcastMutation();
   const acceptReturn = useAcceptReturnBroadcastMutation();
   const declineReturn = useDeclineReturnBroadcastMutation();
+  const acceptRepairPickup = useAcceptRepairPickupBroadcastMutation();
+  const declineRepairPickup = useDeclineRepairPickupBroadcastMutation();
+  const acceptRepairDelivery = useAcceptRepairDeliveryBroadcastMutation();
+  const declineRepairDelivery = useDeclineRepairDeliveryBroadcastMutation();
 
   const { acceptMutation, declineMutation } = useMemo(() => {
     switch (offer?.kind) {
@@ -96,6 +127,10 @@ export const IncomingOfferModal = () => {
         return { acceptMutation: acceptDelivery, declineMutation: declineDelivery };
       case 'return':
         return { acceptMutation: acceptReturn, declineMutation: declineReturn };
+      case 'repair_pickup':
+        return { acceptMutation: acceptRepairPickup, declineMutation: declineRepairPickup };
+      case 'repair_delivery':
+        return { acceptMutation: acceptRepairDelivery, declineMutation: declineRepairDelivery };
       case 'pickup':
       default:
         return { acceptMutation: acceptPickup, declineMutation: declinePickup };
@@ -133,8 +168,23 @@ export const IncomingOfferModal = () => {
     : null;
 
   const titleKey =
-    offer.kind === 'delivery' ? 'deliveries.deliveryOrder' : offer.kind === 'return' ? 'returns.returnOrder' : 'pickups.pickupOrder';
-  const iconName = offer.kind === 'delivery' ? 'bicycle-outline' : offer.kind === 'return' ? 'return-up-back-outline' : 'cube-outline';
+    offer.kind === 'delivery'
+      ? 'deliveries.deliveryOrder'
+      : offer.kind === 'return'
+        ? 'returns.returnOrder'
+        : offer.kind === 'repair_pickup'
+          ? 'repairPickups.repairPickupOrder'
+          : offer.kind === 'repair_delivery'
+            ? 'repairDeliveries.repairDeliveryOrder'
+            : 'pickups.pickupOrder';
+  const iconName =
+    offer.kind === 'delivery' || offer.kind === 'repair_delivery'
+      ? 'bicycle-outline'
+      : offer.kind === 'return'
+        ? 'return-up-back-outline'
+        : offer.kind === 'repair_pickup'
+          ? 'construct-outline'
+          : 'cube-outline';
 
   const handleAccept = () => {
     acceptMutation.mutate(offer.orderId, {
@@ -195,10 +245,14 @@ export const IncomingOfferModal = () => {
               style={{ backgroundColor: colors.card, borderColor: colors.border }}
             >
               <LocationRow
-                icon={offer.kind === 'delivery' || offer.kind === 'return' ? 'cut-outline' : 'location-outline'}
+                icon={
+                  offer.kind === 'delivery' || offer.kind === 'return' || offer.kind === 'repair_delivery'
+                    ? 'cut-outline'
+                    : 'location-outline'
+                }
                 iconColor={colors.primary}
                 label={
-                  offer.kind === 'delivery' || offer.kind === 'return'
+                  offer.kind === 'delivery' || offer.kind === 'return' || offer.kind === 'repair_delivery'
                     ? t('deliveries.pickupTailor')
                     : t('pickups.pickupCustomer')
                 }

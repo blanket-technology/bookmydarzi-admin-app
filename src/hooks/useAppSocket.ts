@@ -152,6 +152,10 @@ export function useAppSocket() {
         // Was previously missing entirely - the Returns screen only ever
         // updated via its own 30s poll, unlike pickup/delivery above.
         queryClient.invalidateQueries({ queryKey: ['return-broadcasts'] });
+      } else if (notification.type === 'repair_pickup_broadcast_offer') {
+        queryClient.invalidateQueries({ queryKey: ['repair-pickup-broadcasts'] });
+      } else if (notification.type === 'repair_delivery_broadcast_offer') {
+        queryClient.invalidateQueries({ queryKey: ['repair-delivery-broadcasts'] });
       } else if (notification.type === 'broadcast_offer') {
         queryClient.invalidateQueries({ queryKey: ['broadcasts'] });
       }
@@ -167,14 +171,20 @@ export function useAppSocket() {
       if (
         notification.type === 'pickup_broadcast_offer' ||
         notification.type === 'delivery_broadcast_offer' ||
-        notification.type === 'return_broadcast_offer'
+        notification.type === 'return_broadcast_offer' ||
+        notification.type === 'repair_pickup_broadcast_offer' ||
+        notification.type === 'repair_delivery_broadcast_offer'
       ) {
         const kind =
           notification.type === 'pickup_broadcast_offer'
             ? 'pickup'
             : notification.type === 'delivery_broadcast_offer'
               ? 'delivery'
-              : 'return';
+              : notification.type === 'return_broadcast_offer'
+                ? 'return'
+                : notification.type === 'repair_pickup_broadcast_offer'
+                  ? 'repair_pickup'
+                  : 'repair_delivery';
         const data = notification.data ?? {};
         // The WS notification payload doesn't carry the broadcast row's real
         // expires_at (see delivery/pickup/return_broadcast_service.py's
