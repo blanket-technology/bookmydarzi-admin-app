@@ -167,6 +167,20 @@ export default function ChatThreadScreen() {
           {item.body ? (
             <Text style={{ color: isAgent ? '#ffffff' : colors.text }}>{item.body}</Text>
           ) : null}
+          {/* Read-only visibility into the quick-reply chips the AI offered
+              the customer on this message - staff don't tap these (the
+              customer already did, or will), this is just context. */}
+          {item.sender_type === 'ai' && Array.isArray(item.metadata?.quick_replies) ? (
+            <View className="flex-row flex-wrap gap-1.5 mt-1.5">
+              {(item.metadata!.quick_replies as { label: string }[]).map((chip, i) => (
+                <View key={i} className="rounded-full border px-2.5 py-1" style={{ borderColor: 'rgba(255,255,255,0.4)' }}>
+                  <Text className="text-[10px] font-semibold" style={{ color: '#e9d5ff' }}>
+                    {chip.label}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
           <View className="flex-row items-center mt-1 gap-2">
             <Text style={{ color: isAgent ? '#e9d5ff' : colors.textMuted }} className="text-[10px]">
               {isPending ? 'Sending…' : formatDateTime(item.created_at ?? undefined)}
