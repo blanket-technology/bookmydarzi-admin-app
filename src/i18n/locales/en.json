@@ -197,7 +197,9 @@
     "urgency": "Urgency",
     "created": "Created",
     "expectedDelivery": "Expected Delivery",
-    "returnHandledBy": "Return Handled By"
+    "returnHandledBy": "Return Handled By",
+    "repairPickupHandledBy": "Repair Pickup Handled By",
+    "repairDeliveryHandledBy": "Repair Delivery Handled By"
   },
   "ordersFilter": {
     "title": "Filter Orders",
@@ -313,7 +315,13 @@
   "assignBridgeEmployee": {
     "pickupTitle": "Assign Pickup Employee",
     "deliveryTitle": "Assign Delivery Employee",
+    "deliveryReassignTitle": "Reassign Delivery Employee",
     "returnTitle": "Assign Return Employee",
+    "returnReassignTitle": "Reassign Return Employee",
+    "repairPickupTitle": "Assign Repair-Pickup Employee",
+    "repairPickupReassignTitle": "Reassign Repair-Pickup Employee",
+    "repairDeliveryTitle": "Assign Repair-Delivery Employee",
+    "repairDeliveryReassignTitle": "Reassign Repair-Delivery Employee",
     "noEmployees": "No Bridge employees found",
     "noEmployeesBody": "No active Bridge/employee accounts exist yet.",
     "online": "Online",

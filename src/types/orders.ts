@@ -20,7 +20,14 @@ export type OrderStatus =
   | 'delivered'
   | 'inspection_window'
   | 'in_repair'
+  | 'repair_pickup_pending'
+  | 'repair_pickup_scheduled'
+  | 'repair_pickup_in_transit'
+  | 'at_tailor_for_repair'
   | 'repair_completed'
+  | 'repair_delivery_pending'
+  | 'repair_delivery_scheduled'
+  | 'repair_delivery_in_transit'
   | 'completed'
   | 'cancelled'
   | 'return_pending'
@@ -141,6 +148,12 @@ export interface AdminOrderItem {
    * employee has accepted the order's return broadcast. */
   return_employee_id?: string;
   return_employee_name?: string | null;
+  /** Repair round-trip legs (customer<->tailor, for a reported post-delivery
+   * issue) - only set once an employee has accepted the respective broadcast. */
+  repair_pickup_employee_id?: string;
+  repair_pickup_employee_name?: string | null;
+  repair_delivery_employee_id?: string;
+  repair_delivery_employee_name?: string | null;
   measurement?: OrderMeasurement | null;
   /** True when the tailor broadcast exhausted every round (including the
    * all-tailor fallback) with zero acceptance - needs manual assignment. */
@@ -249,6 +262,10 @@ export interface MyOrderItem {
   DeliveryEmployeeName?: string | null;
   ReturnEmployeeId?: number | null;
   ReturnEmployeeName?: string | null;
+  RepairPickupEmployeeId?: number | null;
+  RepairPickupEmployeeName?: string | null;
+  RepairDeliveryEmployeeId?: number | null;
+  RepairDeliveryEmployeeName?: string | null;
   Items?: RawOrderItemSummary[] | null;
 }
 

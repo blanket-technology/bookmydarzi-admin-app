@@ -72,6 +72,10 @@ function normalizeOrderResponse(item: MyOrderItem): AdminOrderItem {
     delivery_employee_name: item.DeliveryEmployeeName ?? null,
     return_employee_id: item.ReturnEmployeeId != null ? String(item.ReturnEmployeeId) : undefined,
     return_employee_name: item.ReturnEmployeeName ?? null,
+    repair_pickup_employee_id: item.RepairPickupEmployeeId != null ? String(item.RepairPickupEmployeeId) : undefined,
+    repair_pickup_employee_name: item.RepairPickupEmployeeName ?? null,
+    repair_delivery_employee_id: item.RepairDeliveryEmployeeId != null ? String(item.RepairDeliveryEmployeeId) : undefined,
+    repair_delivery_employee_name: item.RepairDeliveryEmployeeName ?? null,
     measurement: item.measurement ? { ...item.measurement, id: String(item.measurement.id) } : null,
     needs_manual_assignment: item.NeedsManualAssignment ?? false,
     broadcast_exhausted_at: item.BroadcastExhaustedAt ?? null,
@@ -167,7 +171,28 @@ export const orderService = {
     return data;
   },
 
-  // Bridge/employee picker for the three assignment actions above - open to
+  // Same manual-override lever as above, for the two repair legs
+  // (customer<->tailor round trip for a reported post-delivery issue) -
+  // see assign_bridge_service.py's assign_repair_pickup_employee /
+  // assign_repair_delivery_employee on the backend. Previously neither
+  // repair leg had any admin-assignment lever at all.
+  assignRepairPickupEmployee: async (orderId: string, payload: AssignBridgeEmployeeRequest) => {
+    const { data } = await apiClient.patch(
+      ENDPOINTS.ADMIN.ORDER_ASSIGN_REPAIR_PICKUP_EMPLOYEE(orderId),
+      payload,
+    );
+    return data;
+  },
+
+  assignRepairDeliveryEmployee: async (orderId: string, payload: AssignBridgeEmployeeRequest) => {
+    const { data } = await apiClient.patch(
+      ENDPOINTS.ADMIN.ORDER_ASSIGN_REPAIR_DELIVERY_EMPLOYEE(orderId),
+      payload,
+    );
+    return data;
+  },
+
+  // Bridge/employee picker for the assignment actions above - open to
   // admin/superadmin/employee alike (unlike GET /admin/staff, admin-only),
   // no PII beyond name (see StaffBridgeEmployeeListItem on the backend).
   getBridgeEmployees: async (): Promise<BridgeEmployeeListItem[]> => {

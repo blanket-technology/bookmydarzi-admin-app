@@ -171,6 +171,46 @@ export const useAssignReturnEmployeeMutation = () => {
   });
 };
 
+export const useAssignRepairPickupEmployeeMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      payload,
+    }: {
+      orderId: string;
+      payload: AssignBridgeEmployeeRequest;
+    }) => orderService.assignRepairPickupEmployee(orderId, payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(variables.orderId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
+      toast.success('Repair-pickup employee assigned successfully');
+    },
+    onError: (error) => toast.error(formatApiErrorDetail(error)),
+  });
+};
+
+export const useAssignRepairDeliveryEmployeeMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      payload,
+    }: {
+      orderId: string;
+      payload: AssignBridgeEmployeeRequest;
+    }) => orderService.assignRepairDeliveryEmployee(orderId, payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(variables.orderId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
+      toast.success('Repair-delivery employee assigned successfully');
+    },
+    onError: (error) => toast.error(formatApiErrorDetail(error)),
+  });
+};
+
 // Employee-scoped tailor assignment — PATCH /employee/orders/{id}/assign-tailor,
 // distinct endpoint from useAssignTailorMutation above (admin-only route).
 export const useAssignTailorEmployeeMutation = () => {
