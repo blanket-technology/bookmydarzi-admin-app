@@ -6,6 +6,7 @@ import {
   normalizeAuthUser,
 } from '@/services/authService';
 import { STORAGE_KEYS } from '@/constants/storage';
+import { refreshAccessToken } from '@/services/refreshCoordinator';
 import { tokenStorage } from '@/services/tokenStorage';
 import { useAuthStore } from '@/store/authStore';
 import type { AuthUser } from '@/types/auth';
@@ -53,7 +54,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isHydrated = useAuthStore((s) => s.isHydrated);
   const storeLogin = useAuthStore((s) => s.login);
   const storeLogout = useAuthStore((s) => s.logout);
-  const storeRefreshSession = useAuthStore((s) => s.refreshSession);
   const setUser = useAuthStore((s) => s.setUser);
   const setLoading = useAuthStore((s) => s.setLoading);
   const setHydrated = useAuthStore((s) => s.setHydrated);
@@ -118,9 +118,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const data = await withTimeout(authService.refresh(refreshToken), SESSION_INIT_TIMEOUT_MS);
-      await tokenStorage.setTokens(data.access_token, data.refresh_token);
-      storeRefreshSession(data.access_token, data.refresh_token);
+      // Routed through the shared coordinator (not authService.refresh
+      // directly) so this boot-time refresh joins any refresh axios.ts's
+      // 401 interceptor may already have in flight, instead of racing it
+      // with the same refresh token - see refreshCoordinator.ts. The
+      // coordinator already persists the new tokens on success.
+      const data = await withTimeout(refreshAccessToken(refreshToken), SESSION_INIT_TIMEOUT_MS);
 
       if (data.user) {
         setUser(normalizeAuthUser(data.user as unknown as Record<string, unknown>));
@@ -131,13 +134,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return true;
     } catch (error) {
+      // A timeout/network failure here means we don't know whether the
+      // refresh token is actually invalid - it may well still be good.
+      // Logging out on this is how a slow/cold-starting backend (Railway
+      // hobby tier, documented in axios.ts) turned into a false "session
+      // expired" for users who never did anything wrong. Only an actual
+      // rejection from the server (expired/revoked token) should log out;
+      // a transient failure should leave the existing session alone and
+      // let the next authenticated request's own 401 handling (axios.ts,
+      // which does retry network errors before giving up) take it from
+      // here.
+      const isTimeout = error instanceof Error && error.message === 'SESSION_INIT_TIMEOUT';
+      const isNetworkError =
+        typeof error === 'object' &&
+        error !== null &&
+        'message' in error &&
+        (error as { message?: unknown }).message === 'Network Error';
+
       if (__DEV__) {
-        console.warn('[AuthProvider] refreshSession failed', error);
+        console.warn('[AuthProvider] refreshSession failed', error, { isTimeout, isNetworkError });
       }
+
+      if (isTimeout || isNetworkError) {
+        return false;
+      }
+
       await logout();
       return false;
     }
-  }, [logout, setUser, storeRefreshSession]);
+  }, [logout, setUser]);
 
   // Fallback: never block app boot if zustand persist hydration stalls
   useEffect(() => {

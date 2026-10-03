@@ -5,10 +5,10 @@ import axios, {
 } from 'axios';
 import { API_CONFIG } from '@/config/api';
 import { ENDPOINTS } from '@/services/endpoints';
+import { refreshAccessToken } from '@/services/refreshCoordinator';
 import { tokenStorage } from '@/services/tokenStorage';
 import { useAuthStore } from '@/store/authStore';
 import { useSessionStore } from '@/store/sessionStore';
-import type { AuthTokenResponse } from '@/types/auth';
 import { logApiError, logApiRequest, logApiResponse } from '@/utils/apiLogger';
 import { enrichApiError, parseApiError } from '@/utils/errors';
 
@@ -73,11 +73,6 @@ const resolveAccessToken = async (): Promise<string | null> => {
 
   return secureToken;
 };
-
-const normalizeRefreshTokens = (data: Record<string, unknown>) => ({
-  access_token: String(data.access_token ?? data.accessToken ?? data.token ?? ''),
-  refresh_token: String(data.refresh_token ?? data.refreshToken ?? ''),
-});
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_CONFIG.BASE_URL,
@@ -190,22 +185,16 @@ apiClient.interceptors.response.use(
 
       try {
         if (__DEV__) console.log('[API] Refreshing access token...');
-        const response = await axios.post<AuthTokenResponse>(
-          `${API_CONFIG.BASE_URL}${ENDPOINTS.AUTH.REFRESH}`,
-          { refresh_token: refreshToken },
-          { headers: { 'Content-Type': 'application/json' }, timeout: API_CONFIG.TIMEOUT },
-        );
-
-        const tokens = normalizeRefreshTokens(
-          response.data as unknown as Record<string, unknown>,
-        );
+        // Routed through the shared coordinator (not a raw axios.post here)
+        // so this call joins the same in-flight refresh authContext.tsx's
+        // boot-time session restore may already have started, instead of
+        // racing it with the same refresh token - see refreshCoordinator.ts.
+        const tokens = await refreshAccessToken(refreshToken);
 
         if (!tokens.access_token) {
           throw new Error('Refresh response missing access_token');
         }
 
-        useAuthStore.getState().refreshSession(tokens.access_token, tokens.refresh_token);
-        await tokenStorage.setTokens(tokens.access_token, tokens.refresh_token);
         processQueue(null, tokens.access_token);
 
         originalRequest.headers.Authorization = `Bearer ${tokens.access_token}`;
