@@ -13,7 +13,6 @@ import {
 import {
   useAcceptPickupBroadcastMutation,
   useDeclinePickupBroadcastMutation,
-  useEmployeeOnlineStatus,
   usePickupBroadcastOffers,
 } from '@/features/pickups/hooks/usePickups';
 import {
@@ -36,7 +35,6 @@ import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { useOfferAlertSound } from '@/hooks/useOfferAlertSound';
 import { useIncomingOfferStore, type IncomingOfferLocation } from '@/store/incomingOfferStore';
-import { formatDistanceKm, haversineDistanceKm } from '@/utils/geo';
 
 // Full-screen, non-dismissible "New offer!" takeover - the Rapido/Ola-style
 // ride-request popup this app was missing. Previously a new pickup/delivery/
@@ -57,12 +55,6 @@ export const IncomingOfferModal = () => {
   const queue = useIncomingOfferStore((s) => s.queue);
   const dequeue = useIncomingOfferStore((s) => s.dequeue);
   const offer = queue[0] ?? null;
-
-  const { data: onlineStatus } = useEmployeeOnlineStatus(staffEnabled);
-  const myCoords =
-    onlineStatus?.latitude != null && onlineStatus?.longitude != null
-      ? { latitude: onlineStatus.latitude, longitude: onlineStatus.longitude }
-      : null;
 
   // Pickup offers arrive with no location payload at all (see
   // incomingOfferStore.ts's IncomingOffer docstring) - resolve it from the
@@ -103,9 +95,19 @@ export const IncomingOfferModal = () => {
     resolvedRepairPickupOffer ??
     resolvedRepairDeliveryOffer;
 
-  const pickup: IncomingOfferLocation | null | undefined =
-    offer?.kind === 'pickup' ? resolvedPickupOffer?.pickup ?? offer?.pickup ?? null : offer?.pickup ?? null;
-  const drop = offer?.drop ?? null;
+  // Prefer the resolved list-endpoint data (which carries the real
+  // server-computed distance_km, see _leg_distance_km in employee.py) over
+  // the raw WS payload for BOTH legs and every offer kind - the WS
+  // notification's own pickup/drop dicts (built separately in each
+  // broadcast service) never carry distance_km, only the list endpoints
+  // this hook queries do. Previously only the plain "pickup" kind ever
+  // looked at resolvedOffer for its pickup leg, and drop never did at all
+  // for any kind - meaning every delivery/return/repair offer's distance
+  // silently stayed null even once the backend started sending it.
+  const pickup: IncomingOfferLocation | null | undefined = resolvedOffer?.pickup ?? offer?.pickup ?? null;
+  const resolvedDrop: IncomingOfferLocation | null | undefined =
+    resolvedOffer && 'drop' in resolvedOffer ? resolvedOffer.drop : null;
+  const drop: IncomingOfferLocation | null | undefined = resolvedDrop ?? offer?.drop ?? null;
   const items = resolvedOffer?.items;
   const expiresAt = resolvedOffer?.expires_at ?? offer?.expiresAt;
   const broadcastRound = resolvedOffer?.broadcast_round ?? offer?.broadcastRound;
@@ -153,10 +155,12 @@ export const IncomingOfferModal = () => {
 
   if (!offer) return null;
 
-  const distanceLabel =
-    myCoords && pickup?.latitude != null && pickup?.longitude != null
-      ? formatDistanceKm(haversineDistanceKm(myCoords.latitude, myCoords.longitude, pickup.latitude, pickup.longitude))
-      : null;
+  // Real server-computed per-leg distance (employee.py's distance_km) -
+  // replaces the old client-side haversine-from-live-GPS approximation,
+  // which only ever covered the pickup leg and silently showed nothing if
+  // the device's own GPS read was stale/denied.
+  const pickupDistanceKm = pickup?.distance_km ?? null;
+  const dropDistanceKm = drop?.distance_km ?? null;
 
   const pickupLine = pickup
     ? [pickup.address_line_1, pickup.address_line_2, pickup.city, pickup.pincode].filter(Boolean).join(', ') ||
@@ -227,11 +231,6 @@ export const IncomingOfferModal = () => {
               {countdown}
             </Text>
           </View>
-          {distanceLabel ? (
-            <Text className="text-sm mt-2 font-semibold" style={{ color: colors.textSecondary }}>
-              {distanceLabel} {t('pickups.away')}
-            </Text>
-          ) : null}
         </View>
 
         <ScrollView className="flex-1 px-5 mt-2" showsVerticalScrollIndicator={false}>
@@ -259,6 +258,7 @@ export const IncomingOfferModal = () => {
                 addressLine={pickupLine || t('pickups.addressNotAvailable')}
                 personName={pickup?.tailor_name ?? pickup?.full_name}
                 mobile={pickup?.tailor_mobile ?? pickup?.mobile}
+                distanceKm={pickupDistanceKm}
                 onPress={undefined}
                 colors={colors}
               />
@@ -272,6 +272,7 @@ export const IncomingOfferModal = () => {
                     addressLine={dropLine || t('pickups.addressNotAvailable')}
                     personName={drop.full_name}
                     mobile={drop.mobile}
+                    distanceKm={dropDistanceKm}
                     onPress={undefined}
                     colors={colors}
                   />

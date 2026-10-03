@@ -13,6 +13,10 @@ export interface PickupAddressInfo {
   landmark?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  // Real server-computed distance from the employee's own current location
+  // to this pickup point (rounded to nearest 0.5 km) - mirrors the tailor
+  // broadcast side's identical distance_km field.
+  distance_km?: number | null;
 }
 
 export interface PickupBroadcastItem {

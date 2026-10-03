@@ -71,6 +71,7 @@ export const LocationRow = ({
   addressLine,
   personName,
   mobile,
+  distanceKm,
   onPress,
   colors,
 }: {
@@ -80,6 +81,11 @@ export const LocationRow = ({
   addressLine: string;
   personName?: string | null;
   mobile?: string | null;
+  // Distance for THIS leg specifically (e.g. employee -> pickup, or
+  // pickup -> drop) - rendered prominently next to the label, matching the
+  // Rapido/Swiggy-style "0.1 km" / "14 km" per-leg convention instead of a
+  // single trip-wide distance shown only once.
+  distanceKm?: number | null;
   onPress?: () => void;
   colors: ReturnType<typeof useTheme>['colors'];
 }) => (
@@ -87,9 +93,16 @@ export const LocationRow = ({
     <Pressable onPress={onPress} disabled={!onPress} className="flex-row items-start">
       <Ionicons name={icon} size={15} color={iconColor} style={{ marginTop: 1 }} />
       <View className="flex-1 ml-2">
-        <Text className="text-[11px] font-semibold uppercase" style={{ color: colors.textMuted }}>
-          {label}
-        </Text>
+        <View className="flex-row items-center justify-between">
+          <Text className="text-[11px] font-semibold uppercase" style={{ color: colors.textMuted }}>
+            {label}
+          </Text>
+          {distanceKm != null ? (
+            <Text className="text-sm font-bold" style={{ color: colors.text }}>
+              {distanceKm} km
+            </Text>
+          ) : null}
+        </View>
         <Text className="text-sm mt-0.5" style={{ color: colors.text }} numberOfLines={2}>
           {addressLine}
         </Text>

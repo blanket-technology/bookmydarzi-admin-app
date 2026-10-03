@@ -13,6 +13,7 @@ export interface RepairPickupPickupInfo {
   landmark?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  distance_km?: number | null;
 }
 
 export interface RepairPickupDropInfo {
@@ -22,6 +23,7 @@ export interface RepairPickupDropInfo {
   location?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  distance_km?: number | null;
 }
 
 export interface RepairPickupBroadcastItem {
