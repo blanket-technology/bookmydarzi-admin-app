@@ -197,7 +197,9 @@
     "urgency": "प्राथमिकता",
     "created": "बनाया गया",
     "expectedDelivery": "संभावित डिलीवरी",
-    "returnHandledBy": "वापसी का प्रबंधन"
+    "returnHandledBy": "वापसी का प्रबंधन",
+    "repairPickupHandledBy": "मरम्मत पिकअप प्रबंधन",
+    "repairDeliveryHandledBy": "मरम्मत डिलीवरी प्रबंधन"
   },
   "ordersFilter": {
     "title": "ऑर्डर फ़िल्टर करें",
@@ -313,7 +315,13 @@
   "assignBridgeEmployee": {
     "pickupTitle": "पिकअप कर्मचारी असाइन करें",
     "deliveryTitle": "डिलीवरी कर्मचारी असाइन करें",
+    "deliveryReassignTitle": "डिलीवरी कर्मचारी पुनः असाइन करें",
     "returnTitle": "रिटर्न कर्मचारी असाइन करें",
+    "returnReassignTitle": "रिटर्न कर्मचारी पुनः असाइन करें",
+    "repairPickupTitle": "मरम्मत पिकअप कर्मचारी असाइन करें",
+    "repairPickupReassignTitle": "मरम्मत पिकअप कर्मचारी पुनः असाइन करें",
+    "repairDeliveryTitle": "मरम्मत डिलीवरी कर्मचारी असाइन करें",
+    "repairDeliveryReassignTitle": "मरम्मत डिलीवरी कर्मचारी पुनः असाइन करें",
     "noEmployees": "कोई ब्रिज कर्मचारी नहीं मिला",
     "noEmployeesBody": "अभी तक कोई सक्रिय ब्रिज/कर्मचारी खाता मौजूद नहीं है।",
     "online": "ऑनलाइन",

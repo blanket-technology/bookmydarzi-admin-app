@@ -69,6 +69,20 @@ export const OrderSummaryCard = ({ order, isTailorRole = false }: { order: Admin
           colors={colors}
         />
       ) : null}
+      {!isTailorRole && order.repair_pickup_employee_id ? (
+        <DetailRow
+          label={t('orderSummary.repairPickupHandledBy')}
+          value={order.repair_pickup_employee_name ?? `#${order.repair_pickup_employee_id}`}
+          colors={colors}
+        />
+      ) : null}
+      {!isTailorRole && order.repair_delivery_employee_id ? (
+        <DetailRow
+          label={t('orderSummary.repairDeliveryHandledBy')}
+          value={order.repair_delivery_employee_name ?? `#${order.repair_delivery_employee_id}`}
+          colors={colors}
+        />
+      ) : null}
       {!isTailorRole ? (
         <>
           <DetailRow label={t('orderSummary.payment')} value={capitalize(order.payment_status ?? '—')} colors={colors} />

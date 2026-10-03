@@ -13,6 +13,8 @@ import {
   useAssignTailorEmployeeMutation,
   useAssignDeliveryEmployeeMutation,
   useAssignReturnEmployeeMutation,
+  useAssignRepairPickupEmployeeMutation,
+  useAssignRepairDeliveryEmployeeMutation,
   useBridgeEmployees,
   useUpdateOrderStatusMutation,
   useDownloadInvoiceMutation,
@@ -73,6 +75,8 @@ export default function OrderDetailsScreen() {
   const [assignSheetVisible, setAssignSheetVisible] = useState(false);
   const [assignDeliverySheetVisible, setAssignDeliverySheetVisible] = useState(false);
   const [assignReturnSheetVisible, setAssignReturnSheetVisible] = useState(false);
+  const [assignRepairPickupSheetVisible, setAssignRepairPickupSheetVisible] = useState(false);
+  const [assignRepairDeliverySheetVisible, setAssignRepairDeliverySheetVisible] = useState(false);
   const [schedulePickupSheetVisible, setSchedulePickupSheetVisible] = useState(false);
   const [statusSheetVisible, setStatusSheetVisible] = useState(false);
   const [measurementManageSheetVisible, setMeasurementManageSheetVisible] = useState(false);
@@ -132,11 +136,17 @@ export default function OrderDetailsScreen() {
   // own picker lives inside SchedulePickupSheet now (its own
   // useBridgeEmployees call).
   const { data: bridgeEmployeesData } = useBridgeEmployees(
-    isStaffRole && (assignDeliverySheetVisible || assignReturnSheetVisible),
+    isStaffRole &&
+      (assignDeliverySheetVisible ||
+        assignReturnSheetVisible ||
+        assignRepairPickupSheetVisible ||
+        assignRepairDeliverySheetVisible),
   );
   const bridgeEmployees = bridgeEmployeesData ?? [];
   const assignDeliveryEmployeeMutation = useAssignDeliveryEmployeeMutation();
   const assignReturnEmployeeMutation = useAssignReturnEmployeeMutation();
+  const assignRepairPickupEmployeeMutation = useAssignRepairPickupEmployeeMutation();
+  const assignRepairDeliveryEmployeeMutation = useAssignRepairDeliveryEmployeeMutation();
   const statusMutation = useUpdateOrderStatusMutation();
   const triggerBroadcastMutation = useTriggerBroadcastMutation();
   const downloadInvoiceMutation = useDownloadInvoiceMutation();
@@ -194,6 +204,22 @@ export default function OrderDetailsScreen() {
     assignReturnEmployeeMutation.mutate(
       { orderId: order.order_id, payload: { employee_id: employeeId } },
       { onSuccess: () => setAssignReturnSheetVisible(false) },
+    );
+  };
+
+  const handleAssignRepairPickupEmployee = (employeeId: string) => {
+    if (!order) return;
+    assignRepairPickupEmployeeMutation.mutate(
+      { orderId: order.order_id, payload: { employee_id: employeeId } },
+      { onSuccess: () => setAssignRepairPickupSheetVisible(false) },
+    );
+  };
+
+  const handleAssignRepairDeliveryEmployee = (employeeId: string) => {
+    if (!order) return;
+    assignRepairDeliveryEmployeeMutation.mutate(
+      { orderId: order.order_id, payload: { employee_id: employeeId } },
+      { onSuccess: () => setAssignRepairDeliverySheetVisible(false) },
     );
   };
 
@@ -560,11 +586,12 @@ export default function OrderDetailsScreen() {
             (SchedulePickupSheet) when nobody is assigned yet, matching the
             web admin panel's OrderFullDetailsPage.jsx exactly.
 
-            Delivery assignment appears here only once the order actually
-            reaches ready_for_dispatch and nobody has claimed it yet - this
-            is the manual override lever for when the automatic delivery
-            broadcast finds nobody, not a control that's visible long
-            before it can ever be used. */}
+            Delivery assignment appears at READY_FOR_DISPATCH (unclaimed -
+            the automatic broadcast found nobody) AND at OUT_FOR_DELIVERY
+            (already claimed - the accepted employee has gone unresponsive
+            and needs reassigning). Previously only the unclaimed case had
+            any lever at all - once accepted, admin had no recovery path
+            short of a direct DB fix if that employee stopped responding. */}
         {isStaffRole &&
         order.status === ORDER_STATUS.READY_FOR_DISPATCH &&
         !order.delivery_employee_id ? (
@@ -577,12 +604,26 @@ export default function OrderDetailsScreen() {
             />
           </View>
         ) : null}
+        {isStaffRole &&
+        order.status === ORDER_STATUS.OUT_FOR_DELIVERY &&
+        !!order.delivery_employee_id ? (
+          <View className="mb-3">
+            <Button
+              title={t('assignBridgeEmployee.deliveryReassignTitle')}
+              variant="secondary"
+              onPress={() => setAssignDeliverySheetVisible(true)}
+              fullWidth
+            />
+          </View>
+        ) : null}
 
         {/* Same override lever as delivery above, for the return leg - when
             no Bridge employee accepts the automatic return broadcast, staff
             previously had no way to force an assignment (only a deduped
             admin notification), matching the exact gap already fixed on
-            the web admin panel's OrderFullDetailsPage.jsx. */}
+            the web admin panel's OrderFullDetailsPage.jsx. Reassignment
+            (already-claimed case) is also available now, for the same
+            unresponsive-employee reason as delivery above. */}
         {isStaffRole &&
         order.status === ORDER_STATUS.RETURN_PENDING &&
         !order.return_employee_id ? (
@@ -591,6 +632,73 @@ export default function OrderDetailsScreen() {
               title={t('assignBridgeEmployee.returnTitle')}
               variant="secondary"
               onPress={() => setAssignReturnSheetVisible(true)}
+              fullWidth
+            />
+          </View>
+        ) : null}
+        {isStaffRole &&
+        (order.status === ORDER_STATUS.RETURN_SCHEDULED || order.status === ORDER_STATUS.RETURN_IN_TRANSIT) &&
+        !!order.return_employee_id ? (
+          <View className="mb-3">
+            <Button
+              title={t('assignBridgeEmployee.returnReassignTitle')}
+              variant="secondary"
+              onPress={() => setAssignReturnSheetVisible(true)}
+              fullWidth
+            />
+          </View>
+        ) : null}
+
+        {/* Repair-pickup/repair-delivery legs (customer<->tailor round trip
+            for a reported post-delivery issue) previously had NO admin
+            assignment lever at all, unlike every other Bridge leg - only
+            the broadcast-accept paths ever wrote these columns. */}
+        {isStaffRole &&
+        order.status === ORDER_STATUS.REPAIR_PICKUP_PENDING &&
+        !order.repair_pickup_employee_id ? (
+          <View className="mb-3">
+            <Button
+              title={t('assignBridgeEmployee.repairPickupTitle')}
+              variant="secondary"
+              onPress={() => setAssignRepairPickupSheetVisible(true)}
+              fullWidth
+            />
+          </View>
+        ) : null}
+        {isStaffRole &&
+        (order.status === ORDER_STATUS.REPAIR_PICKUP_SCHEDULED ||
+          order.status === ORDER_STATUS.REPAIR_PICKUP_IN_TRANSIT) &&
+        !!order.repair_pickup_employee_id ? (
+          <View className="mb-3">
+            <Button
+              title={t('assignBridgeEmployee.repairPickupReassignTitle')}
+              variant="secondary"
+              onPress={() => setAssignRepairPickupSheetVisible(true)}
+              fullWidth
+            />
+          </View>
+        ) : null}
+        {isStaffRole &&
+        order.status === ORDER_STATUS.REPAIR_DELIVERY_PENDING &&
+        !order.repair_delivery_employee_id ? (
+          <View className="mb-3">
+            <Button
+              title={t('assignBridgeEmployee.repairDeliveryTitle')}
+              variant="secondary"
+              onPress={() => setAssignRepairDeliverySheetVisible(true)}
+              fullWidth
+            />
+          </View>
+        ) : null}
+        {isStaffRole &&
+        (order.status === ORDER_STATUS.REPAIR_DELIVERY_SCHEDULED ||
+          order.status === ORDER_STATUS.REPAIR_DELIVERY_IN_TRANSIT) &&
+        !!order.repair_delivery_employee_id ? (
+          <View className="mb-3">
+            <Button
+              title={t('assignBridgeEmployee.repairDeliveryReassignTitle')}
+              variant="secondary"
+              onPress={() => setAssignRepairDeliverySheetVisible(true)}
               fullWidth
             />
           </View>
@@ -613,6 +721,22 @@ export default function OrderDetailsScreen() {
         title={t('assignBridgeEmployee.returnTitle')}
         employees={bridgeEmployees}
         onAssign={handleAssignReturnEmployee}
+      />
+
+      <AssignBridgeEmployeeSheet
+        visible={assignRepairPickupSheetVisible}
+        onClose={() => setAssignRepairPickupSheetVisible(false)}
+        title={t('assignBridgeEmployee.repairPickupTitle')}
+        employees={bridgeEmployees}
+        onAssign={handleAssignRepairPickupEmployee}
+      />
+
+      <AssignBridgeEmployeeSheet
+        visible={assignRepairDeliverySheetVisible}
+        onClose={() => setAssignRepairDeliverySheetVisible(false)}
+        title={t('assignBridgeEmployee.repairDeliveryTitle')}
+        employees={bridgeEmployees}
+        onAssign={handleAssignRepairDeliveryEmployee}
       />
 
       <SchedulePickupSheet
