@@ -61,4 +61,9 @@ export const QUERY_KEYS = {
   PAYOUTS: (params?: Record<string, unknown>) => ['payouts', params] as const,
   PAYOUT_SUMMARY: (tailorId: string) => ['payout-summary', tailorId] as const,
   COMMISSION_RATES: (tailorId?: string) => ['commission-rates', tailorId] as const,
+  BRIDGE_PAYOUTS: (params?: Record<string, unknown>) => ['bridge-payouts', params] as const,
+  BRIDGE_PAYOUT_SUMMARY: (employeeId: string) => ['bridge-payout-summary', employeeId] as const,
+  BRIDGE_LEG_RATES: (employeeId?: string) => ['bridge-leg-rates', employeeId] as const,
+  MY_PAYOUTS: (role: string, params?: Record<string, unknown>) => ['my-payouts', role, params] as const,
+  MY_PAYOUT_SUMMARY: (role: string) => ['my-payout-summary', role] as const,
 } as const;

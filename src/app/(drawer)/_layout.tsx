@@ -50,6 +50,14 @@ export default function DrawerLayout() {
           <Drawer.Screen name="broadcasts/index" options={{ title: 'Broadcasts' }} />
           <Drawer.Screen name="pickups/index" options={{ title: 'Pickups' }} />
           <Drawer.Screen name="deliveries/index" options={{ title: 'Deliveries' }} />
+          {/* These three were fully built (see src/features/returns,
+              repairPickups, repairDeliveries) and linked in CustomDrawer's
+              MENU_ITEMS, but never actually registered here - unreachable,
+              same bug class as the missing payouts/index registration
+              below. */}
+          <Drawer.Screen name="returns/index" options={{ title: 'Returns' }} />
+          <Drawer.Screen name="repair-pickups/index" options={{ title: 'Repair Pickups' }} />
+          <Drawer.Screen name="repair-deliveries/index" options={{ title: 'Repair Deliveries' }} />
           <Drawer.Screen name="leave/index" options={{ title: 'Leave' }} />
           <Drawer.Screen name="customers" options={{ title: 'Customers' }} />
           <Drawer.Screen name="tailors" options={{ title: 'Tailors' }} />
@@ -68,6 +76,10 @@ export default function DrawerLayout() {
           <Drawer.Screen name="roles-permissions/index" options={{ title: 'Roles & Permissions' }} />
           <Drawer.Screen name="faqs/index" options={{ title: 'FAQs' }} />
           <Drawer.Screen name="billing/index" options={{ title: 'Billing' }} />
+          <Drawer.Screen name="payouts/index" options={{ title: 'Tailor Payouts' }} />
+          <Drawer.Screen name="bridge-payouts/index" options={{ title: 'Bridge Payouts' }} />
+          <Drawer.Screen name="my-earnings/index" options={{ title: 'My Earnings' }} />
+          <Drawer.Screen name="account-settings/index" options={{ title: 'Account Settings' }} />
           <Drawer.Screen name="notifications" options={{ title: 'Notifications' }} />
           <Drawer.Screen name="support" options={{ title: 'Support' }} />
           <Drawer.Screen name="settings" options={{ title: 'Settings' }} />

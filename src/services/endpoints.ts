@@ -96,6 +96,11 @@ export const ENDPOINTS = {
     PAYOUT_SUMMARY: (tailorId: string) => `/api/v1/admin/payouts/summary/${tailorId}`,
     COMMISSION_RATES: '/api/v1/admin/commission-rates',
     COMMISSION_RATE_DETAIL: (rateId: string) => `/api/v1/admin/commission-rates/${rateId}`,
+    BRIDGE_PAYOUTS: '/api/v1/admin/bridge-payouts',
+    BRIDGE_PAYOUT_MARK_PAID: (payoutId: string) => `/api/v1/admin/bridge-payouts/${payoutId}/mark-paid`,
+    BRIDGE_PAYOUT_SUMMARY: (employeeId: string) => `/api/v1/admin/bridge-payouts/summary/${employeeId}`,
+    BRIDGE_LEG_RATES: '/api/v1/admin/bridge-leg-rates',
+    BRIDGE_LEG_RATE_DETAIL: (rateId: string) => `/api/v1/admin/bridge-leg-rates/${rateId}`,
   },
   LOCATION: {
     ADMIN_SERVICE_AREAS: '/api/v1/location/admin/service-areas',
@@ -164,6 +169,8 @@ export const ENDPOINTS = {
       `/api/v1/employee/orders/${orderId}/repair-delivery/complete`,
     MY_BRIDGE_PROFILE: '/api/v1/employee/me/bridge-profile',
     MY_KYC: '/api/v1/employee/me/kyc',
+    MY_PAYOUTS: '/api/v1/employee/me/payouts',
+    MY_PAYOUT_SUMMARY: '/api/v1/employee/me/payouts/summary',
   },
   TAILOR: {
     BROADCASTS: '/api/v1/tailor/orders/broadcasts',
@@ -172,6 +179,8 @@ export const ENDPOINTS = {
     ONLINE_STATUS: '/api/v1/tailors/me/online',
     ME: '/api/v1/tailors/me',
     MY_KYC: '/api/v1/tailors/me/kyc',
+    MY_PAYOUTS: '/api/v1/tailors/me/payouts',
+    MY_PAYOUT_SUMMARY: '/api/v1/tailors/me/payouts/summary',
   },
   // Shared by both Tailor and Bridge/Employee roles - same backend routes,
   // require_roles(TAILOR, EMPLOYEE) (app/api/v1/endpoints/leave_request.py).
