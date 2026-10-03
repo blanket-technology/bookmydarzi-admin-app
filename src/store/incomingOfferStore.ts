@@ -29,6 +29,12 @@ export interface IncomingOfferLocation {
   landmark?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  // Real server-computed distance for THIS leg (employee -> pickup point on
+  // the pickup leg; pickup-point -> drop-point on the drop leg) - mirrors
+  // the tailor side's distance_km field. Replaces the old client-side
+  // haversine-from-live-GPS approximation, which only ever covered the
+  // pickup leg.
+  distance_km?: number | null;
 }
 
 export interface IncomingOffer {

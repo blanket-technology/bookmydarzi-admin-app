@@ -7,6 +7,8 @@ export interface DeliveryPickupInfo {
   location?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  // Employee -> tailor distance for this leg (nearest 0.5 km).
+  distance_km?: number | null;
 }
 
 export interface DeliveryDropInfo {
@@ -20,6 +22,9 @@ export interface DeliveryDropInfo {
   landmark?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  // Tailor -> customer distance for this leg (the real second-leg trip
+  // distance, not employee -> customer) - nearest 0.5 km.
+  distance_km?: number | null;
 }
 
 export interface DeliveryBroadcastItem {

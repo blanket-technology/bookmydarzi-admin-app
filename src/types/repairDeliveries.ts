@@ -9,6 +9,7 @@ export interface RepairDeliveryPickupInfo {
   location?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  distance_km?: number | null;
 }
 
 export interface RepairDeliveryDropInfo {
@@ -22,6 +23,7 @@ export interface RepairDeliveryDropInfo {
   landmark?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  distance_km?: number | null;
 }
 
 export interface RepairDeliveryBroadcastItem {

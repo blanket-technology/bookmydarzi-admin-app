@@ -9,6 +9,7 @@ export interface ReturnPickupInfo {
   location?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  distance_km?: number | null;
 }
 
 export interface ReturnDropInfo {
@@ -22,6 +23,7 @@ export interface ReturnDropInfo {
   landmark?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  distance_km?: number | null;
 }
 
 export interface ReturnBroadcastItem {
