@@ -15,6 +15,7 @@ import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { t as translate } from '@/i18n';
+import { toast } from '@/store/toastStore';
 import type { DeliveryBroadcastOffer } from '@/types/deliveries';
 import { formatApiErrorDetail, formatDate } from '@/utils/errors';
 import { formatDistanceKm, haversineDistanceKm } from '@/utils/geo';
@@ -246,10 +247,12 @@ export default function DeliveriesScreen() {
           longitude: location.coords?.longitude,
         });
         setIsOnline(true);
+        toast.success("You're online");
       } else {
         await setOnlineStatus.mutateAsync({ is_online: false });
         location.stop();
         setIsOnline(false);
+        toast.success("You're offline");
       }
     } finally {
       setTogglingOnline(false);

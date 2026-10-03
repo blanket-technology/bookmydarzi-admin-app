@@ -56,7 +56,10 @@ export const useSetTailorOnlineStatusMutation = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['broadcasts'] });
       queryClient.invalidateQueries({ queryKey: ['tailor', 'me'] });
-      toast.success(data.IsOnline ? "You're online" : "You're offline");
+      // No toast here - this mutation also fires on every GPS location
+      // tick while already online, which would otherwise show "You're
+      // online" on a loop for a moving tailor. The explicit manual
+      // toggle shows its own toast right at the call site instead.
     },
     onError: (error) => toast.error(getMutationError(error)),
   });

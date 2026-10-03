@@ -12,6 +12,7 @@ import { useMyTailorProfile } from '@/features/tailors/hooks/useTailors';
 import { useLocation } from '@/hooks/useLocation';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
+import { toast } from '@/store/toastStore';
 import type { BroadcastOffer } from '@/types/broadcasts';
 import { formatApiErrorDetail } from '@/utils/errors';
 
@@ -84,10 +85,12 @@ export default function BroadcastsScreen() {
           longitude: location.coords?.longitude,
         });
         setIsOnline(true);
+        toast.success("You're online");
       } else {
         await setOnlineStatus.mutateAsync({ is_online: false });
         location.stop();
         setIsOnline(false);
+        toast.success("You're offline");
       }
     } finally {
       setTogglingOnline(false);

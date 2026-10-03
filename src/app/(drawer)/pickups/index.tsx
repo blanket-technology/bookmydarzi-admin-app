@@ -13,6 +13,7 @@ import {
 import { useLocation } from '@/hooks/useLocation';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
+import { toast } from '@/store/toastStore';
 import { t as translate } from '@/i18n';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { PickupBroadcastOffer } from '@/types/pickups';
@@ -263,10 +264,12 @@ export default function PickupsScreen() {
           longitude: location.coords?.longitude,
         });
         setIsOnline(true);
+        toast.success("You're online");
       } else {
         await setOnlineStatus.mutateAsync({ is_online: false });
         location.stop();
         setIsOnline(false);
+        toast.success("You're offline");
       }
     } finally {
       setTogglingOnline(false);
