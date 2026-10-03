@@ -50,7 +50,12 @@ export const useSetPickupOnlineStatusMutation = () => {
       queryClient.invalidateQueries({ queryKey: ['pickup-broadcasts'] });
       queryClient.invalidateQueries({ queryKey: ['delivery-broadcasts'] });
       queryClient.setQueryData(QUERY_KEYS.EMPLOYEE_ONLINE_STATUS, data);
-      toast.success(data.is_online ? "You're online" : "You're offline");
+      // No toast here - this mutation also fires on every GPS location
+      // tick while already online (see pickups/index.tsx's keep-location-
+      // fresh effect, every ~20s/50m via useLocation), which would
+      // otherwise show "You're online" on a loop for a moving employee.
+      // The explicit manual toggle (handleToggleOnline) shows its own
+      // toast right at the call site instead.
     },
     onError: (error) => toast.error(getMutationError(error)),
   });

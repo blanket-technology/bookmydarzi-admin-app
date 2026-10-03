@@ -51,7 +51,10 @@ export const useSetEmployeeOnlineStatusMutation = () => {
       queryClient.invalidateQueries({ queryKey: ['delivery-broadcasts'] });
       queryClient.invalidateQueries({ queryKey: ['pickup-broadcasts'] });
       queryClient.setQueryData(QUERY_KEYS.EMPLOYEE_ONLINE_STATUS, data);
-      toast.success(data.is_online ? "You're online" : "You're offline");
+      // No toast here - this mutation also fires on every GPS location
+      // tick while already online, which would otherwise show "You're
+      // online" on a loop for a moving employee. The explicit manual
+      // toggle shows its own toast right at the call site instead.
     },
     onError: (error) => toast.error(getMutationError(error)),
   });
