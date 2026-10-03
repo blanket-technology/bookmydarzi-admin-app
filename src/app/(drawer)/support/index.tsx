@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native';
 import { Badge, EmptyState, FilterSheet, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
 import { useChatSessions, useMyAgentStatus, useSetAgentStatusMutation } from '@/features/chat/hooks/useChat';
+import { RequestCallbackScreen } from '@/features/support/components/RequestCallbackScreen';
 import { useSupportTickets } from '@/features/support/hooks/useSupportTickets';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
@@ -409,6 +410,8 @@ export default function SupportScreen() {
   const { permissions } = usePermissions();
   const { user } = useAuth();
   const normalizedRole = String(user?.role ?? '').toLowerCase();
+  const isFieldRole = normalizedRole === 'tailor' || normalizedRole === 'employee';
+
   // Tailors are blocked server-side from chat_v2 entirely (_STAFF_ROLES /
   // _get_authorized_session in chat_v2.py) - the tab bar itself is hidden
   // for them rather than showing a tab that always errors.
@@ -428,6 +431,22 @@ export default function SupportScreen() {
       ? tab
       : 'conversations'
     : 'tickets';
+
+  // Tailor/Bridge get a one-tap "Request a Call" screen instead of the
+  // staff conversation/ticket management console below - neither role
+  // needs to browse or search support history, they need to ask for help
+  // as directly as possible. Previously a tailor landed on the full ticket
+  // list+filter+search+category-picker+subject/message form (built for
+  // admins triaging every customer's tickets), and a Bridge employee
+  // landed on the staff chat-inbox screen (ConversationsTab) instead of
+  // any "ask for help" surface at all - neither was ever the right screen
+  // for someone asking for help themselves, not managing others' requests.
+  // Checked after every hook above has already run unconditionally (Rules
+  // of Hooks - this early return must come after all hook calls, not
+  // before them).
+  if (isFieldRole) {
+    return <RequestCallbackScreen />;
+  }
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>

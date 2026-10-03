@@ -1,42 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Image, Text, View } from 'react-native';
-import { Badge, Modal, Pressable } from '@/components/ui';
+import { Modal, Pressable } from '@/components/ui';
+import { useCountdown } from '@/features/broadcasts/offerCardHelpers';
 import { DetailRow } from '@/features/orders/components/DetailRow';
 import { useTheme } from '@/hooks/useTheme';
 import type { BroadcastItem, BroadcastOffer } from '@/types/broadcasts';
 import { capitalize, formatDate } from '@/utils/errors';
-import { formatDistanceKm } from '@/utils/geo';
 
-const URGENCY_BADGE: Record<string, { bg: string; color: string }> = {
-  standard: { bg: '#FBF3DF', color: '#7D622A' },
-  urgent: { bg: '#fef3c7', color: '#d97706' },
-  express: { bg: '#fee2e2', color: '#dc2626' },
-};
-
-export const useCountdown = (expiresAt?: string | null) => {
-  const [label, setLabel] = useState('');
-  useEffect(() => {
-    if (!expiresAt) {
-      setLabel('');
-      return;
-    }
-    const update = () => {
-      const diffMs = new Date(expiresAt).getTime() - Date.now();
-      if (diffMs <= 0) {
-        setLabel('Expired');
-        return;
-      }
-      const mins = Math.floor(diffMs / 60000);
-      const secs = Math.floor((diffMs % 60000) / 1000);
-      setLabel(mins > 0 ? `${mins}m ${secs}s left` : `${secs}s left`);
-    };
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [expiresAt]);
-  return label;
-};
+// Re-exported for any other file still importing useCountdown from here -
+// this card previously defined its own duplicate copy (buggy in a
+// different, unrelated way: fine on its own, but a second source of truth
+// for the same logic). Now a single shared implementation
+// (offerCardHelpers.tsx), same one the Bridge/employee offer cards use.
+export { useCountdown };
 
 const MEASUREMENT_FIELDS: { key: keyof NonNullable<BroadcastItem['measurement']>; label: string; unit?: string }[] = [
   { key: 'chest', label: 'Chest', unit: 'in' },
@@ -163,32 +140,42 @@ export const TailorOfferCard = ({
 }) => {
   const { colors } = useTheme();
   const countdown = useCountdown(offer.expires_at);
-  const urgency = URGENCY_BADGE[offer.urgency_level ?? 'standard'] ?? URGENCY_BADGE.standard;
   const isExpired = countdown === 'Expired';
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+  // Real job name instead of a redundant "Tailoring Order" label (a tailor
+  // knows this is a tailoring order - the screen it's on already tells
+  // them that). The first garment's own name when there's one item; a
+  // plain count + first name when there's more than one, so the header is
+  // never empty filler text on a multi-item/cart order (where the
+  // order-level service_name is legitimately null).
+  const firstItemName = offer.items?.[0]?.service_name;
+  const headline =
+    offer.garment_count > 1 && firstItemName
+      ? `${offer.garment_count} items — ${firstItemName}`
+      : (firstItemName ?? offer.service_name ?? `${offer.garment_count} garment${offer.garment_count === 1 ? '' : 's'}`);
+
+  // Plain-language deadline instead of a "TAT"/urgency-tier badge a tailor
+  // isn't trained on vocabulary for - just when the finished garment needs
+  // to be ready, in their own words.
   const tatDays = offer.tat_days;
   const tatIsTight = tatDays != null && tatDays <= 1;
   const tatLabel =
     tatDays == null
       ? null
       : tatDays === 0
-        ? 'Due today'
-        : `${tatDays} day${tatDays === 1 ? '' : 's'} to complete`;
+        ? 'Finish today'
+        : `Finish within ${tatDays} day${tatDays === 1 ? '' : 's'}`;
 
   return (
     <View className="rounded-3xl p-4 mb-3 border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
-      <View className="flex-row items-start justify-between mb-2">
-        <View className="flex-1 mr-2">
-          <Text className="font-bold text-base" style={{ color: colors.text }}>
-            {offer.service_name ?? 'Tailoring Order'}
-          </Text>
-          <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
-            {offer.category_name ? `${offer.category_name} · ` : ''}
-            {offer.order_code ?? `Order #${offer.order_id}`}
-          </Text>
-        </View>
-        <Badge label={capitalize(offer.urgency_level ?? 'standard')} backgroundColor={urgency.bg} color={urgency.color} />
+      <View className="mb-2">
+        <Text className="font-bold text-lg" style={{ color: colors.text }}>
+          {headline}
+        </Text>
+        <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
+          {offer.order_code ?? `Order #${offer.order_id}`}
+        </Text>
       </View>
 
       {tatLabel ? (
@@ -202,29 +189,6 @@ export const TailorOfferCard = ({
           </Text>
         </View>
       ) : null}
-
-      <View className="flex-row items-center mb-1">
-        <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
-        <Text className="text-sm ml-1.5" style={{ color: colors.textSecondary }}>
-          {offer.pickup_area ?? 'Area unavailable'}
-        </Text>
-        {formatDistanceKm(offer.distance_km) ? (
-          <>
-            <Text className="text-sm mx-1" style={{ color: colors.textMuted }}>
-              ·
-            </Text>
-            <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
-              {formatDistanceKm(offer.distance_km)}
-            </Text>
-          </>
-        ) : null}
-      </View>
-      <View className="flex-row items-center mb-2">
-        <Ionicons name="shirt-outline" size={14} color={colors.textSecondary} />
-        <Text className="text-sm ml-1.5" style={{ color: colors.textSecondary }}>
-          {offer.garment_count} garment{offer.garment_count === 1 ? '' : 's'}
-        </Text>
-      </View>
 
       {offer.items && offer.items.length > 0 ? (
         <View className="mb-1">
