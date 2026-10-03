@@ -68,6 +68,18 @@ const MENU_ITEMS: {
   { label: 'Billing', icon: 'card-outline', route: '/(drawer)/billing', permission: 'billing' },
   { label: 'Tailor Payouts', icon: 'wallet-outline', route: '/(drawer)/payouts', permission: 'payouts' },
   {
+    label: 'Bridge Payouts',
+    icon: 'wallet-outline',
+    route: '/(drawer)/bridge-payouts',
+    permission: 'bridgePayouts',
+  },
+  {
+    label: 'My Earnings',
+    icon: 'cash-outline',
+    route: '/(drawer)/my-earnings',
+    permission: 'myEarnings',
+  },
+  {
     label: 'Notifications',
     icon: 'notifications-outline',
     route: '/(drawer)/notifications',

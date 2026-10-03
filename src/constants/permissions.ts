@@ -90,6 +90,17 @@ export interface AppPermissions {
    * payout amount reveals the platform's commission split, same
    * sensitivity class as billing/analytics above. */
   payouts: boolean;
+  /** Bridge employee leg rates & payouts — app/api/v1/endpoints/admin_bridge_payouts.py,
+   * require_admin_permission(SUPERADMIN only, screen="bridge_payouts"). Same
+   * sensitivity class as `payouts` above, separate flag since it's a
+   * distinct admin screen (/admin/bridge-payouts vs /admin/payouts). */
+  bridgePayouts: boolean;
+  /** Own real payout ledger (GET /tailors/me/payouts or
+   * /employee/me/payouts) - the Tailor/Bridge self-service "My Earnings"
+   * screen. Deliberately the inverse of payouts/bridgePayouts: a Tailor or
+   * Bridge employee sees their OWN earnings here, never the admin-only
+   * cross-tailor/cross-employee payout list those two flags gate. */
+  myEarnings: boolean;
 }
 
 /** Full admin access — all modules visible, except registering other admins
@@ -134,6 +145,8 @@ const ADMIN_PERMISSIONS: AppPermissions = {
   // though this is otherwise the "full admin" permission set.
   billing: false,
   payouts: false,
+  bridgePayouts: false,
+  myEarnings: false,
 };
 
 /** Superadmin: everything an admin has, plus admin-account management and
@@ -146,6 +159,7 @@ const SUPERADMIN_PERMISSIONS: AppPermissions = {
   rolesPermissions: true,
   billing: true,
   payouts: true,
+  bridgePayouts: true,
 };
 
 /** Matches pre-RBAC employee drawer routes.
@@ -189,6 +203,8 @@ const EMPLOYEE_PERMISSIONS: AppPermissions = {
   faqs: false,
   billing: false,
   payouts: false,
+  bridgePayouts: false,
+  myEarnings: true,
 };
 
 /** Matches pre-RBAC tailor drawer routes */
@@ -233,6 +249,8 @@ const TAILOR_PERMISSIONS: AppPermissions = {
   faqs: false,
   billing: false,
   payouts: false,
+  bridgePayouts: false,
+  myEarnings: true,
 };
 
 /** Most restrictive default — used when the role cannot be resolved at all. */
@@ -266,6 +284,8 @@ const NO_PERMISSIONS: AppPermissions = {
   faqs: false,
   billing: false,
   payouts: false,
+  bridgePayouts: false,
+  myEarnings: false,
 };
 
 const normalizeRole = (role?: string | null): string | undefined => {
@@ -397,6 +417,15 @@ export const ROUTE_PERMISSION_MAP: Record<string, keyof AppPermissions> = {
   broadcasts: 'broadcasts',
   pickups: 'deliveries',
   deliveries: 'deliveries',
+  // Missing from this map meant these three fully-built, backend-wired
+  // screens (linked from CustomDrawer's own MENU_ITEMS with
+  // permission: 'deliveries') were unreachable - RoutePermissionGuard
+  // fails closed on any unmapped segment, so a Bridge employee tapping
+  // "Returns"/"Repair Pickups"/"Repair Deliveries" hit a permission-denied
+  // screen instead of the real feature.
+  returns: 'deliveries',
+  'repair-pickups': 'deliveries',
+  'repair-deliveries': 'deliveries',
   leave: 'leave',
   settings: 'settings',
   profile: 'profile',
@@ -407,6 +436,9 @@ export const ROUTE_PERMISSION_MAP: Record<string, keyof AppPermissions> = {
   faqs: 'faqs',
   billing: 'billing',
   payouts: 'payouts',
+  'bridge-payouts': 'bridgePayouts',
+  'my-earnings': 'myEarnings',
+  'account-settings': 'profile',
 };
 
 export const getDefaultRouteForRole = (

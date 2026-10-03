@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Switch, Text, View } from 'react-native';
@@ -14,18 +15,11 @@ import {
   Header,
   Input,
   Loader,
-  PasswordInput,
   Pressable,
   ScreenContent,
 } from '@/components/ui';
-import { useLogoutMutation } from '@/features/auth/hooks/useAuthMutations';
-import { useMyEarningsSummary } from '@/features/orders/hooks/useMyEarningsSummary';
-import { ChangeEmailSheet } from '@/features/settings/components/ChangeEmailSheet';
-import { ChangeMobileSheet } from '@/features/settings/components/ChangeMobileSheet';
 import {
-  useChangePasswordMutation,
   useProfile,
-  useUpdateProfileMutation,
   useUploadProfilePhotoMutation,
 } from '@/features/settings/hooks/useProfile';
 import {
@@ -45,23 +39,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/store/toastStore';
-import { formatCurrency, getMutationError } from '@/utils/errors';
-
-const profileSchema = z.object({
-  firstName: z.string().min(2),
-  lastName: z.string().min(2),
-});
-
-const passwordSchema = z
-  .object({
-    oldPassword: z.string().min(6),
-    newPassword: z.string().min(8),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  });
+import { getMutationError } from '@/utils/errors';
 
 const tailorProfileSchema = z.object({
   specialization: z.string().optional(),
@@ -78,118 +56,38 @@ const bridgeProfileSchema = z.object({
   workingShift: z.string().optional(),
 });
 
-type ProfileForm = z.infer<typeof profileSchema>;
-type PasswordForm = z.infer<typeof passwordSchema>;
 type TailorProfileForm = z.infer<typeof tailorProfileSchema>;
 type BridgeProfileForm = z.infer<typeof bridgeProfileSchema>;
 
-// ─── Settings-list row — tappable "Email" / "Mobile" / "Password" style
-// entries, matching the icon-left / value+chevron-right pattern almost
-// every major app (Google, banking apps, etc.) uses for account security
-// settings, instead of the previous bare "Change Password" button with no
-// visible current value for email/mobile.
-function SettingsRow({
-  icon,
-  label,
-  value,
-  onPress,
-  verified,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value?: string | null;
-  onPress: () => void;
-  verified?: boolean;
-}) {
+// ─── Lightweight link tile to the real My Earnings screen (the actual
+// payout ledger - TailorPayout/BridgePayout) - replaces the old inline
+// derived-approximation card that used to live here directly.
+function EarningsLinkTile() {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => router.push('/(drawer)/my-earnings' as never)}
       pressScale={0.98}
-      className="flex-row items-center py-3.5"
+      className="flex-row items-center mb-4 rounded-3xl p-4 border"
+      style={{ backgroundColor: colors.card, borderColor: colors.border }}
     >
       <View
         className="w-10 h-10 rounded-full items-center justify-center mr-3"
         style={{ backgroundColor: colors.primaryLight }}
       >
-        <Ionicons name={icon} size={18} color={colors.primary} />
+        <Ionicons name="wallet-outline" size={18} color={colors.primary} />
       </View>
       <View className="flex-1">
         <Text className="text-sm font-semibold" style={{ color: colors.text }}>
-          {label}
+          {t('profile.earnings')}
         </Text>
-        <View className="flex-row items-center mt-0.5">
-          <Text className="text-xs" style={{ color: colors.textMuted }} numberOfLines={1}>
-            {value || t('profile.notSet')}
-          </Text>
-          {verified ? (
-            <Ionicons name="checkmark-circle" size={12} color={colors.success} style={{ marginLeft: 4 }} />
-          ) : null}
-        </View>
+        <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
+          View your real payout history
+        </Text>
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
     </Pressable>
-  );
-}
-
-// ─── Shared "earnings" summary card — tailor and employee both derive this ──
-// from their own completed orders, since neither role has a real payout/
-// commission ledger on the backend today (see useMyEarningsSummary's
-// comment for why this is honestly labeled as a derived total, not a
-// payout figure).
-function EarningsSummaryCard() {
-  const { colors } = useTheme();
-  const { t } = useAppLanguage();
-  const { completedCount, totalValue, isPartial, sampledCount, isLoading, isError, refetch } =
-    useMyEarningsSummary();
-
-  return (
-    <Card className="mb-4">
-      <View className="flex-row items-center justify-between mb-3">
-        <Text className="text-lg font-bold" style={{ color: colors.text }}>
-          {t('profile.earnings')}
-        </Text>
-        <Ionicons name="wallet-outline" size={18} color={colors.primary} />
-      </View>
-
-      {isLoading ? (
-        <Loader message={t('common.loading')} />
-      ) : isError ? (
-        <View className="items-center py-4">
-          <Text className="text-sm mb-2" style={{ color: colors.textMuted }}>
-            {t('profile.failedToLoadEarnings')}
-          </Text>
-          <Button title={t('common.retry')} size="sm" variant="outline" onPress={() => refetch()} />
-        </View>
-      ) : (
-        <>
-          <View className="flex-row" style={{ gap: 12 }}>
-            <View className="flex-1 rounded-2xl p-3.5" style={{ backgroundColor: colors.primaryLight }}>
-              <Text className="text-xl font-bold" style={{ color: colors.primary }}>
-                {formatCurrency(totalValue)}
-              </Text>
-              <Text className="text-[11px] mt-0.5" style={{ color: colors.textSecondary }}>
-                {isPartial
-                  ? t('profile.fromLastCompletedOrders', { count: sampledCount })
-                  : t('profile.completedOrderValue')}
-              </Text>
-            </View>
-            <View className="flex-1 rounded-2xl p-3.5" style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
-              <Text className="text-xl font-bold" style={{ color: colors.text }}>
-                {completedCount}
-              </Text>
-              <Text className="text-[11px] mt-0.5" style={{ color: colors.textSecondary }}>
-                {t('profile.completedOrders')}
-              </Text>
-            </View>
-          </View>
-          <Text className="text-[11px] mt-3" style={{ color: colors.textMuted }}>
-            {t('profile.earningsDisclaimer')}
-          </Text>
-        </>
-      )}
-    </Card>
   );
 }
 
@@ -421,7 +319,7 @@ function TailorProfileSection() {
 
       <KycStatusCard role="tailor" />
 
-      <EarningsSummaryCard />
+      <EarningsLinkTile />
     </>
   );
 }
@@ -641,7 +539,7 @@ function EmployeeProfileSection() {
 
       <KycStatusCard role="employee" />
 
-      <EarningsSummaryCard />
+      <EarningsLinkTile />
     </>
   );
 }
@@ -651,13 +549,7 @@ export default function ProfileScreen() {
   const { t } = useAppLanguage();
   const { user } = useAuth();
   const { data: profile } = useProfile();
-  const updateMutation = useUpdateProfileMutation();
-  const passwordMutation = useChangePasswordMutation();
   const uploadPhotoMutation = useUploadProfilePhotoMutation();
-  const logoutMutation = useLogoutMutation();
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [emailSheetVisible, setEmailSheetVisible] = useState(false);
-  const [mobileSheetVisible, setMobileSheetVisible] = useState(false);
 
   const pickAndUploadPhoto = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -699,43 +591,6 @@ export default function ProfileScreen() {
       ? t('profile.roleAccount', { role: `${roleLabel.charAt(0).toUpperCase()}${roleLabel.slice(1)}` })
       : t('profile.yourAccount'));
   const hasRealName = Boolean(profile?.FullName?.trim() || user?.full_name?.trim());
-
-  const profileForm = useForm<ProfileForm>({
-    resolver: zodResolver(profileSchema),
-    values: {
-      firstName: profile?.FirstName ?? user?.first_name ?? '',
-      lastName: profile?.LastName ?? user?.last_name ?? '',
-    },
-  });
-
-  const passwordForm = useForm<PasswordForm>({
-    resolver: zodResolver(passwordSchema),
-    defaultValues: { oldPassword: '', newPassword: '', confirmPassword: '' },
-  });
-
-  const onUpdateProfile = (data: ProfileForm) => {
-    updateMutation.mutate(
-      { FirstName: data.firstName, LastName: data.lastName },
-      {
-        onSuccess: () => toast.success(t('profile.profileUpdated')),
-        onError: (error) => toast.error(getMutationError(error)),
-      },
-    );
-  };
-
-  const onChangePassword = (data: PasswordForm) => {
-    passwordMutation.mutate(
-      { old_password: data.oldPassword, new_password: data.newPassword },
-      {
-        onSuccess: () => {
-          toast.success(t('profile.passwordChanged'));
-          passwordForm.reset();
-          setShowPasswordForm(false);
-        },
-        onError: (error) => toast.error(getMutationError(error)),
-      },
-    );
-  };
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
@@ -824,115 +679,34 @@ export default function ProfileScreen() {
         {isTailor ? <TailorProfileSection /> : null}
         {isEmployee ? <EmployeeProfileSection /> : null}
 
-        {/* Account & Security - settings-list rows for the things that need
-            their own verification flow (email/mobile), separate from the
-            plain name-edit form below. */}
-        <Card className="mb-4">
-          <Text className="text-lg font-bold mb-1" style={{ color: colors.text }}>
-            {t('profile.accountAndSecurity')}
-          </Text>
-          <View className="divide-y" style={{ borderColor: colors.border }}>
-            <View style={{ borderBottomWidth: 1, borderColor: colors.border }}>
-              <SettingsRow
-                icon="mail-outline"
-                label={t('profile.emailAddress')}
-                value={profile?.Email ?? user?.email}
-                verified={profile?.IsEmailVerified}
-                onPress={() => setEmailSheetVisible(true)}
-              />
-            </View>
-            <View style={{ borderBottomWidth: 1, borderColor: colors.border }}>
-              <SettingsRow
-                icon="call-outline"
-                label={t('profile.mobileNumber')}
-                value={profile?.Mobile ?? user?.mobile}
-                verified={profile?.IsMobileVerified}
-                onPress={() => setMobileSheetVisible(true)}
-              />
-            </View>
-            <SettingsRow
-              icon="lock-closed-outline"
-              label={t('profile.password')}
-              value="••••••••"
-              onPress={() => setShowPasswordForm((prev) => !prev)}
-            />
+        {/* Email/mobile/password change and personal-details editing moved
+            to a dedicated Account Settings screen - keeps this screen
+            focused on identity + role-specific work fields + earnings for
+            Tailor/Bridge, instead of one long scroll mixing identity, work
+            fields, and account-security settings together. */}
+        <Pressable
+          onPress={() => router.push('/(drawer)/account-settings' as never)}
+          pressScale={0.98}
+          className="flex-row items-center mb-8 rounded-3xl p-4 border"
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        >
+          <View
+            className="w-10 h-10 rounded-full items-center justify-center mr-3"
+            style={{ backgroundColor: colors.primaryLight }}
+          >
+            <Ionicons name="settings-outline" size={18} color={colors.primary} />
           </View>
-
-          {showPasswordForm ? (
-            <View className="mt-4 pt-4 border-t" style={{ borderColor: colors.border }}>
-              <Controller
-                control={passwordForm.control}
-                name="oldPassword"
-                render={({ field: { onChange, value } }) => (
-                  <PasswordInput label={t('profile.currentPassword')} value={value} onChangeText={onChange} />
-                )}
-              />
-              <Controller
-                control={passwordForm.control}
-                name="newPassword"
-                render={({ field: { onChange, value } }) => (
-                  <PasswordInput label={t('profile.newPassword')} value={value} onChangeText={onChange} />
-                )}
-              />
-              <Controller
-                control={passwordForm.control}
-                name="confirmPassword"
-                render={({ field: { onChange, value } }) => (
-                  <PasswordInput label={t('profile.confirmPassword')} value={value} onChangeText={onChange} />
-                )}
-              />
-              <Button
-                title={t('profile.updatePassword')}
-                onPress={passwordForm.handleSubmit(onChangePassword)}
-                loading={passwordMutation.isPending}
-                fullWidth
-              />
-            </View>
-          ) : null}
-        </Card>
-
-        <Card className="mb-4">
-          <Text className="text-lg font-bold mb-4" style={{ color: colors.text }}>
-            {t('profile.personalDetails')}
-          </Text>
-          <Controller
-            control={profileForm.control}
-            name="firstName"
-            render={({ field: { onChange, value } }) => (
-              <Input label={t('profile.firstName')} value={value} onChangeText={onChange} />
-            )}
-          />
-          <Controller
-            control={profileForm.control}
-            name="lastName"
-            render={({ field: { onChange, value } }) => (
-              <Input label={t('profile.lastName')} value={value} onChangeText={onChange} />
-            )}
-          />
-          <Button
-            title={t('profile.saveChanges')}
-            onPress={profileForm.handleSubmit(onUpdateProfile)}
-            loading={updateMutation.isPending}
-            fullWidth
-          />
-        </Card>
-
-        <Button
-          title={t('profile.logout')}
-          variant="danger"
-          onPress={() => logoutMutation.mutate()}
-          loading={logoutMutation.isPending}
-          fullWidth
-          className="mb-8"
-        />
+          <View className="flex-1">
+            <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+              {t('profile.accountAndSecurity')}
+            </Text>
+            <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
+              Email, mobile, password & personal details
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </Pressable>
       </ScreenContent>
-
-      <ChangeEmailSheet
-        visible={emailSheetVisible}
-        onClose={() => setEmailSheetVisible(false)}
-        hasExistingEmail={Boolean(profile?.Email ?? user?.email)}
-      />
-      <ChangeMobileSheet visible={mobileSheetVisible} onClose={() => setMobileSheetVisible(false)} />
     </View>
   );
 }

@@ -23,3 +23,22 @@ export const useUpdateMyBridgeProfileMutation = () => {
     onError: (error) => toast.error(getMutationError(error)),
   });
 };
+
+// Real per-leg payout ledger - replaces the old client-side derived
+// "sum of my completed orders" approximation (useMyEarningsSummary).
+export const useMyBridgePayouts = (
+  params: { page?: number; limit?: number; status?: 'pending' | 'paid' },
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.MY_PAYOUTS('bridge', params as Record<string, unknown>),
+    queryFn: () => bridgeProfileService.getMyPayouts(params),
+    enabled,
+  });
+
+export const useMyBridgePayoutSummary = (enabled = true) =>
+  useQuery({
+    queryKey: QUERY_KEYS.MY_PAYOUT_SUMMARY('bridge'),
+    queryFn: () => bridgeProfileService.getMyPayoutSummary(),
+    enabled,
+  });

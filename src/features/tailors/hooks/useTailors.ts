@@ -25,6 +25,25 @@ export const useUpdateMyTailorProfileMutation = () => {
   });
 };
 
+// Real per-order commission ledger - replaces the old client-side derived
+// "sum of my completed orders" approximation (useMyEarningsSummary).
+export const useMyPayouts = (
+  params: { page?: number; limit?: number; status?: 'pending' | 'paid' },
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.MY_PAYOUTS('tailor', params as Record<string, unknown>),
+    queryFn: () => tailorService.getMyPayouts(params),
+    enabled,
+  });
+
+export const useMyPayoutSummary = (enabled = true) =>
+  useQuery({
+    queryKey: QUERY_KEYS.MY_PAYOUT_SUMMARY('tailor'),
+    queryFn: () => tailorService.getMyPayoutSummary(),
+    enabled,
+  });
+
 export const useTailors = (params?: { search?: string }, enabled = true) =>
   useQuery({
     queryKey: QUERY_KEYS.TAILORS(params),
