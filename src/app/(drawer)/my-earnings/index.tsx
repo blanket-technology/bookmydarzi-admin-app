@@ -1,39 +1,65 @@
 import { useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Badge, EmptyState, Header, Loader, Pagination, Pressable, SkeletonList } from '@/components/ui';
 import { useMyPayoutSummary, useMyPayouts } from '@/features/tailors/hooks/useTailors';
-import { useMyBridgePayoutSummary, useMyBridgePayouts } from '@/features/staff/hooks/useBridgeProfile';
-import { LEG_TYPE_LABELS } from '@/features/payouts/legTypeLabels';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { Payout } from '@/types/payouts';
-import type { BridgePayout } from '@/types/bridgePayouts';
 import { formatApiErrorDetail, formatCurrency, formatDate } from '@/utils/errors';
 
 const LIMIT = 20;
 
-type AnyPayout = Payout | BridgePayout;
-
-function isBridgePayout(p: AnyPayout): p is BridgePayout {
-  return 'leg_type' in p;
+function payoutAmount(p: Payout): number {
+  return Number(p.payout_amount);
 }
 
-function payoutAmount(p: AnyPayout): number {
-  return Number(isBridgePayout(p) ? p.rate_amount : p.payout_amount);
+function payoutSubtitle(p: Payout): string {
+  return `${Number(p.commission_percent).toFixed(2)}% commission`;
 }
 
-function payoutSubtitle(p: AnyPayout): string {
-  return isBridgePayout(p) ? LEG_TYPE_LABELS[p.leg_type] : `${Number(p.commission_percent).toFixed(2)}% commission`;
+// Simple, honest placeholder for Bridge - no numbers, since the per-leg
+// rates behind them are provisional defaults, not a confirmed
+// compensation model. Same plain-language, one-screen-one-message
+// convention as RequestCallbackScreen.tsx.
+function BridgeEarningsComingSoon() {
+  const { colors } = useTheme();
+  return (
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
+      <Header title="My Earnings" showMenu={false} />
+      <View className="flex-1 items-center justify-center px-8">
+        <View
+          className="w-24 h-24 rounded-full items-center justify-center mb-6"
+          style={{ backgroundColor: colors.primaryLight }}
+        >
+          <Ionicons name="time-outline" size={44} color={colors.primary} />
+        </View>
+        <Text className="text-xl font-bold text-center" style={{ color: colors.text }}>
+          Coming soon
+        </Text>
+        <Text className="text-sm text-center mt-2" style={{ color: colors.textSecondary }}>
+          Your earnings page is being set up. Contact support if you have questions about your pay.
+        </Text>
+      </View>
+    </View>
+  );
 }
 
 // Real "My Earnings" screen for Tailor and Bridge - replaces the old
 // EarningsSummaryCard's derived "sum of my completed orders"
-// approximation with the actual payout ledger (TailorPayout for tailors,
-// BridgePayout for Bridge/employee), via each role's own self-service
-// endpoint. Same screen component for both roles since the list/summary
-// shape and the UI are otherwise identical - only the data source and a
-// couple of label differences (leg vs commission %) vary.
+// approximation with the actual payout ledger (TailorPayout for tailors),
+// via each role's own self-service endpoint.
+//
+// Bridge/employee intentionally does NOT get the equivalent BridgePayout
+// view here - that ledger is built but switched off server-side
+// (settings.BRIDGE_PAYOUTS_ENABLED=False, order_tracking_service.py)
+// because Bridge compensation is likely to be salary-based, not per-leg,
+// and that decision hasn't been made yet. Showing real-looking "Pending
+// ₹30/₹40 per leg" numbers here previously implied a payout scheme that
+// was never actually going to pay out that way - a Bridge employee has
+// no way to know the numbers are provisional. A simple "coming soon"
+// state is honest about that; see BridgeEarningsComingSoon below.
 export default function MyEarningsScreen() {
   const { colors } = useTheme();
   const { contentMaxWidth } = useResponsive();
@@ -46,18 +72,20 @@ export default function MyEarningsScreen() {
   const [page, setPage] = useState(1);
 
   const tailorQuery = useMyPayouts({ page, limit: LIMIT, status: statusFilter || undefined }, isTailor);
-  const bridgeQuery = useMyBridgePayouts({ page, limit: LIMIT, status: statusFilter || undefined }, isBridge);
   const tailorSummary = useMyPayoutSummary(isTailor);
-  const bridgeSummary = useMyBridgePayoutSummary(isBridge);
 
-  const { data, isLoading, isError, error, refetch, isRefetching } = isTailor ? tailorQuery : bridgeQuery;
-  const summary = isTailor ? tailorSummary.data : bridgeSummary.data;
-  const summaryLoading = isTailor ? tailorSummary.isLoading : bridgeSummary.isLoading;
+  if (isBridge) {
+    return <BridgeEarningsComingSoon />;
+  }
 
-  const payouts: AnyPayout[] = data?.payouts ?? [];
+  const { data, isLoading, isError, error, refetch, isRefetching } = tailorQuery;
+  const summary = tailorSummary.data;
+  const summaryLoading = tailorSummary.isLoading;
+
+  const payouts: Payout[] = data?.payouts ?? [];
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / LIMIT));
 
-  const renderItem = ({ item }: { item: AnyPayout }) => (
+  const renderItem = ({ item }: { item: Payout }) => (
     <View className="rounded-3xl p-4 mb-3 border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
       <View className="flex-row items-start justify-between">
         <View className="flex-1 mr-2">

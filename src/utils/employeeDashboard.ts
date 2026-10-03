@@ -77,7 +77,6 @@ export interface TailorDashboardStats {
   stitching: number;
   ready: number;
   completed: number;
-  completedEarnings: number;
 }
 
 const STITCHING_STATUSES = new Set<string>([
@@ -93,7 +92,6 @@ export const computeTailorDashboardStats = (
   let stitching = 0;
   let ready = 0;
   let completed = 0;
-  let completedEarnings = 0;
 
   for (const order of orders) {
     // TAILOR_ASSIGNED - order is with this tailor but the cloth hasn't
@@ -116,12 +114,11 @@ export const computeTailorDashboardStats = (
       // DELIVERED and COMPLETED are both "done" from the tailor's
       // perspective (their stitching work is finished either way) -
       // previously only COMPLETED counted, so a DELIVERED order was
-      // invisible on the dashboard and excluded from earnings until some
-      // later transition to COMPLETED.
+      // invisible on the dashboard until some later transition to
+      // COMPLETED.
       completed += 1;
-      completedEarnings += order.final_amount ?? order.amount ?? 0;
     }
   }
 
-  return { assigned, stitching, ready, completed, completedEarnings };
+  return { assigned, stitching, ready, completed };
 };

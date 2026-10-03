@@ -10,7 +10,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { ORDER_STATUS, ORDER_STATUS_COLORS, orderStatusLabel } from '@/constants/orderStatus';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
 import { useEmployeeOnlineStatus } from '@/features/pickups/hooks/usePickups';
-import { useMyTailorProfile } from '@/features/tailors/hooks/useTailors';
+import { useMyPayoutSummary, useMyTailorProfile } from '@/features/tailors/hooks/useTailors';
 import { useOrders } from '@/features/orders/hooks/useOrders';
 import { useUsers } from '@/features/users/hooks/useUsers';
 import {
@@ -280,6 +280,17 @@ export default function DashboardScreen() {
   // GET /tailors/me is TAILOR-only server-side - gate the fetch or every
   // other role gets a 403 the moment they open this screen.
   const { data: tailorProfile } = useMyTailorProfile(isTailorRole);
+  // Real payout ledger (same source my-earnings/index.tsx uses) for the
+  // dashboard hero's earnings figure - previously summed the customer's
+  // full final_amount per completed order, about 1.5x what a tailor
+  // actually earns after the platform's commission cut
+  // (DEFAULT_COMMISSION_PERCENT=65%, payout_service.py), and only ever
+  // looked at the first 50 orders. pending+paid together is the true
+  // total earned to date, matching the per-order TailorPayout rows this
+  // same number is built from server-side.
+  const { data: tailorPayoutSummary } = useMyPayoutSummary(isTailorRole);
+  const tailorCompletedEarnings =
+    Number(tailorPayoutSummary?.pending_amount ?? 0) + Number(tailorPayoutSummary?.paid_amount ?? 0);
   // GET /employee/me/online - same live-status source the Pickups/Deliveries
   // manual toggle already updates, so this pill reflects real state instead
   // of a static "Go online" label that never changes.
@@ -430,7 +441,7 @@ export default function DashboardScreen() {
             <RoleDashboardHero
               greeting={timeOfDayGreeting(t)}
               name={firstName ?? t('dashboard.thereGreeting')}
-              primaryStat={{ label: t('dashboard.earningsCompleted'), value: formatCurrency(tailorStats.completedEarnings) }}
+              primaryStat={{ label: t('dashboard.earningsCompleted'), value: formatCurrency(tailorCompletedEarnings) }}
               onlineBadge={<OnlineStatusPill isOnline={Boolean(tailorProfile?.IsOnline)} />}
             />
           }
