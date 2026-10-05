@@ -12,6 +12,13 @@ export const useBanners = (enabled = true) =>
     enabled,
   });
 
+export const useUploadBannerImageMutation = () =>
+  useMutation({
+    mutationFn: (file: { uri: string; fileName?: string; mimeType?: string }) =>
+      homepageService.uploadBannerImage(file),
+    onError: (error) => toast.error(getMutationError(error)),
+  });
+
 export const useCreateBannerMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
