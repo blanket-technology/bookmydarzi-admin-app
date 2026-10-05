@@ -172,7 +172,7 @@ export default function ChatThreadScreen() {
               customer already did, or will), this is just context. */}
           {item.sender_type === 'ai' && Array.isArray(item.metadata?.quick_replies) ? (
             <View className="flex-row flex-wrap gap-1.5 mt-1.5">
-              {(item.metadata!.quick_replies as { label: string }[]).map((chip, i) => (
+              {(item.metadata?.quick_replies as { label: string }[] | undefined ?? []).map((chip, i) => (
                 <View key={i} className="rounded-full border px-2.5 py-1" style={{ borderColor: 'rgba(255,255,255,0.4)' }}>
                   <Text className="text-[10px] font-semibold" style={{ color: '#e9d5ff' }}>
                     {chip.label}
