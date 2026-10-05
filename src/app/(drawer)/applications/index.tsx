@@ -238,6 +238,16 @@ export default function ApplicationsScreen() {
           visible={!!rejectTarget}
           onClose={() => setRejectTarget(null)}
           title="Reject Application"
+          footer={
+            <Button
+              title="Confirm Reject"
+              variant="danger"
+              onPress={handleConfirmReject}
+              loading={rejectMutation.isPending}
+              disabled={rejectReason.trim().length < 5}
+              fullWidth
+            />
+          }
         >
           <Input
             label="Rejection Reason"
@@ -245,14 +255,6 @@ export default function ApplicationsScreen() {
             onChangeText={setRejectReason}
             placeholder="Minimum 5 characters"
             multiline
-          />
-          <Button
-            title="Confirm Reject"
-            variant="danger"
-            onPress={handleConfirmReject}
-            loading={rejectMutation.isPending}
-            disabled={rejectReason.trim().length < 5}
-            fullWidth
           />
         </BottomSheet>
       ) : null}
