@@ -12,6 +12,36 @@ const platformName = (): 'android' | 'ios' | 'web' => {
   return 'web';
 };
 
+let handlerConfigured = false;
+
+// Controls whether a notification alerts (sound/banner) while the app is in
+// the FOREGROUND - without this, expo-notifications' default handler
+// suppresses foreground alerts entirely on some platforms, which made it
+// look like notifications "only sometimes" worked. This has no effect on
+// background/killed-app delivery (that's the OS + Android notification
+// channel's job, see the MAX-importance channel set up below) but every
+// state should behave consistently, so it's set regardless.
+export function configureNotificationHandler(): void {
+  if (handlerConfigured || isExpoGo) return;
+  handlerConfigured = true;
+  import('expo-notifications')
+    .then((Notifications) => {
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldShowBanner: true,
+          shouldShowList: true,
+          shouldPlaySound: true,
+          shouldSetBadge: false,
+        }),
+      });
+    })
+    .catch(() => {
+      // Same best-effort posture as push registration below - a device
+      // that can't load expo-notifications shouldn't block app startup.
+    });
+}
+
 // Registers this device's Expo push token with the backend so the existing
 // push infrastructure (send_push / the broadcast-notification feature) can
 // actually reach it — previously nothing in the app ever called
@@ -58,9 +88,18 @@ export const usePushRegistration = () => {
         if (finalStatus !== 'granted' || cancelled) return;
 
         if (Platform.OS === 'android') {
+          // MAX (not DEFAULT) - broadcast job offers and order alerts are
+          // time-sensitive for a tailor/Bridge partner deciding whether to
+          // accept a job. DEFAULT importance lets many OEMs suppress the
+          // heads-up popup and sound once the app is backgrounded or the
+          // device is locked, which made notifications look like they
+          // silently stopped working outside the foreground.
           await Notifications.setNotificationChannelAsync('default', {
             name: 'default',
-            importance: Notifications.AndroidImportance.DEFAULT,
+            importance: Notifications.AndroidImportance.MAX,
+            sound: 'default',
+            vibrationPattern: [0, 250, 250, 250],
+            lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
           });
         }
 
