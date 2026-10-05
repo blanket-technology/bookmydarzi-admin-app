@@ -5,6 +5,7 @@ import { BiometricLockGate } from '@/components/navigation/BiometricLockGate';
 import { CustomDrawer } from '@/components/navigation/CustomDrawer';
 import { RoutePermissionGuard } from '@/components/navigation/RoutePermissionGuard';
 import { useAuth } from '@/hooks/useAuth';
+import { useNotificationRouting } from '@/hooks/useNotificationRouting';
 import { usePushRegistration } from '@/hooks/usePushRegistration';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useTheme } from '@/hooks/useTheme';
@@ -14,6 +15,12 @@ export default function DrawerLayout() {
   const { colors } = useTheme();
   const { isTablet } = useResponsive();
   usePushRegistration();
+  // Routes a tapped broadcast push straight to its screen (pickups,
+  // deliveries, etc.) instead of just opening the app - see the hook's own
+  // docstring. Only enabled once authenticated, same gating as push
+  // registration above - routing into a drawer screen before the navigator
+  // is ready isn't meaningful.
+  useNotificationRouting(isAuthenticated);
 
   if (!isHydrated || !isInitialized) {
     return <Loader fullScreen message="Loading..." />;
