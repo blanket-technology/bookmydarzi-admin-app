@@ -168,21 +168,6 @@ const buildStatisticsFromApi = (api: AdminDashboardApiResponse): DashboardStats 
   revenue: api.revenue?.total,
 });
 
-export const buildRevenueChartData = (
-  revenue?: AdminDashboardRevenue,
-): RevenueChartPoint[] => {
-  if (!revenue) return [];
-
-  const points: RevenueChartPoint[] = [
-    { label: 'Today', value: revenue.today ?? 0 },
-    { label: 'Week', value: revenue.this_week ?? 0 },
-    { label: 'Month', value: revenue.this_month ?? 0 },
-    { label: 'Total', value: revenue.total ?? 0 },
-  ];
-
-  return points.some((point) => point.value > 0) ? points : points;
-};
-
 export const normalizeDashboardResponse = (raw: unknown): DashboardResponse => {
   const payload = unwrapDashboardPayload(raw);
 
@@ -242,10 +227,12 @@ export const normalizeDashboardResponse = (raw: unknown): DashboardResponse => {
       }
     : undefined;
 
-  const revenue_chart =
-    users || orders || revenue || payments
-      ? buildRevenueChartData(revenue)
-      : asArray<RevenueChartPoint>(payload.revenue_chart ?? payload.revenue_trend);
+  // No longer synthesized from revenue's nested cumulative totals (today/
+  // this_week/this_month/total aren't sequential time-series points - see
+  // dashboard.tsx's revenueBreakdown for the correct, non-misleading
+  // presentation of this same data). Only populated from a genuine
+  // backend-provided time series, if one is ever added.
+  const revenue_chart = asArray<RevenueChartPoint>(payload.revenue_chart ?? payload.revenue_trend);
 
   return {
     ...apiResponse,
