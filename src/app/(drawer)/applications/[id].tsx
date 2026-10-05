@@ -281,6 +281,15 @@ export default function ApplicationDetailScreen() {
           visible={confirmApprove}
           onClose={() => setConfirmApprove(false)}
           title="Approve Without PAN Card"
+          footer={
+            <Button
+              title="Approve Application"
+              onPress={handleApprove}
+              loading={approveMutation.isPending}
+              disabled={!overridePan || panWaiverReason.trim().length < 5}
+              fullWidth
+            />
+          }
         >
           <Text className="text-sm mb-4" style={{ color: colors.textSecondary }}>
             {application.full_name} has not uploaded a PAN card. Approving anyway waives this
@@ -300,13 +309,6 @@ export default function ApplicationDetailScreen() {
               multiline
             />
           ) : null}
-          <Button
-            title="Approve Application"
-            onPress={handleApprove}
-            loading={approveMutation.isPending}
-            disabled={!overridePan || panWaiverReason.trim().length < 5}
-            fullWidth
-          />
         </BottomSheet>
       )}
 
@@ -314,6 +316,15 @@ export default function ApplicationDetailScreen() {
         visible={rejectSheetVisible}
         onClose={() => setRejectSheetVisible(false)}
         title="Reject Application"
+        footer={
+          <Button
+            title="Confirm Reject"
+            variant="danger"
+            onPress={handleReject}
+            loading={rejectMutation.isPending}
+            fullWidth
+          />
+        }
       >
         <Input
           label="Rejection Reason"
@@ -321,13 +332,6 @@ export default function ApplicationDetailScreen() {
           onChangeText={setRejectReason}
           placeholder="Minimum 5 characters"
           multiline
-        />
-        <Button
-          title="Confirm Reject"
-          variant="danger"
-          onPress={handleReject}
-          loading={rejectMutation.isPending}
-          fullWidth
         />
       </BottomSheet>
 
