@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Badge, BottomSheet, Button, Card, ConfirmModal, EmptyState, Header, Input, Loader, Pressable, ScreenContent } from '@/components/ui';
@@ -8,8 +10,10 @@ import {
   useCreateBannerMutation,
   useDeleteBannerMutation,
   useUpdateBannerMutation,
+  useUploadBannerImageMutation,
 } from '@/features/homepage/hooks/useHomepage';
 import { useTheme } from '@/hooks/useTheme';
+import { toast } from '@/store/toastStore';
 import type { Banner } from '@/types/homepage';
 import { formatApiErrorDetail, formatDate } from '@/utils/errors';
 
@@ -30,6 +34,7 @@ export default function HomepageScreen() {
   const updateBannerMutation = useUpdateBannerMutation();
   const deleteBannerMutation = useDeleteBannerMutation();
   const clearCacheMutation = useClearHomepageCacheMutation();
+  const uploadImageMutation = useUploadBannerImageMutation();
 
   const [bannerSheetVisible, setBannerSheetVisible] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
@@ -52,6 +57,21 @@ export default function HomepageScreen() {
     });
     setBannerSheetVisible(true);
   };
+  const pickAndUploadBannerImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      toast.error('Photo library permission is required');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    uploadImageMutation.mutate(
+      { uri: asset.uri, fileName: asset.fileName ?? undefined, mimeType: asset.mimeType ?? 'image/jpeg' },
+      { onSuccess: (res) => setBannerForm((f) => ({ ...f, image_url: res.url })) },
+    );
+  };
+
   const handleSaveBanner = () => {
     if (!bannerForm.title.trim()) return;
     const payload = {
@@ -143,7 +163,27 @@ export default function HomepageScreen() {
       >
         <Input label="Title" value={bannerForm.title} onChangeText={(t) => setBannerForm((f) => ({ ...f, title: t }))} />
         <Input label="Subtitle" value={bannerForm.subtitle} onChangeText={(t) => setBannerForm((f) => ({ ...f, subtitle: t }))} />
-        <Input label="Image URL" value={bannerForm.image_url} onChangeText={(t) => setBannerForm((f) => ({ ...f, image_url: t }))} autoCapitalize="none" />
+        {bannerForm.image_url ? (
+          <Image
+            source={{ uri: bannerForm.image_url }}
+            style={{ width: '100%', aspectRatio: 2, borderRadius: 16, marginBottom: 12 }}
+            contentFit="cover"
+          />
+        ) : null}
+        <Button
+          title="Pick Image"
+          variant="outline"
+          className="mb-4"
+          loading={uploadImageMutation.isPending}
+          onPress={pickAndUploadBannerImage}
+          fullWidth
+        />
+        <Input
+          label="Image URL (or paste a link instead)"
+          value={bannerForm.image_url}
+          onChangeText={(t) => setBannerForm((f) => ({ ...f, image_url: t }))}
+          autoCapitalize="none"
+        />
         <Input label="Redirect URL" value={bannerForm.redirect_url} onChangeText={(t) => setBannerForm((f) => ({ ...f, redirect_url: t }))} autoCapitalize="none" />
         <Input label="Display Order" value={bannerForm.display_order} onChangeText={(t) => setBannerForm((f) => ({ ...f, display_order: t }))} keyboardType="number-pad" />
         <Button

@@ -23,4 +23,19 @@ export const homepageService = {
     const { data } = await apiClient.post(ENDPOINTS.ADMIN.HOMEPAGE_CACHE_CLEAR);
     return data;
   },
+  uploadBannerImage: async (file: { uri: string; fileName?: string; mimeType?: string }) => {
+    const formData = new FormData();
+    // Matches offersService.uploadImage's pattern (React Native FormData shape).
+    formData.append('file', {
+      uri: file.uri,
+      name: file.fileName ?? 'banner_image.jpg',
+      type: file.mimeType ?? 'image/jpeg',
+    } as unknown as Blob);
+    const { data } = await apiClient.post<{ url: string; file_id: string }>(
+      ENDPOINTS.ADMIN.HOMEPAGE_BANNER_UPLOAD_IMAGE,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    return data;
+  },
 };

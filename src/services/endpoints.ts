@@ -73,6 +73,7 @@ export const ENDPOINTS = {
     ORDER_BROADCAST: (orderId: string) => `/api/v1/admin/orders/${orderId}/broadcast`,
     HOMEPAGE_BANNERS: '/api/v1/admin/homepage/banners',
     HOMEPAGE_BANNER: (bannerId: string) => `/api/v1/admin/homepage/banners/${bannerId}`,
+    HOMEPAGE_BANNER_UPLOAD_IMAGE: '/api/v1/admin/homepage/banners/upload-image',
     HOMEPAGE_CATEGORIES: '/api/v1/admin/homepage/categories',
     HOMEPAGE_CATEGORY: (categoryId: string) =>
       `/api/v1/admin/homepage/categories/${categoryId}`,
