@@ -92,6 +92,12 @@ export default function BroadcastsScreen() {
         setIsOnline(false);
         toast.success("You're offline");
       }
+    } catch {
+      // setOnlineStatus's own onError already shows a toast - this catch
+      // exists only so the mutateAsync rejection doesn't surface as an
+      // unhandled promise rejection once `finally` runs (it previously had
+      // no catch at all, so the rejection propagated past this handler on
+      // every failed toggle, e.g. a network blip).
     } finally {
       setTogglingOnline(false);
     }

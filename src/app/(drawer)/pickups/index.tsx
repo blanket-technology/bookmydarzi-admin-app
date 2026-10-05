@@ -271,6 +271,10 @@ export default function PickupsScreen() {
         setIsOnline(false);
         toast.success("You're offline");
       }
+    } catch {
+      // setOnlineStatus's own onError already shows a toast - this catch
+      // just prevents the mutateAsync rejection from surfacing as an
+      // unhandled promise rejection once `finally` runs.
     } finally {
       setTogglingOnline(false);
     }

@@ -246,6 +246,10 @@ export default function ReturnsScreen() {
         location.stop();
         setIsOnline(false);
       }
+    } catch {
+      // setOnlineStatus's own onError already shows a toast - this catch
+      // just prevents the mutateAsync rejection from surfacing as an
+      // unhandled promise rejection once `finally` runs.
     } finally {
       setTogglingOnline(false);
     }
