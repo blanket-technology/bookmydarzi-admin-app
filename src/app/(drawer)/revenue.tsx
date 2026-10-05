@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { RefreshControl, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Card, ChartCard, EmptyState, Header, Pressable, ScreenContent, SkeletonList, StatCard } from '@/components/ui';
+import { Card, EmptyState, Header, Pressable, ScreenContent, SkeletonList, StatCard } from '@/components/ui';
 import { useDashboard, useExportDashboardCsvMutation } from '@/features/dashboard/hooks/useDashboard';
 import { useTheme } from '@/hooks/useTheme';
 import { normalizeDashboardResponse } from '@/utils/dashboard';
@@ -185,7 +185,6 @@ export default function RevenueScreen() {
   const orders = dash.orders ?? {};
   const payments = dash.payments ?? {};
   const tailors = dash.tailors ?? {};
-  const revenueChart = dash.revenue_chart ?? [];
 
   const total = revenue.total ?? 0;
   const online = revenue.online ?? 0;
@@ -268,9 +267,6 @@ export default function RevenueScreen() {
             <StatCard title="This Week" value={formatCurrency(revenue.this_week)} icon="calendar-outline" color="#8b5cf6" />
             <StatCard title="This Month" value={formatCurrency(revenue.this_month)} icon="trending-up-outline" color="#f59e0b" />
           </View>
-
-          {/* Revenue trend */}
-          <ChartCard title="Revenue Trend" data={revenueChart} />
 
           {/* Payment mix — online vs COD */}
           <Card className="mb-4">

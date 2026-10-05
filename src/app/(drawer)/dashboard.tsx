@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect, useMemo } from 'react';
 import { RefreshControl, Text, View } from 'react-native';
-import { Avatar, Badge, Card, ChartCard, EmptyState, Header, Pressable, ScreenContent, SkeletonList, StatCard } from '@/components/ui';
+import { Avatar, Badge, Card, EmptyState, Header, Pressable, ScreenContent, SkeletonList, StatCard } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
@@ -380,7 +380,12 @@ export default function DashboardScreen() {
   );
 
   const statCards = parseDashboardStats(dashboard, isSuperadmin);
-  const revenueData = dashboard.revenue_chart ?? [];
+  const revenueBreakdown = [
+    { label: 'Today', value: dashboard.revenue?.today ?? 0 },
+    { label: 'This Week', value: dashboard.revenue?.this_week ?? 0 },
+    { label: 'This Month', value: dashboard.revenue?.this_month ?? 0 },
+    { label: 'Total', value: dashboard.revenue?.total ?? 0 },
+  ];
   const pendingOrders = livePendingOrders;
   const recentOrders = adminOrders;
   const customers = adminUsersData?.users ?? [];
@@ -546,7 +551,33 @@ export default function DashboardScreen() {
             ))}
           </View>
 
-          {isSuperadmin && <ChartCard title="Revenue Overview" data={revenueData} />}
+          {isSuperadmin && (
+            <Card className="mb-4">
+              <SectionHeader title="Revenue Overview" icon="cash-outline" />
+              {/* Today/This Week/This Month/Total are nested cumulative
+                  figures, not a time series (This Month already includes
+                  This Week, which already includes Today) - a connected
+                  line chart across them visually implied steady growth
+                  that wasn't real, and summed the 4 values into a
+                  meaningless header total. Plain rows, matching how
+                  final's web admin dashboard presents this same data
+                  (SuperadminDashboard.jsx's Revenue stat card). */}
+              {revenueBreakdown.map((row, i) => (
+                <View
+                  key={row.label}
+                  className="flex-row items-center justify-between py-2.5"
+                  style={i < revenueBreakdown.length - 1 ? { borderBottomWidth: 1, borderBottomColor: colors.border } : undefined}
+                >
+                  <Text className="text-sm" style={{ color: colors.textSecondary }}>
+                    {row.label}
+                  </Text>
+                  <Text className="text-sm font-bold" style={{ color: colors.text }}>
+                    {formatCurrency(row.value)}
+                  </Text>
+                </View>
+              ))}
+            </Card>
+          )}
 
           <Card className="mb-4">
             <SectionHeader
