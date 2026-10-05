@@ -39,6 +39,39 @@ export const useCountdown = (expiresAt?: string | null) => {
   return label;
 };
 
+// Companion to useCountdown for a draining urgency bar - returns 1 right
+// after the offer was issued, decaying linearly to 0 at expiry, derived
+// from notifiedAt/expiresAt rather than a guessed fixed window so it's
+// accurate regardless of which broadcast round's timeout this offer is on.
+// A broadcast offer previously had no escalating visual cue at all beyond
+// the countdown pill flipping to red in the last instant - this gives a
+// continuous sense of urgency building as time runs out, not just a binary
+// flip.
+export const useCountdownProgress = (notifiedAt?: string | null, expiresAt?: string | null): number => {
+  const [progress, setProgress] = useState(1);
+  useEffect(() => {
+    if (!expiresAt || !notifiedAt) {
+      setProgress(1);
+      return;
+    }
+    const start = new Date(notifiedAt).getTime();
+    const end = new Date(expiresAt).getTime();
+    const totalMs = end - start;
+    if (totalMs <= 0) {
+      setProgress(0);
+      return;
+    }
+    const update = () => {
+      const remainingMs = end - Date.now();
+      setProgress(Math.max(0, Math.min(1, remainingMs / totalMs)));
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [notifiedAt, expiresAt]);
+  return progress;
+};
+
 export const openMap = (latitude?: number | null, longitude?: number | null, label?: string) => {
   if (latitude == null || longitude == null) return;
   const query = encodeURIComponent(label ?? `${latitude},${longitude}`);

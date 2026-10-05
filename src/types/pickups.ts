@@ -35,6 +35,10 @@ export interface PickupBroadcastOffer {
   expires_at?: string | null;
   pickup?: PickupAddressInfo | null;
   items?: PickupBroadcastItem[];
+  // What this employee earns for accepting this leg (BridgeLegRate
+  // resolved per-employee server-side) - lets the offer card/modal show a
+  // real payout figure instead of asking the employee to accept blind.
+  rate_amount?: number | null;
 }
 
 export interface PickupBroadcastOffersResponse {

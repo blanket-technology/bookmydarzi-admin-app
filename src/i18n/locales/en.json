@@ -280,6 +280,9 @@
     "responded": "Responded {{date}}",
     "noAttempts": "No broadcast attempts yet."
   },
+  "incomingBroadcast": {
+    "title": "New Order Offer!"
+  },
   "pendingOffer": {
     "pickupOfferTitle": "Pickup offer for you",
     "deliveryOfferTitle": "Delivery offer for you",
@@ -451,7 +454,8 @@
     "newOffersWillAppear": "New pickup offers near you will appear here.",
     "declineOfferTitle": "Decline Offer",
     "declineOfferMessage": "Decline this pickup offer? It will be sent to the next available Bridge employee.",
-    "away": "away"
+    "away": "away",
+    "moreOffersWaiting": "+{{count}} more offer(s) waiting"
   },
   "deliveries": {
     "title": "Deliveries",

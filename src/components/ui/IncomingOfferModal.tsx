@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { ActivityIndicator, Modal, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
-import { LocationRow, itemsLabel, useCountdown } from '@/features/broadcasts/offerCardHelpers';
+import { LocationRow, itemsLabel, useCountdown, useCountdownProgress } from '@/features/broadcasts/offerCardHelpers';
 import {
   useAcceptDeliveryBroadcastMutation,
   useDeclineDeliveryBroadcastMutation,
@@ -35,6 +35,7 @@ import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { useOfferAlertSound } from '@/hooks/useOfferAlertSound';
 import { useIncomingOfferStore, type IncomingOfferLocation } from '@/store/incomingOfferStore';
+import { formatCurrency } from '@/utils/errors';
 
 // Full-screen, non-dismissible "New offer!" takeover - the Rapido/Ola-style
 // ride-request popup this app was missing. Previously a new pickup/delivery/
@@ -110,7 +111,11 @@ export const IncomingOfferModal = () => {
   const drop: IncomingOfferLocation | null | undefined = resolvedDrop ?? offer?.drop ?? null;
   const items = resolvedOffer?.items;
   const expiresAt = resolvedOffer?.expires_at ?? offer?.expiresAt;
+  const notifiedAt = resolvedOffer?.notified_at;
   const broadcastRound = resolvedOffer?.broadcast_round ?? offer?.broadcastRound;
+  // Only on the resolved list-endpoint data - the raw WS payload never
+  // carries it (same reasoning as expiresAt/broadcastRound above).
+  const rateAmount = resolvedOffer?.rate_amount;
 
   const acceptPickup = useAcceptPickupBroadcastMutation();
   const declinePickup = useDeclinePickupBroadcastMutation();
@@ -142,6 +147,7 @@ export const IncomingOfferModal = () => {
 
   const countdown = useCountdown(expiresAt);
   const isExpired = countdown === t('pickups.expired');
+  const countdownProgress = useCountdownProgress(notifiedAt, expiresAt);
 
   // The broadcast already timed out server-side by the time the countdown
   // hits zero - nothing to decline, just stop showing it and move to
@@ -223,14 +229,46 @@ export const IncomingOfferModal = () => {
           <Text className="text-sm mt-0.5" style={{ color: colors.textMuted }}>
             {offer.orderCode ?? t('pickups.orderHash', { id: offer.orderId })}
           </Text>
-          <View
-            className="mt-3 px-4 py-1.5 rounded-full"
-            style={{ backgroundColor: isExpired ? `${colors.error}20` : `${colors.primary}20` }}
-          >
-            <Text className="text-lg font-black" style={{ color: isExpired ? colors.error : colors.primary }}>
-              {countdown}
-            </Text>
+          <View className="flex-row items-center mt-3" style={{ gap: 10 }}>
+            <View
+              className="px-4 py-1.5 rounded-full"
+              style={{ backgroundColor: isExpired ? `${colors.error}20` : `${colors.primary}20` }}
+            >
+              <Text className="text-lg font-black" style={{ color: isExpired ? colors.error : colors.primary }}>
+                {countdown}
+              </Text>
+            </View>
+            {rateAmount != null ? (
+              <View className="px-4 py-1.5 rounded-full" style={{ backgroundColor: '#16a34a20' }}>
+                <Text className="text-lg font-black" style={{ color: '#16a34a' }}>
+                  {formatCurrency(rateAmount)}
+                </Text>
+              </View>
+            ) : null}
           </View>
+          {expiresAt ? (
+            <View
+              className="h-1.5 rounded-full mt-3"
+              style={{ width: '70%', maxWidth: 260, backgroundColor: colors.border, overflow: 'hidden' }}
+            >
+              <View
+                style={{
+                  width: `${countdownProgress * 100}%`,
+                  height: '100%',
+                  backgroundColor: isExpired
+                    ? colors.error
+                    : countdownProgress < 0.3
+                      ? '#f59e0b'
+                      : colors.primary,
+                }}
+              />
+            </View>
+          ) : null}
+          {queue.length > 1 ? (
+            <Text className="text-xs mt-2" style={{ color: colors.textMuted }}>
+              {t('pickups.moreOffersWaiting', { count: queue.length - 1 })}
+            </Text>
+          ) : null}
         </View>
 
         <ScrollView className="flex-1 px-5 mt-2" showsVerticalScrollIndicator={false}>

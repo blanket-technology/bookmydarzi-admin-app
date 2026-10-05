@@ -43,6 +43,9 @@ export interface RepairPickupBroadcastOffer {
   pickup?: RepairPickupPickupInfo | null;
   drop?: RepairPickupDropInfo | null;
   items?: RepairPickupBroadcastItem[];
+  // What this employee earns for accepting this leg - see
+  // PickupBroadcastOffer.rate_amount's identical comment.
+  rate_amount?: number | null;
 }
 
 export interface RepairPickupBroadcastOffersResponse {
