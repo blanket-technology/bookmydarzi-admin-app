@@ -43,6 +43,9 @@ export interface ReturnBroadcastOffer {
   pickup?: ReturnPickupInfo | null;
   drop?: ReturnDropInfo | null;
   items?: ReturnBroadcastItem[];
+  // What this employee earns for accepting this leg - see
+  // PickupBroadcastOffer.rate_amount's identical comment.
+  rate_amount?: number | null;
 }
 
 export interface ReturnBroadcastOffersResponse {

@@ -280,6 +280,9 @@
     "responded": "{{date}} को जवाब दिया",
     "noAttempts": "अभी तक कोई ब्रॉडकास्ट प्रयास नहीं हुआ।"
   },
+  "incomingBroadcast": {
+    "title": "नया ऑर्डर ऑफर!"
+  },
   "pendingOffer": {
     "pickupOfferTitle": "आपके लिए पिकअप ऑफर",
     "deliveryOfferTitle": "आपके लिए डिलीवरी ऑफर",
@@ -451,7 +454,8 @@
     "newOffersWillAppear": "आपके आस-पास के नए पिकअप ऑफर यहां दिखेंगे।",
     "declineOfferTitle": "ऑफर अस्वीकार करें",
     "declineOfferMessage": "इस पिकअप ऑफर को अस्वीकार करें? यह अगले उपलब्ध ब्रिज कर्मचारी को भेज दिया जाएगा।",
-    "away": "दूर"
+    "away": "दूर",
+    "moreOffersWaiting": "+{{count}} और ऑफर प्रतीक्षा में हैं"
   },
   "deliveries": {
     "title": "डिलीवरी",
