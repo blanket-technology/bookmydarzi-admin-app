@@ -54,6 +54,51 @@ export function SpecializationChecklist({ selectedIds, onChange, error }: Specia
       .filter((c) => c.services.length > 0);
   }, [data]);
 
+  // Quick select: Men/Women/Kids + Designer toggles that bulk-check the
+  // matching leaf checkboxes below, so the onboarding agent doesn't have
+  // to hand-pick 7-8 boxes per category for the common case. Category
+  // match is by name prefix (no separate gender field in this payload -
+  // see canonical_service_ids.py's note on "Mens Clothing" vs "Men
+  // Clothing" naming); stitching tier is inferred from the service name
+  // ("Normal Stitching"/"Designer Stitching"), the only place it's
+  // exposed here (see service_hierarchy_seeder.py's Name=stitch_name).
+  const quickSelectGroups = useMemo(() => {
+    const matchers: Array<{ key: string; label: string; test: (name: string) => boolean }> = [
+      { key: 'men', label: 'Men', test: (name) => /^mens?\s+clothing/i.test(name) },
+      { key: 'women', label: 'Women', test: (name) => /^women'?s?\s+clothing/i.test(name) },
+      { key: 'kids', label: 'Kids', test: (name) => /^kids?\s+clothing/i.test(name) },
+    ];
+    return matchers
+      .map((m) => {
+        const category = categories.find((c) => m.test(c.name));
+        if (!category) return null;
+        const normalIds = category.services
+          .filter((s) => /normal stitching/i.test(s.name))
+          .map((s) => Number(s.service_id));
+        const designerIds = category.services
+          .filter((s) => /designer stitching/i.test(s.name))
+          .map((s) => Number(s.service_id));
+        if (normalIds.length === 0 && designerIds.length === 0) return null;
+        return { ...m, normalIds, designerIds };
+      })
+      .filter((g): g is { key: string; label: string; test: (name: string) => boolean; normalIds: number[]; designerIds: number[] } => g !== null);
+  }, [categories]);
+
+  const [designerStitching, setDesignerStitching] = useState(false);
+
+  const applyQuickSelect = (group: { normalIds: number[]; designerIds: number[] }) => {
+    const idsForGroup = designerStitching ? [...group.normalIds, ...group.designerIds] : group.normalIds;
+    const allGroupIds = [...group.normalIds, ...group.designerIds];
+    const isFullyApplied = idsForGroup.length > 0 && idsForGroup.every((id) => selectedIds.includes(id));
+    if (isFullyApplied) {
+      onChange(selectedIds.filter((id) => !allGroupIds.includes(id)));
+      return;
+    }
+    const next = new Set(selectedIds);
+    idsForGroup.forEach((id) => next.add(id));
+    onChange(Array.from(next));
+  };
+
   const toggleCategory = (categoryId: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedCategoryIds((prev) => {
@@ -113,6 +158,47 @@ export function SpecializationChecklist({ selectedIds, onChange, error }: Specia
         Select every garment type this tailor is genuinely good at - orders are routed strictly to matching
         tailors first, so accuracy here directly affects order quality.
       </Text>
+
+      {quickSelectGroups.length > 0 ? (
+        <View className="flex-row flex-wrap items-center mb-3" style={{ gap: 8 }}>
+          {quickSelectGroups.map((group) => {
+            const idsForGroup = designerStitching ? [...group.normalIds, ...group.designerIds] : group.normalIds;
+            const active = idsForGroup.length > 0 && idsForGroup.every((id) => selectedIds.includes(id));
+            return (
+              <Pressable
+                key={group.key}
+                onPress={() => applyQuickSelect(group)}
+                className="px-3 py-1.5 rounded-full border"
+                style={{
+                  borderColor: active ? colors.primary : colors.border,
+                  backgroundColor: active ? colors.primary : colors.card,
+                }}
+              >
+                <Text
+                  className="text-xs font-semibold"
+                  style={{ color: active ? '#fff' : colors.text }}
+                >
+                  {group.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+          <Pressable
+            onPress={() => setDesignerStitching((v) => !v)}
+            className="flex-row items-center px-3 py-1.5 rounded-full border"
+            style={{ borderColor: colors.border, backgroundColor: colors.card }}
+          >
+            <Ionicons
+              name={designerStitching ? 'checkbox' : 'square-outline'}
+              size={15}
+              color={designerStitching ? colors.primary : colors.textMuted}
+            />
+            <Text className="text-xs font-semibold ml-1.5" style={{ color: colors.text }}>
+              Designer stitching
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       {categories.map((category) => {
         const expanded = expandedCategoryIds.has(category.id);
