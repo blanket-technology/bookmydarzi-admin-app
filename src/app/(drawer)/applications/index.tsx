@@ -120,6 +120,20 @@ export default function ApplicationsScreen() {
               <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
                 {item.city ?? '—'} · {formatDate(item.submitted_at)}
               </Text>
+              {/* Minimum context to judge a pending application from the
+                  list without opening the detail screen - previously only
+                  name/contact/date were shown, so Approve/Reject here was
+                  effectively a blind decision unless the admin tapped in
+                  first. KYC document status isn't in the list response
+                  (only the detail one), so it's not shown here - don't
+                  imply completeness that isn't actually known yet. */}
+              {item.experience_years != null || (item.specialization?.length ?? 0) > 0 ? (
+                <Text className="text-xs mt-1" style={{ color: colors.textSecondary }} numberOfLines={1}>
+                  {item.experience_years != null ? `${item.experience_years} yrs exp` : null}
+                  {item.experience_years != null && (item.specialization?.length ?? 0) > 0 ? ' · ' : null}
+                  {item.specialization?.length ? item.specialization.join(', ') : null}
+                </Text>
+              ) : null}
             </View>
             <Badge
               label={item.status}
