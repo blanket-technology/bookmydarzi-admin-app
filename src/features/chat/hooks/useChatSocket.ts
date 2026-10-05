@@ -72,6 +72,19 @@ export function useChatSocket(
   const mountedRef = useRef(true);
   const onSessionEventRef = useRef(onSessionEvent);
   onSessionEventRef.current = onSessionEvent;
+  // Bug fix: onopen's auto-resend loop used to read `messages` directly via
+  // closure. Since the connect effect deliberately doesn't depend on
+  // `messages` (see the eslint-disable below - re-running it on every new
+  // message would reconnect the socket constantly), `connect` and its
+  // `onopen` are only ever defined ONCE per session, at mount. Every
+  // subsequent reconnect (onclose's setTimeout(connect, delay)) reused that
+  // same stale closure, so onopen's resend loop saw the messages array as it
+  // existed at mount time forever after - any message sent/queued after the
+  // very first connect was never auto-resent on a later reconnect, only
+  // recoverable via the manual Retry button. A ref always holds the latest
+  // value regardless of which render defined the closure that reads it.
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
   // client_id -> ack timer, so a late/duplicate ack or a resend can clear
   // the right timer without racing a stale one from a previous attempt.
   const pendingAcksRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -153,7 +166,8 @@ export function useChatSocket(
 
         // Auto-resend anything that never got acked before the connection
         // dropped (queued while offline, or in flight when the socket died).
-        for (const m of messages) {
+        // Reads the ref, not `messages` directly - see messagesRef's comment.
+        for (const m of messagesRef.current) {
           if ((m.deliveryStatus === 'pending' || m.deliveryStatus === 'failed') && m.client_id) {
             dispatchSend(
               m.client_id,
