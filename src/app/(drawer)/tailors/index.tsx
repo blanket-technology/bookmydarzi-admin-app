@@ -2,14 +2,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
-import { Avatar, Badge, EmptyState, Header, Pressable, SearchBar, SkeletonList } from '@/components/ui';
-import { useTailors, useTailorWorkload } from '@/features/tailors/hooks/useTailors';
+import { Avatar, Badge, EmptyState, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
+import { useTailorsPaginated, useTailorWorkload } from '@/features/tailors/hooks/useTailors';
 import { formatApiErrorDetail } from '@/utils/errors';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { AdminTailorListItem, TailorWorkloadItem } from '@/types/tailors';
 
 type TailorsView = 'list' | 'workload';
+
+const LIMIT = 15;
 
 const WorkloadRow = ({ item, colors }: { item: TailorWorkloadItem; colors: ReturnType<typeof useTheme>['colors'] }) => (
   <View
@@ -62,9 +64,10 @@ export default function TailorsScreen() {
   const { colors } = useTheme();
   const { contentMaxWidth } = useResponsive();
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [view, setView] = useState<TailorsView>('list');
-  const { data, isLoading, isError, error, refetch, isRefetching } = useTailors(
-    { search },
+  const { data, isLoading, isError, error, refetch, isRefetching } = useTailorsPaginated(
+    { search: search || undefined, page, limit: LIMIT },
     view === 'list',
   );
   const {
@@ -76,19 +79,12 @@ export default function TailorsScreen() {
     isRefetching: isWorkloadRefetching,
   } = useTailorWorkload(view === 'workload');
 
-  const tailors = useMemo(() => {
-    const items = data?.tailors ?? data?.items ?? [];
-    if (!search.trim()) return items;
-    const q = search.toLowerCase();
-    return items.filter(
-      (item) =>
-        item.full_name?.toLowerCase().includes(q) ||
-        item.email?.toLowerCase().includes(q) ||
-        item.mobile?.includes(q) ||
-        item.tailor_id?.toLowerCase().includes(q) ||
-        item.specialization?.toLowerCase().includes(q),
-    );
-  }, [data, search]);
+  // Filtered server-side now (GET /admin/tailors/paginated's search param),
+  // not client-side after fetching the whole roster - the old approach also
+  // meant "tailors.length" in the header subtitle was the CURRENT PAGE's
+  // count, not the true total, once a real page control existed.
+  const tailors = useMemo(() => data?.tailors ?? data?.items ?? [], [data]);
+  const totalPages = Math.max(1, Math.ceil((data?.total ?? tailors.length) / LIMIT));
 
   const renderItem = ({ item }: { item: AdminTailorListItem }) => (
     <Pressable
@@ -135,7 +131,7 @@ export default function TailorsScreen() {
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Header
         title="Tailors"
-        subtitle={view === 'list' ? `${tailors.length} tailors` : `${workload.length} tailors · workload`}
+        subtitle={view === 'list' ? `${data?.total ?? tailors.length} tailors` : `${workload.length} tailors · workload`}
         rightAction={
           <Pressable
             onPress={() => router.push('/(drawer)/tailors/add')}
@@ -169,7 +165,14 @@ export default function TailorsScreen() {
       <View className="px-5 flex-1 mt-3 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
         {view === 'list' ? (
           <>
-            <SearchBar value={search} onChangeText={setSearch} placeholder="Search tailors..." />
+            <SearchBar
+              value={search}
+              onChangeText={(text) => {
+                setSearch(text);
+                setPage(1);
+              }}
+              placeholder="Search tailors..."
+            />
             {isLoading ? (
               <SkeletonList count={5} />
             ) : isError ? (
@@ -192,6 +195,7 @@ export default function TailorsScreen() {
                   />
                 }
                 ListEmptyComponent={<EmptyState icon="cut-outline" title="No tailors found" />}
+                ListFooterComponent={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}
               />
             )}
           </>

@@ -137,3 +137,13 @@ export interface StaffCreateResponse {
 // GET /admin/staff returns a bare JSON array (response_model=List[AdminStaffListItem]),
 // not a {staff:[...]} / {items:[...]} wrapper.
 export type StaffListResponse = AdminStaffListItem[];
+
+// GET /admin/staff/paginated - the real paginated counterpart, unlike
+// StaffListResponse above.
+export interface StaffPaginatedResponse {
+  items: AdminStaffListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  has_next: boolean;
+}

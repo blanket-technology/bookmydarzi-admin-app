@@ -7,12 +7,20 @@ import type {
   StaffCreateRequest,
   StaffCreateResponse,
   StaffListResponse,
+  StaffPaginatedResponse,
   StaffUpdateRequest,
 } from '@/types/staff';
 
 export interface StaffQueryParams {
   role?: string;
   search?: string;
+}
+
+export interface StaffPaginatedQueryParams {
+  role?: string;
+  search?: string;
+  page: number;
+  limit: number;
 }
 
 // Backend's AdminStaffListItem/AdminStaffDetail schemas declare id/tailor_id
@@ -31,6 +39,16 @@ export const staffService = {
   getStaff: async (params?: StaffQueryParams): Promise<StaffListResponse> => {
     const { data } = await apiClient.get<StaffListResponse>(ENDPOINTS.ADMIN.STAFF, { params });
     return data.map(normalizeStaffListItem);
+  },
+
+  // GET /admin/staff/paginated - server-side page/limit/search, unlike
+  // getStaff above (which fetches the entire staff roster every time and
+  // silently ignores `search`, since the old endpoint never supported it).
+  getStaffPaginated: async (params: StaffPaginatedQueryParams): Promise<StaffPaginatedResponse> => {
+    const { data } = await apiClient.get<StaffPaginatedResponse>(ENDPOINTS.ADMIN.STAFF_PAGINATED, {
+      params,
+    });
+    return { ...data, items: data.items.map(normalizeStaffListItem) };
   },
 
   createStaff: async (payload: StaffCreateRequest): Promise<StaffCreateResponse> => {

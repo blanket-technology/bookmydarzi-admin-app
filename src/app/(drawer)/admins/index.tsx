@@ -1,32 +1,32 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
-import { Avatar, Badge, EmptyState, Header, Pressable, SearchBar, SkeletonList } from '@/components/ui';
-import { useStaff } from '@/features/staff/hooks/useStaff';
+import { Avatar, Badge, EmptyState, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
+import { useStaffPaginated } from '@/features/staff/hooks/useStaff';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { AdminStaffListItem } from '@/types/staff';
 import { formatApiErrorDetail, formatDate } from '@/utils/errors';
 
+const LIMIT = 15;
+
 export default function AdminsScreen() {
   const { colors } = useTheme();
   const { contentMaxWidth } = useResponsive();
   const [search, setSearch] = useState('');
-  const { data, isLoading, isError, error, refetch, isRefetching } = useStaff({
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError, error, refetch, isRefetching } = useStaffPaginated({
     role: 'admin',
+    search: search || undefined,
+    page,
+    limit: LIMIT,
   });
 
-  const admins = useMemo(() => {
-    const items = data ?? [];
-    if (!search.trim()) return items;
-    const q = search.toLowerCase();
-    return items.filter(
-      (item) =>
-        item.full_name?.toLowerCase().includes(q) ||
-        item.email?.toLowerCase().includes(q) ||
-        item.mobile?.includes(q),
-    );
-  }, [data, search]);
+  // Filtered server-side now (GET /admin/staff/paginated's search param) -
+  // the previous GET /admin/staff call had no search support at all, so
+  // this was always filtering a fetched-in-full, unfiltered list client-side.
+  const admins = useMemo(() => data?.items ?? [], [data]);
+  const totalPages = Math.max(1, Math.ceil((data?.total ?? admins.length) / LIMIT));
 
   const renderItem = ({ item }: { item: AdminStaffListItem }) => (
     <Pressable
@@ -63,7 +63,7 @@ export default function AdminsScreen() {
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Header
         title="Admins"
-        subtitle={`${admins.length} admin account${admins.length === 1 ? '' : 's'}`}
+        subtitle={`${data?.total ?? admins.length} admin account${(data?.total ?? admins.length) === 1 ? '' : 's'}`}
         rightAction={
           <Pressable
             onPress={() => router.push('/(drawer)/admins/add')}
@@ -75,7 +75,14 @@ export default function AdminsScreen() {
         }
       />
       <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
-        <SearchBar value={search} onChangeText={setSearch} placeholder="Search admins..." />
+        <SearchBar
+          value={search}
+          onChangeText={(text) => {
+            setSearch(text);
+            setPage(1);
+          }}
+          placeholder="Search admins..."
+        />
         {isLoading ? (
           <SkeletonList count={5} />
         ) : isError ? (
@@ -98,6 +105,7 @@ export default function AdminsScreen() {
               />
             }
             ListEmptyComponent={<EmptyState icon="shield-checkmark-outline" title="No admin accounts" />}
+            ListFooterComponent={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}
           />
         )}
       </View>

@@ -11,6 +11,17 @@ export const useStaff = (params?: { role?: string; search?: string }) =>
     queryFn: () => staffService.getStaff(params),
   });
 
+// Server-side paginated counterpart to useStaff - that hook (and the old
+// GET /admin/staff it calls) fetches the entire staff roster on every call
+// with no real search support. Prefer this for any screen with a page
+// control.
+export const useStaffPaginated = (params: { role?: string; search?: string; page: number; limit: number }) =>
+  useQuery({
+    queryKey: QUERY_KEYS.STAFF(params as Record<string, unknown>),
+    queryFn: () => staffService.getStaffPaginated(params),
+    placeholderData: (prev) => prev,
+  });
+
 export const useCreateStaffMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
