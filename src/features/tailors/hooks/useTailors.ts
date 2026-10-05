@@ -51,6 +51,20 @@ export const useTailors = (params?: { search?: string }, enabled = true) =>
     enabled,
   });
 
+// Server-side paginated counterpart to useTailors - that hook fetches the
+// entire tailor roster on every call, fine while the team was small but not
+// as it grows. Prefer this for any screen with a page control.
+export const useTailorsPaginated = (
+  params: { search?: string; page: number; limit: number },
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.TAILORS(params as unknown as Record<string, unknown>),
+    queryFn: () => tailorService.getTailorsPaginated(params),
+    enabled,
+    placeholderData: (prev) => prev,
+  });
+
 export const useTailorsForEmployee = (enabled = true) =>
   useQuery({
     queryKey: ['tailors', 'employee'],

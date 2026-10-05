@@ -15,6 +15,12 @@ export interface TailorsQueryParams {
   search?: string;
 }
 
+export interface TailorsPaginatedQueryParams {
+  search?: string;
+  page: number;
+  limit: number;
+}
+
 // Backend's AdminTailorListItem schema declares tailor_id/user_id as `int`
 // (app/schemas/staff.py) - the raw JSON response has them as JS numbers,
 // but every screen in this app treats AdminTailorListItem.tailor_id as a
@@ -39,6 +45,17 @@ export const tailorService = {
     });
     const tailors = data.map(normalizeTailor);
     return { tailors, total: tailors.length };
+  },
+
+  // GET /admin/tailors/paginated - server-side page/limit/search, unlike
+  // getTailors above (which fetches the entire tailor roster every time).
+  // The response is already { items, total, page, limit, has_next }.
+  getTailorsPaginated: async (params: TailorsPaginatedQueryParams): Promise<AdminTailorsResponse> => {
+    const { data } = await apiClient.get<{ items: AdminTailorListItem[]; total: number }>(
+      ENDPOINTS.ADMIN.TAILORS_PAGINATED,
+      { params },
+    );
+    return { items: data.items.map(normalizeTailor), total: data.total };
   },
 
   // Employee-safe tailor list for the assignment picker - no contact

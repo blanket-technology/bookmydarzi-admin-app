@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { Avatar, Badge, EmptyState, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
-import { useStaff } from '@/features/staff/hooks/useStaff';
+import { useStaffPaginated } from '@/features/staff/hooks/useStaff';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { AdminStaffListItem } from '@/types/staff';
@@ -15,33 +15,21 @@ export default function EmployeesScreen() {
   const { contentMaxWidth } = useResponsive();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError, error, refetch, isRefetching } = useStaff({
+  const { data, isLoading, isError, error, refetch, isRefetching } = useStaffPaginated({
     role: 'employee',
+    search: search || undefined,
+    page,
+    limit: LIMIT,
   });
 
-  // GET /admin/staff has no server-side pagination (fetches all staff
-  // unconditionally — app/services/admin/staff_listing_service.py) — for an
-  // admin/employee roster this is bounded and low-cardinality, so paginating
-  // client-side here is simpler than adding page/limit plumbing to the
-  // backend for a list that will never realistically need it.
-  const filtered = useMemo(() => {
-    const items = data ?? [];
-    if (!search.trim()) return items;
-    const q = search.toLowerCase();
-    return items.filter(
-      (item) =>
-        item.full_name?.toLowerCase().includes(q) ||
-        item.email?.toLowerCase().includes(q) ||
-        item.mobile?.includes(q) ||
-        item.role?.toLowerCase().includes(q),
-    );
-  }, [data, search]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / LIMIT));
-  const staff = useMemo(
-    () => filtered.slice((page - 1) * LIMIT, page * LIMIT),
-    [filtered, page],
-  );
+  // Filtered server-side now (GET /admin/staff/paginated's search param) -
+  // previously this fetched the ENTIRE staff roster via GET /admin/staff
+  // (no search support at all) and faked both search and pagination
+  // client-side over the full result. That only worked by accident for a
+  // small team; a growing roster would have made every load slower and
+  // slower for no reason.
+  const staff = useMemo(() => data?.items ?? [], [data]);
+  const totalPages = Math.max(1, Math.ceil((data?.total ?? staff.length) / LIMIT));
 
   const renderItem = ({ item }: { item: AdminStaffListItem }) => (
     <Pressable
@@ -82,7 +70,7 @@ export default function EmployeesScreen() {
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Header
         title="Bridge"
-        subtitle={`${filtered.length} staff members`}
+        subtitle={`${data?.total ?? staff.length} staff members`}
         rightAction={
           <Pressable
             onPress={() => router.push('/(drawer)/employees/add')}
