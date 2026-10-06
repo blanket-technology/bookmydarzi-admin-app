@@ -111,6 +111,15 @@ export default function FaqsScreen() {
         visible={sheetVisible}
         onClose={() => setSheetVisible(false)}
         title={editingItem ? 'Edit FAQ' : 'New FAQ'}
+        footer={
+          <Button
+            title={editingItem ? 'Save Changes' : 'Create FAQ'}
+            onPress={handleSave}
+            loading={createMutation.isPending || updateMutation.isPending}
+            disabled={!form.question.trim() || !form.answer.trim()}
+            fullWidth
+          />
+        }
       >
         <Input label="Question" value={form.question} onChangeText={(t) => setForm((f) => ({ ...f, question: t }))} multiline />
         <Input label="Answer" value={form.answer} onChangeText={(t) => setForm((f) => ({ ...f, answer: t }))} multiline numberOfLines={4} />
@@ -153,13 +162,6 @@ export default function FaqsScreen() {
             </Text>
           </Pressable>
         ) : null}
-        <Button
-          title={editingItem ? 'Save Changes' : 'Create FAQ'}
-          onPress={handleSave}
-          loading={createMutation.isPending || updateMutation.isPending}
-          disabled={!form.question.trim() || !form.answer.trim()}
-          fullWidth
-        />
       </BottomSheet>
 
       <ConfirmModal

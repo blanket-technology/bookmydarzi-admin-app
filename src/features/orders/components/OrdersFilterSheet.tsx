@@ -94,7 +94,27 @@ export const OrdersFilterSheet = ({
     onApply({ status: '', paymentStatus: '', tailorId: '', dateFrom: '', dateTo: '' });
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title={t('ordersFilter.title')}>
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title={t('ordersFilter.title')}
+      footer={
+        <View className="flex-row" style={{ gap: 12 }}>
+          <Pressable
+            onPress={clearAll}
+            className="flex-1 items-center justify-center rounded-2xl py-3.5 border"
+            style={{ borderColor: colors.border }}
+          >
+            <Text className="font-semibold" style={{ color: colors.text }}>
+              {t('ordersFilter.clearAll')}
+            </Text>
+          </Pressable>
+          <View className="flex-1">
+            <Button title={t('ordersFilter.done')} onPress={onClose} fullWidth />
+          </View>
+        </View>
+      }
+    >
       <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
         <SectionLabel>{t('ordersFilter.status')}</SectionLabel>
         <View className="flex-row flex-wrap">
@@ -171,21 +191,6 @@ export const OrdersFilterSheet = ({
           </>
         ) : null}
       </ScrollView>
-
-      <View className="flex-row mt-2" style={{ gap: 12 }}>
-        <Pressable
-          onPress={clearAll}
-          className="flex-1 items-center justify-center rounded-2xl py-3.5 border"
-          style={{ borderColor: colors.border }}
-        >
-          <Text className="font-semibold" style={{ color: colors.text }}>
-            {t('ordersFilter.clearAll')}
-          </Text>
-        </Pressable>
-        <View className="flex-1">
-          <Button title={t('ordersFilter.done')} onPress={onClose} fullWidth />
-        </View>
-      </View>
     </BottomSheet>
   );
 };

@@ -42,7 +42,20 @@ export function BroadcastNotificationSheet({ visible, onClose }: BroadcastNotifi
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Send Broadcast Notification">
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title="Send Broadcast Notification"
+      footer={
+        <Button
+          title="Send"
+          onPress={handleSend}
+          loading={mutation.isPending}
+          disabled={!form.title.trim() || !form.body.trim()}
+          fullWidth
+        />
+      }
+    >
       <Text className="text-sm font-medium mb-2" style={{ color: colors.textSecondary }}>
         Send To
       </Text>
@@ -105,14 +118,6 @@ export function BroadcastNotificationSheet({ visible, onClose }: BroadcastNotifi
         placeholder="Notification message…"
         multiline
         maxLength={1000}
-      />
-
-      <Button
-        title="Send"
-        onPress={handleSend}
-        loading={mutation.isPending}
-        disabled={!form.title.trim() || !form.body.trim()}
-        fullWidth
       />
     </BottomSheet>
   );

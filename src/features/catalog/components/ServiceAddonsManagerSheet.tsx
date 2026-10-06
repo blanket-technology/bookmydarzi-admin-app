@@ -72,7 +72,12 @@ export function ServiceAddonsManagerSheet({ visible, onClose, serviceId, service
 
   return (
     <>
-      <BottomSheet visible={visible} onClose={onClose} title={`Add-ons — ${serviceName}`}>
+      <BottomSheet
+        visible={visible}
+        onClose={onClose}
+        title={`Add-ons — ${serviceName}`}
+        footer={<Button title="+ Add Add-on" variant="outline" onPress={openNew} fullWidth />}
+      >
         {isLoading ? (
           <Loader message="Loading add-ons..." />
         ) : !addons || addons.length === 0 ? (
@@ -106,10 +111,22 @@ export function ServiceAddonsManagerSheet({ visible, onClose, serviceId, service
             ))}
           </View>
         )}
-        <Button title="+ Add Add-on" variant="outline" onPress={openNew} fullWidth />
       </BottomSheet>
 
-      <BottomSheet visible={formVisible} onClose={() => setFormVisible(false)} title={editingAddon ? 'Edit Add-on' : 'New Add-on'}>
+      <BottomSheet
+        visible={formVisible}
+        onClose={() => setFormVisible(false)}
+        title={editingAddon ? 'Edit Add-on' : 'New Add-on'}
+        footer={
+          <Button
+            title={editingAddon ? 'Save Changes' : 'Create Add-on'}
+            onPress={handleSave}
+            loading={createMutation.isPending || updateMutation.isPending}
+            disabled={!form.name.trim()}
+            fullWidth
+          />
+        }
+      >
         <Input label="Name" value={form.name} onChangeText={(t) => setForm((f) => ({ ...f, name: t }))} />
         <Input label="Description" value={form.description} onChangeText={(t) => setForm((f) => ({ ...f, description: t }))} multiline />
         <View className="flex-row" style={{ gap: 12 }}>
@@ -124,13 +141,6 @@ export function ServiceAddonsManagerSheet({ visible, onClose, serviceId, service
           <Text style={{ color: colors.text }}>Active</Text>
           <Switch value={form.is_active} onValueChange={(v) => setForm((f) => ({ ...f, is_active: v }))} trackColor={{ true: colors.primary }} />
         </View>
-        <Button
-          title={editingAddon ? 'Save Changes' : 'Create Add-on'}
-          onPress={handleSave}
-          loading={createMutation.isPending || updateMutation.isPending}
-          disabled={!form.name.trim()}
-          fullWidth
-        />
       </BottomSheet>
 
       <ConfirmModal

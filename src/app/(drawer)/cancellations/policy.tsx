@@ -108,6 +108,15 @@ export default function CancellationPolicyScreen() {
         visible={!!editing}
         onClose={() => setEditing(null)}
         title={editing?.DisplayStage ?? 'Edit Stage'}
+        footer={
+          <Button
+            title="Save"
+            onPress={handleSave}
+            loading={updateMutation.isPending}
+            disabled={isPenaltyPctInvalid}
+            fullWidth
+          />
+        }
       >
         <View className="flex-row items-center justify-between mb-4">
           <Text style={{ color: colors.text }}>Cancellation Allowed</Text>
@@ -126,13 +135,6 @@ export default function CancellationPolicyScreen() {
           value={description}
           onChangeText={setDescription}
           multiline
-        />
-        <Button
-          title="Save"
-          onPress={handleSave}
-          loading={updateMutation.isPending}
-          disabled={isPenaltyPctInvalid}
-          fullWidth
         />
       </BottomSheet>
     </View>

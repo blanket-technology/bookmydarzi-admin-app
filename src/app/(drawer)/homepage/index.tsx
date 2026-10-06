@@ -160,6 +160,15 @@ export default function HomepageScreen() {
         visible={bannerSheetVisible}
         onClose={() => setBannerSheetVisible(false)}
         title={editingBanner ? 'Edit Banner' : 'New Banner'}
+        footer={
+          <Button
+            title={editingBanner ? 'Save Changes' : 'Create Banner'}
+            onPress={handleSaveBanner}
+            loading={createBannerMutation.isPending || updateBannerMutation.isPending}
+            disabled={!bannerForm.title.trim()}
+            fullWidth
+          />
+        }
       >
         <Input label="Title" value={bannerForm.title} onChangeText={(t) => setBannerForm((f) => ({ ...f, title: t }))} />
         <Input label="Subtitle" value={bannerForm.subtitle} onChangeText={(t) => setBannerForm((f) => ({ ...f, subtitle: t }))} />
@@ -186,13 +195,6 @@ export default function HomepageScreen() {
         />
         <Input label="Redirect URL" value={bannerForm.redirect_url} onChangeText={(t) => setBannerForm((f) => ({ ...f, redirect_url: t }))} autoCapitalize="none" />
         <Input label="Display Order" value={bannerForm.display_order} onChangeText={(t) => setBannerForm((f) => ({ ...f, display_order: t }))} keyboardType="number-pad" />
-        <Button
-          title={editingBanner ? 'Save Changes' : 'Create Banner'}
-          onPress={handleSaveBanner}
-          loading={createBannerMutation.isPending || updateBannerMutation.isPending}
-          disabled={!bannerForm.title.trim()}
-          fullWidth
-        />
       </BottomSheet>
 
       <ConfirmModal

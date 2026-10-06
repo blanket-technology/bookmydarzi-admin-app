@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Keyboard, Text, View } from 'react-native';
 import { BottomSheet, Button, Input, OtpInput, PasswordInput, Pressable } from '@/components/ui';
 import {
@@ -92,6 +92,28 @@ export const ChangeEmailSheet = ({ visible, onClose, hasExistingEmail }: ChangeE
       onClose={handleClose}
       title={step === 'form' ? 'Change Email' : 'Verify Email'}
       contentKey={step}
+      footer={
+        step === 'form' ? (
+          <Button
+            title="Send Verification Code"
+            onPress={handleRequestOtp}
+            loading={requestMutation.isPending}
+            fullWidth
+          />
+        ) : (
+          <Fragment>
+            <Button title="Verify & Update" onPress={handleVerify} loading={verifyMutation.isPending} fullWidth />
+            <Button
+              title="Resend code"
+              variant="ghost"
+              onPress={handleRequestOtp}
+              loading={requestMutation.isPending}
+              fullWidth
+              className="mt-1"
+            />
+          </Fragment>
+        )
+      }
     >
       {step === 'form' ? (
         <View className="pt-1">
@@ -137,12 +159,6 @@ export const ChangeEmailSheet = ({ visible, onClose, hasExistingEmail }: ChangeE
               </Text>
             </View>
           ) : null}
-          <Button
-            title="Send Verification Code"
-            onPress={handleRequestOtp}
-            loading={requestMutation.isPending}
-            fullWidth
-          />
         </View>
       ) : (
         <View className="pt-1">
@@ -194,15 +210,6 @@ export const ChangeEmailSheet = ({ visible, onClose, hasExistingEmail }: ChangeE
           ) : (
             <View className="mb-3" />
           )}
-          <Button title="Verify & Update" onPress={handleVerify} loading={verifyMutation.isPending} fullWidth />
-          <Button
-            title="Resend code"
-            variant="ghost"
-            onPress={handleRequestOtp}
-            loading={requestMutation.isPending}
-            fullWidth
-            className="mt-1"
-          />
         </View>
       )}
     </BottomSheet>

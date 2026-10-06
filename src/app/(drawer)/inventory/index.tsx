@@ -159,6 +159,15 @@ export default function InventoryScreen() {
         visible={sheetVisible}
         onClose={() => setSheetVisible(false)}
         title={editingItem ? 'Edit Item' : 'New Item'}
+        footer={
+          <Button
+            title={editingItem ? 'Save Changes' : 'Add Item'}
+            onPress={handleSave}
+            loading={createMutation.isPending || updateMutation.isPending}
+            disabled={!form.name.trim()}
+            fullWidth
+          />
+        }
       >
         <Input label="Name" value={form.name} onChangeText={(t) => setForm((f) => ({ ...f, name: t }))} />
         <Input label="Category" value={form.category} onChangeText={(t) => setForm((f) => ({ ...f, category: t }))} />
@@ -175,13 +184,6 @@ export default function InventoryScreen() {
           value={form.price_per_unit}
           onChangeText={(t) => setForm((f) => ({ ...f, price_per_unit: t }))}
           keyboardType="decimal-pad"
-        />
-        <Button
-          title={editingItem ? 'Save Changes' : 'Add Item'}
-          onPress={handleSave}
-          loading={createMutation.isPending || updateMutation.isPending}
-          disabled={!form.name.trim()}
-          fullWidth
         />
       </BottomSheet>
 

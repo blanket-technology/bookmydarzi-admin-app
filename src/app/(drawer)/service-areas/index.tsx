@@ -140,6 +140,20 @@ export default function ServiceAreasScreen() {
         visible={sheetVisible}
         onClose={() => setSheetVisible(false)}
         title={editingItem ? 'Edit Service Area' : 'New Service Area'}
+        footer={
+          <Button
+            title={editingItem ? 'Save Changes' : 'Create Service Area'}
+            onPress={handleSave}
+            loading={createMutation.isPending || updateMutation.isPending}
+            disabled={
+              !form.name.trim() ||
+              !form.latitude || Number.isNaN(Number(form.latitude)) || Number(form.latitude) < -90 || Number(form.latitude) > 90 ||
+              !form.longitude || Number.isNaN(Number(form.longitude)) || Number(form.longitude) < -180 || Number(form.longitude) > 180 ||
+              !form.radius_km || Number.isNaN(Number(form.radius_km)) || Number(form.radius_km) < 1 || Number(form.radius_km) > 200
+            }
+            fullWidth
+          />
+        }
       >
         <Input label="Name" value={form.name} onChangeText={(t) => setForm((f) => ({ ...f, name: t }))} />
         <Input
@@ -176,18 +190,6 @@ export default function ServiceAreasScreen() {
             </Text>
           </Pressable>
         ) : null}
-        <Button
-          title={editingItem ? 'Save Changes' : 'Create Service Area'}
-          onPress={handleSave}
-          loading={createMutation.isPending || updateMutation.isPending}
-          disabled={
-            !form.name.trim() ||
-            !form.latitude || Number.isNaN(Number(form.latitude)) || Number(form.latitude) < -90 || Number(form.latitude) > 90 ||
-            !form.longitude || Number.isNaN(Number(form.longitude)) || Number(form.longitude) < -180 || Number(form.longitude) > 180 ||
-            !form.radius_km || Number.isNaN(Number(form.radius_km)) || Number(form.radius_km) < 1 || Number(form.radius_km) > 200
-          }
-          fullWidth
-        />
       </BottomSheet>
 
       <ConfirmModal

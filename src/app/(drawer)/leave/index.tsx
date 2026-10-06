@@ -184,7 +184,19 @@ function MyLeaveScreen() {
         )}
       </View>
 
-      <BottomSheet visible={sheetVisible} onClose={handleClose} title="Apply for Leave">
+      <BottomSheet
+        visible={sheetVisible}
+        onClose={handleClose}
+        title="Apply for Leave"
+        footer={
+          <Button
+            title={createMutation.isPending ? 'Submitting…' : 'Submit request'}
+            onPress={handleSubmit}
+            loading={createMutation.isPending}
+            fullWidth
+          />
+        }
+      >
         <DateField
           label="Start date"
           value={startDate}
@@ -210,12 +222,6 @@ function MyLeaveScreen() {
             {formError}
           </Text>
         ) : null}
-        <Button
-          title={createMutation.isPending ? 'Submitting…' : 'Submit request'}
-          onPress={handleSubmit}
-          loading={createMutation.isPending}
-          fullWidth
-        />
       </BottomSheet>
     </View>
   );
