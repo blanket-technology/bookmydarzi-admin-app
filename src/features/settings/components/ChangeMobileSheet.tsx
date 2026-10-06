@@ -136,7 +136,24 @@ export const ChangeMobileSheet = ({ visible, onClose }: ChangeMobileSheetProps) 
   };
 
   return (
-    <BottomSheet visible={visible} onClose={handleClose} title={titles[step]} contentKey={step}>
+    <BottomSheet
+      visible={visible}
+      onClose={handleClose}
+      title={titles[step]}
+      contentKey={step}
+      footer={
+        step === 'form' ? (
+          <Button title="Continue" onPress={handleStart} loading={isPending} fullWidth />
+        ) : (
+          <Button
+            title={step === 'verify-current' ? 'Verify' : 'Verify & Update'}
+            onPress={step === 'verify-current' ? handleVerifyCurrent : handleVerifyNew}
+            loading={isPending}
+            fullWidth
+          />
+        )
+      }
+    >
       {step === 'form' ? (
         <View className="pt-1">
           <View className="items-center mb-5">
@@ -178,7 +195,6 @@ export const ChangeMobileSheet = ({ visible, onClose }: ChangeMobileSheetProps) 
               </Text>
             </View>
           ) : null}
-          <Button title="Continue" onPress={handleStart} loading={isPending} fullWidth />
         </View>
       ) : (
         <View className="pt-1">
@@ -236,12 +252,6 @@ export const ChangeMobileSheet = ({ visible, onClose }: ChangeMobileSheetProps) 
           ) : (
             <View className="mb-3" />
           )}
-          <Button
-            title={step === 'verify-current' ? 'Verify' : 'Verify & Update'}
-            onPress={step === 'verify-current' ? handleVerifyCurrent : handleVerifyNew}
-            loading={isPending}
-            fullWidth
-          />
         </View>
       )}
     </BottomSheet>

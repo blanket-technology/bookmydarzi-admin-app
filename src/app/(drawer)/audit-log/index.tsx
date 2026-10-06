@@ -360,30 +360,36 @@ function DateRangeSheet({
   }, [visible, dateFrom, dateTo]);
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Filter by date">
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title="Filter by date"
+      footer={
+        <View className="flex-row" style={{ gap: 10 }}>
+          <View className="flex-1">
+            <Button
+              title="Reset"
+              variant="outline"
+              onPress={() => {
+                setFrom(null);
+                setTo(null);
+              }}
+            />
+          </View>
+          <View className="flex-1">
+            <Button
+              title="Apply"
+              onPress={() => {
+                onApply(from, to);
+                onClose();
+              }}
+            />
+          </View>
+        </View>
+      }
+    >
       <DateField label="From" value={from} onChange={setFrom} maximumDate={to ? new Date(`${to}T00:00:00`) : undefined} />
       <DateField label="To" value={to} onChange={setTo} minimumDate={from ? new Date(`${from}T00:00:00`) : undefined} />
-      <View className="flex-row mt-2" style={{ gap: 10 }}>
-        <View className="flex-1">
-          <Button
-            title="Reset"
-            variant="outline"
-            onPress={() => {
-              setFrom(null);
-              setTo(null);
-            }}
-          />
-        </View>
-        <View className="flex-1">
-          <Button
-            title="Apply"
-            onPress={() => {
-              onApply(from, to);
-              onClose();
-            }}
-          />
-        </View>
-      </View>
     </BottomSheet>
   );
 }

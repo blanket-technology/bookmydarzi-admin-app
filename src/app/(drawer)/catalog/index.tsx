@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { ScrollView, Switch, Text, View } from 'react-native';
 import { Badge, BottomSheet, Button, Card, ConfirmModal, EmptyState, Header, Input, Loader, Pressable } from '@/components/ui';
 import {
@@ -371,6 +371,15 @@ export default function CatalogScreen() {
         visible={sheetKind === 'category'}
         onClose={() => setSheetKind(null)}
         title={editingCategory ? 'Edit Category' : 'New Category'}
+        footer={
+          <Button
+            title={editingCategory ? 'Save Changes' : 'Create Category'}
+            onPress={handleSaveCategory}
+            loading={createCategoryMutation.isPending || updateCategoryMutation.isPending}
+            disabled={!categoryForm.name.trim()}
+            fullWidth
+          />
+        }
       >
         <Input label="Name" value={categoryForm.name} onChangeText={(t) => setCategoryForm((f) => ({ ...f, name: t }))} />
         <Input label="Description" value={categoryForm.description} onChangeText={(t) => setCategoryForm((f) => ({ ...f, description: t }))} multiline />
@@ -388,13 +397,6 @@ export default function CatalogScreen() {
           <Text style={{ color: colors.text }}>Active</Text>
           <Switch value={categoryForm.is_active} onValueChange={(v) => setCategoryForm((f) => ({ ...f, is_active: v }))} trackColor={{ true: colors.primary }} />
         </View>
-        <Button
-          title={editingCategory ? 'Save Changes' : 'Create Category'}
-          onPress={handleSaveCategory}
-          loading={createCategoryMutation.isPending || updateCategoryMutation.isPending}
-          disabled={!categoryForm.name.trim()}
-          fullWidth
-        />
       </BottomSheet>
 
       {/* Service line sheet */}
@@ -402,6 +404,15 @@ export default function CatalogScreen() {
         visible={sheetKind === 'service_line'}
         onClose={() => setSheetKind(null)}
         title={editingLine ? 'Edit Service Line' : 'New Service Line'}
+        footer={
+          <Button
+            title={editingLine ? 'Save Changes' : 'Create Service Line'}
+            onPress={handleSaveLine}
+            loading={createLineMutation.isPending || updateLineMutation.isPending}
+            disabled={!lineForm.name.trim()}
+            fullWidth
+          />
+        }
       >
         <Input label="Name" value={lineForm.name} onChangeText={(t) => setLineForm((f) => ({ ...f, name: t }))} />
         <Input label="Description" value={lineForm.description} onChangeText={(t) => setLineForm((f) => ({ ...f, description: t }))} multiline />
@@ -419,13 +430,6 @@ export default function CatalogScreen() {
           <Text style={{ color: colors.text }}>Active</Text>
           <Switch value={lineForm.is_active} onValueChange={(v) => setLineForm((f) => ({ ...f, is_active: v }))} trackColor={{ true: colors.primary }} />
         </View>
-        <Button
-          title={editingLine ? 'Save Changes' : 'Create Service Line'}
-          onPress={handleSaveLine}
-          loading={createLineMutation.isPending || updateLineMutation.isPending}
-          disabled={!lineForm.name.trim()}
-          fullWidth
-        />
       </BottomSheet>
 
       {/* Service sheet */}
@@ -433,6 +437,26 @@ export default function CatalogScreen() {
         visible={sheetKind === 'service'}
         onClose={() => setSheetKind(null)}
         title={editingService ? 'Edit Service' : 'New Service'}
+        footer={
+          <Fragment>
+            <Button
+              title={editingService ? 'Save Changes' : 'Create Service'}
+              onPress={handleSaveService}
+              loading={createServiceMutation.isPending || updateServiceMutation.isPending}
+              disabled={!serviceForm.name.trim()}
+              fullWidth
+            />
+            {editingService ? (
+              <Button
+                title="Manage Add-ons"
+                variant="outline"
+                className="mt-3"
+                onPress={() => setAddonsManagerVisible(true)}
+                fullWidth
+              />
+            ) : null}
+          </Fragment>
+        }
       >
         <Input label="Name" value={serviceForm.name} onChangeText={(t) => setServiceForm((f) => ({ ...f, name: t }))} />
         <Input label="Description" value={serviceForm.description} onChangeText={(t) => setServiceForm((f) => ({ ...f, description: t }))} multiline />
@@ -537,22 +561,6 @@ export default function CatalogScreen() {
           <Text style={{ color: colors.text }}>Active</Text>
           <Switch value={serviceForm.is_active} onValueChange={(v) => setServiceForm((f) => ({ ...f, is_active: v }))} trackColor={{ true: colors.primary }} />
         </View>
-        <Button
-          title={editingService ? 'Save Changes' : 'Create Service'}
-          onPress={handleSaveService}
-          loading={createServiceMutation.isPending || updateServiceMutation.isPending}
-          disabled={!serviceForm.name.trim()}
-          fullWidth
-        />
-        {editingService ? (
-          <Button
-            title="Manage Add-ons"
-            variant="outline"
-            className="mt-3"
-            onPress={() => setAddonsManagerVisible(true)}
-            fullWidth
-          />
-        ) : null}
       </BottomSheet>
 
       <ServiceAddonsManagerSheet

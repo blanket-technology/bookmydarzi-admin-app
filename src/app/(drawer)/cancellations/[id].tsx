@@ -163,6 +163,14 @@ export default function CancellationDetailScreen() {
         visible={approveSheetVisible}
         onClose={() => setApproveSheetVisible(false)}
         title="Approve Cancellation"
+        footer={
+          <Button
+            title="Confirm Approval"
+            onPress={handleApprove}
+            loading={approveMutation.isPending}
+            fullWidth
+          />
+        }
       >
         <Input
           label={`Override Refund Amount (leave blank for calculated ${formatCurrency(cancellation.RefundAmount)})`}
@@ -176,18 +184,22 @@ export default function CancellationDetailScreen() {
           onChangeText={setApproveNotes}
           multiline
         />
-        <Button
-          title="Confirm Approval"
-          onPress={handleApprove}
-          loading={approveMutation.isPending}
-          fullWidth
-        />
       </BottomSheet>
 
       <BottomSheet
         visible={rejectSheetVisible}
         onClose={() => setRejectSheetVisible(false)}
         title="Reject Cancellation"
+        footer={
+          <Button
+            title="Confirm Rejection"
+            variant="danger"
+            onPress={handleReject}
+            loading={rejectMutation.isPending}
+            disabled={!rejectNotes.trim()}
+            fullWidth
+          />
+        }
       >
         <Input
           label="Reason for rejection (required)"
@@ -195,20 +207,20 @@ export default function CancellationDetailScreen() {
           onChangeText={setRejectNotes}
           multiline
         />
-        <Button
-          title="Confirm Rejection"
-          variant="danger"
-          onPress={handleReject}
-          loading={rejectMutation.isPending}
-          disabled={!rejectNotes.trim()}
-          fullWidth
-        />
       </BottomSheet>
 
       <BottomSheet
         visible={editSheetVisible}
         onClose={() => setEditSheetVisible(false)}
         title="Edit Refund / Notes"
+        footer={
+          <Button
+            title="Save Changes"
+            onPress={handleEdit}
+            loading={patchMutation.isPending}
+            fullWidth
+          />
+        }
       >
         <Input
           label="Override Refund Amount"
@@ -221,12 +233,6 @@ export default function CancellationDetailScreen() {
           value={editNotes}
           onChangeText={setEditNotes}
           multiline
-        />
-        <Button
-          title="Save Changes"
-          onPress={handleEdit}
-          loading={patchMutation.isPending}
-          fullWidth
         />
       </BottomSheet>
     </View>

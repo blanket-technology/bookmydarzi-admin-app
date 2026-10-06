@@ -24,9 +24,15 @@ export const RejectOrderSheet = ({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title={t('rejectOrder.title')}>
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title={t('rejectOrder.title')}
+      footer={
+        <Button title={t('rejectOrder.title')} variant="danger" onPress={handleReject} loading={rejectMutation.isPending} fullWidth />
+      }
+    >
       <Input label={t('rejectOrder.reasonOptional')} value={reason} onChangeText={setReason} multiline />
-      <Button title={t('rejectOrder.title')} variant="danger" onPress={handleReject} loading={rejectMutation.isPending} fullWidth />
     </BottomSheet>
   );
 };

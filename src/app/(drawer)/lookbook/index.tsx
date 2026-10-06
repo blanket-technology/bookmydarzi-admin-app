@@ -159,6 +159,15 @@ export default function LookbookScreen() {
         visible={sheetVisible}
         onClose={() => setSheetVisible(false)}
         title={editingItem ? 'Edit Lookbook Item' : 'New Lookbook Item'}
+        footer={
+          <Button
+            title={editingItem ? 'Save Changes' : 'Create Item'}
+            onPress={handleSave}
+            loading={createMutation.isPending || updateMutation.isPending}
+            disabled={!form.image_url.trim()}
+            fullWidth
+          />
+        }
       >
         {form.image_url ? (
           <Image source={{ uri: form.image_url }} style={{ width: '100%', aspectRatio: 1, borderRadius: 16, marginBottom: 12 }} contentFit="cover" />
@@ -188,13 +197,6 @@ export default function LookbookScreen() {
             </Text>
           </Pressable>
         ) : null}
-        <Button
-          title={editingItem ? 'Save Changes' : 'Create Item'}
-          onPress={handleSave}
-          loading={createMutation.isPending || updateMutation.isPending}
-          disabled={!form.image_url.trim()}
-          fullWidth
-        />
       </BottomSheet>
 
       <ConfirmModal

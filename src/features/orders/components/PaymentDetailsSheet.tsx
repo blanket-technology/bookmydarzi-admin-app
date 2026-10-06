@@ -210,10 +210,16 @@ export const PaymentDetailsSheet = ({
         ))}
       </BottomSheet>
 
-      <BottomSheet visible={refundSheetVisible} onClose={() => setRefundSheetVisible(false)} title={t('paymentDetails.issueRefund')}>
+      <BottomSheet
+        visible={refundSheetVisible}
+        onClose={() => setRefundSheetVisible(false)}
+        title={t('paymentDetails.issueRefund')}
+        footer={
+          <Button title={t('paymentDetails.confirmRefund')} variant="danger" onPress={handleRefund} loading={createRefundMutation.isPending} fullWidth />
+        }
+      >
         <Input label={t('paymentDetails.amountBlankForFull')} value={refundAmount} onChangeText={setRefundAmount} keyboardType="decimal-pad" />
         <Input label={t('rejectOrder.reasonOptional')} value={refundReason} onChangeText={setRefundReason} multiline />
-        <Button title={t('paymentDetails.confirmRefund')} variant="danger" onPress={handleRefund} loading={createRefundMutation.isPending} fullWidth />
       </BottomSheet>
     </>
   );

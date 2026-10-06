@@ -234,6 +234,15 @@ export default function OffersScreen() {
         visible={sheetVisible}
         onClose={() => setSheetVisible(false)}
         title={editingItem ? 'Edit Offer' : 'New Offer'}
+        footer={
+          <Button
+            title={editingItem ? 'Save Changes' : 'Create Offer'}
+            onPress={handleSave}
+            loading={createMutation.isPending || updateMutation.isPending}
+            disabled={!form.title.trim() || isDiscountPercentInvalid || isFlatDiscountInvalid}
+            fullWidth
+          />
+        }
       >
         {form.image_url ? (
           <Image source={{ uri: form.image_url }} style={{ width: '100%', aspectRatio: 2, borderRadius: 16, marginBottom: 12 }} contentFit="cover" />
@@ -338,13 +347,6 @@ export default function OffersScreen() {
             </Text>
           </Pressable>
         ) : null}
-        <Button
-          title={editingItem ? 'Save Changes' : 'Create Offer'}
-          onPress={handleSave}
-          loading={createMutation.isPending || updateMutation.isPending}
-          disabled={!form.title.trim() || isDiscountPercentInvalid || isFlatDiscountInvalid}
-          fullWidth
-        />
       </BottomSheet>
 
       <ConfirmModal
