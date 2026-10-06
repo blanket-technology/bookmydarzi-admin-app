@@ -93,9 +93,20 @@ export const BottomSheet = ({
         onPress={onClose}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          // Android's Modal already resizes for the keyboard via
-          // windowSoftInputMode - only iOS needs the manual offset here.
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          // Bug fix: app.json's softwareKeyboardLayoutMode was "pan" (the
+          // OS shifts the whole screen up instead of resizing it), which
+          // doesn't interact correctly with a Modal - the sheet's own
+          // content, and the dimmed overlay behind it, could end up panned
+          // independently of each other, leaving a gap where the previous
+          // screen showed through and the sheet's footer/submit button
+          // pushed off-screen under the keyboard. Switched to "resize" (see
+          // app.json) so the window itself actually shrinks for the
+          // keyboard - matches how the Modal + KeyboardAvoidingView
+          // combination is meant to be used. "height" (not the previous
+          // `undefined`/no-op) gives Android an explicit second layer of
+          // avoidance on top of that OS-level resize, for RN/Expo versions
+          // where the resize alone isn't quite enough on every device.
           keyboardVerticalOffset={0}
         >
           <RNPressable
