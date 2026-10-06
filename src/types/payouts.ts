@@ -31,6 +31,30 @@ export interface PayoutListParams {
   status?: 'pending' | 'paid';
 }
 
+// GET /tailors/me/payouts (tailor self-service) returns this shape, not
+// Payout - the backend deliberately omits order_amount (the customer's
+// FinalAmount) from this endpoint. See TailorPayoutResponse's docstring in
+// app/schemas/tailor_payout.py. Never add order_amount here.
+export interface TailorSelfPayout {
+  id: number;
+  order_id: number;
+  order_code: string | null;
+  commission_percent: string;
+  payout_amount: string;
+  status: 'pending' | 'paid';
+  paid_at: string | null;
+  payout_reference: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface TailorSelfPayoutListResponse {
+  payouts: TailorSelfPayout[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface PayoutMarkPaidRequest {
   payout_reference: string;
   notes?: string;

@@ -9,7 +9,11 @@ import type {
   TailorWorkloadItem,
   UpdateTailorRequest,
 } from '@/types/tailors';
-import type { PayoutListParams, PayoutListResponse, TailorPayoutSummary } from '@/types/payouts';
+import type {
+  PayoutListParams,
+  TailorPayoutSummary,
+  TailorSelfPayoutListResponse,
+} from '@/types/payouts';
 
 export interface TailorsQueryParams {
   search?: string;
@@ -126,8 +130,8 @@ export const tailorService = {
   // Real per-order commission ledger (GET /tailors/me/payouts), scoped
   // server-side to the caller's own tailor_id - replaces the old
   // client-side derived "sum of my completed orders" approximation.
-  getMyPayouts: async (params: Omit<PayoutListParams, 'tailor_id'>): Promise<PayoutListResponse> => {
-    const { data } = await apiClient.get<PayoutListResponse>(ENDPOINTS.TAILOR.MY_PAYOUTS, { params });
+  getMyPayouts: async (params: Omit<PayoutListParams, 'tailor_id'>): Promise<TailorSelfPayoutListResponse> => {
+    const { data } = await apiClient.get<TailorSelfPayoutListResponse>(ENDPOINTS.TAILOR.MY_PAYOUTS, { params });
     return data;
   },
 

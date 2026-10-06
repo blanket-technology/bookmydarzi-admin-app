@@ -6,16 +6,16 @@ import { useMyPayoutSummary, useMyPayouts } from '@/features/tailors/hooks/useTa
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
-import type { Payout } from '@/types/payouts';
+import type { TailorSelfPayout } from '@/types/payouts';
 import { formatApiErrorDetail, formatCurrency, formatDate } from '@/utils/errors';
 
 const LIMIT = 20;
 
-function payoutAmount(p: Payout): number {
+function payoutAmount(p: TailorSelfPayout): number {
   return Number(p.payout_amount);
 }
 
-function payoutSubtitle(p: Payout): string {
+function payoutSubtitle(p: TailorSelfPayout): string {
   return `${Number(p.commission_percent).toFixed(2)}% commission`;
 }
 
@@ -82,10 +82,10 @@ export default function MyEarningsScreen() {
   const summary = tailorSummary.data;
   const summaryLoading = tailorSummary.isLoading;
 
-  const payouts: Payout[] = data?.payouts ?? [];
+  const payouts: TailorSelfPayout[] = data?.payouts ?? [];
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / LIMIT));
 
-  const renderItem = ({ item }: { item: Payout }) => (
+  const renderItem = ({ item }: { item: TailorSelfPayout }) => (
     <View className="rounded-3xl p-4 mb-3 border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
       <View className="flex-row items-start justify-between">
         <View className="flex-1 mr-2">
