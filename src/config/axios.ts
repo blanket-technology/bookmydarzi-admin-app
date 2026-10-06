@@ -279,12 +279,26 @@ apiClient.interceptors.response.use(
     }
 
     if (status === 404) {
+      // Bug fix: a 404 from this backend means two very different things -
+      // a route that genuinely doesn't exist (FastAPI's bare
+      // {"detail":"Not Found"}, no error_code), vs. an app-level "resource
+      // not found" exception that deliberately uses status_code=404 (e.g.
+      // UserNotFoundException on POST /auth/forgot-password/verify, which
+      // sends {"error":"USER_NOT_FOUND","message":"User not found",...}).
+      // This branch used to always show "Endpoint not found: <url>"
+      // regardless, so a real "no account with that email" response on the
+      // Forgot Password screen rendered as if the whole feature were
+      // broken. Prefer the backend's own message when it sent one (same
+      // pattern as the 403 branch above) and only use the generic
+      // route-level wording when it didn't.
+      const parsed = parseApiError(error);
+      const hasBackendMessage = parsed.message && parsed.message !== 'Something went wrong';
       return Promise.reject(
         enrichApiError(
           {
-            message: `Endpoint not found: ${originalRequest.url}`,
+            message: hasBackendMessage ? parsed.message : `Endpoint not found: ${originalRequest.url}`,
             status: 404,
-            code: 'NOT_FOUND',
+            code: hasBackendMessage ? (parsed.code ?? 'NOT_FOUND') : 'NOT_FOUND',
             details: error.response.data,
           },
           error,
