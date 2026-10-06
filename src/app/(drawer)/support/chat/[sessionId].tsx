@@ -271,7 +271,12 @@ export default function ChatThreadScreen() {
       ) : (
         <KeyboardAvoidingView
           className="flex-1"
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          // Bug fix: `undefined` on Android disables KeyboardAvoidingView
+          // entirely there, relying solely on app.json's
+          // softwareKeyboardLayoutMode (now "resize", previously the
+          // no-op-for-this-purpose "pan") - this screen's own message
+          // input could get covered by the keyboard with no fallback.
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={90}
         >
         <View className="flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
