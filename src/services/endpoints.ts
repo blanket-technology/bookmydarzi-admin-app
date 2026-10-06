@@ -280,8 +280,12 @@ export const ENDPOINTS = {
     QUICK_REPLIES: '/api/v1/admin/chat/quick-replies',
     UPLOAD: '/api/v1/chat/v2/upload',
     WS: (sessionUuid: string) => `/api/v1/ws/chat/${sessionUuid}`,
-    MY_AGENT_STATUS: '/api/v1/admin/agents/me/status',
-    AGENT_STATUS: (agentId: number) => `/api/v1/admin/agents/${agentId}/status`,
+    // Bug fix: both were missing the /chat segment - chat_v2's admin_router
+    // is mounted at /admin/chat (see app/api/v1/router.py), not /admin, so
+    // these 404'd every time ("Endpoint not found: /api/v1/admin/agents/
+    // {id}/status") instead of ever reaching the real backend route.
+    MY_AGENT_STATUS: '/api/v1/admin/chat/agents/me/status',
+    AGENT_STATUS: (agentId: number) => `/api/v1/admin/chat/agents/${agentId}/status`,
     ANALYTICS: '/api/v1/admin/chat/analytics',
   },
   RBAC: {
