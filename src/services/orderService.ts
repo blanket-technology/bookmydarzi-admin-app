@@ -321,6 +321,20 @@ export const orderService = {
     return data;
   },
 
+  // Customer declined to accept the finished garment at the door. Backend
+  // handles penalty/refund math and schedules the return with this same
+  // delivery employee directly (no re-broadcast) - this call just reports
+  // the reason the employee enters.
+  refuseDelivery: async (
+    orderId: string,
+    reason: string,
+  ): Promise<EmployeeOrderActionResponse> => {
+    const { data } = await apiClient.patch(ENDPOINTS.EMPLOYEE.ORDER_REFUSE_DELIVERY(orderId), {
+      reason,
+    });
+    return data;
+  },
+
   // Employee notices at pickup that the customer also wants an extra (e.g.
   // a button replaced) that wasn't selected online - adds the add-on's
   // GST-inclusive price to the order's balance due. Collecting that extra

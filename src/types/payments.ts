@@ -40,6 +40,15 @@ export interface RefundCreateRequest {
   reason?: string;
 }
 
+// Mirrors backend app/schemas/refund.py RefundMarkManualSchema. Does not
+// send money anywhere - the admin has already paid the customer manually
+// (UPI/bank transfer via their own banking) and this records what they
+// paid against. Only valid on a refund currently "failed".
+export interface RefundMarkManualRequest {
+  reference: string;
+  note?: string;
+}
+
 // Mirrors backend app/schemas/refund.py RefundResponseSchema.
 export interface RefundDetail {
   id: number;
@@ -48,8 +57,14 @@ export interface RefundDetail {
   order_id: number | null;
   amount: number;
   reason: string | null;
+  // manual_completed: Razorpay refund failed, an admin settled it
+  // manually and recorded manual_reference/manual_note here.
   status: string;
   gateway_refund_id: string | null;
   failure_reason: string | null;
+  manual_reference: string | null;
+  manual_note: string | null;
+  manually_completed_by: number | null;
+  manually_completed_at: string | null;
   created_at: string;
 }

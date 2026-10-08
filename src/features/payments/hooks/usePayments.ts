@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { paymentService } from '@/features/payments/services/paymentService';
-import type { PaymentStatusUpdateRequest, RefundCreateRequest } from '@/types/payments';
+import type {
+  PaymentStatusUpdateRequest,
+  RefundCreateRequest,
+  RefundMarkManualRequest,
+} from '@/types/payments';
 import { toast } from '@/store/toastStore';
 import { formatApiErrorDetail } from '@/utils/errors';
 
@@ -68,6 +72,35 @@ export const useCreateRefundMutation = (orderId?: string) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
       toast.success('Refund issued');
+    },
+    onError: (error) => toast.error(formatApiErrorDetail(error)),
+  });
+};
+
+// Admin fallback when the Razorpay gateway refund failed and won't retry
+// successfully. Does NOT send money anywhere - the admin has already paid
+// the customer manually (UPI/bank transfer via their own banking) and
+// this just records the reference. Only valid on a "failed" refund.
+export const useMarkRefundManualMutation = (orderId?: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      paymentId,
+      refundId,
+      payload,
+    }: {
+      paymentId: string;
+      refundId: string;
+      payload: RefundMarkManualRequest;
+    }) => paymentService.markRefundManual(paymentId, refundId, payload),
+    onSuccess: (_data, variables) => {
+      if (orderId) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENT_BY_ORDER(orderId) });
+      }
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.PAYMENT_REFUNDS(variables.paymentId),
+      });
+      toast.success('Refund marked as manually completed');
     },
     onError: (error) => toast.error(formatApiErrorDetail(error)),
   });

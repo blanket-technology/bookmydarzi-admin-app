@@ -443,6 +443,16 @@ export const useCompleteOrderMutation = () =>
     'Order completed',
   );
 
+// Customer declined to accept the finished garment at the door. Backend
+// computes any refund/penalty and schedules the return directly with this
+// same delivery employee (no re-broadcast) - see cancellation_service.py's
+// refuse_delivery.
+export const useRefuseDeliveryMutation = () =>
+  useEmployeeActionMutation<string>(
+    (orderId, reason) => orderService.refuseDelivery(orderId, reason),
+    'Delivery marked as refused - return scheduled',
+  );
+
 export const useCollectPaymentMutation = () =>
   useEmployeeActionMutation<CollectPaymentRequest>(
     (orderId, payload) => orderService.collectPayment(orderId, payload),

@@ -18,6 +18,7 @@ export type OrderStatus =
   | 'ready_for_dispatch'
   | 'out_for_delivery'
   | 'delivered'
+  | 'delivery_refused'
   | 'inspection_window'
   | 'in_repair'
   | 'repair_pickup_pending'
