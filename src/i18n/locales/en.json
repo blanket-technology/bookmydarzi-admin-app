@@ -341,6 +341,11 @@
     "title": "Reject Order",
     "reasonOptional": "Reason (optional)"
   },
+  "refuseDelivery": {
+    "title": "Customer Refused Delivery",
+    "reasonRequired": "Reason (required)",
+    "banner": "Mark this order as refused if the customer declines to accept the finished garment at the door."
+  },
   "cancelOrder": {
     "title": "Cancel Order",
     "reason": "Reason",
@@ -390,7 +395,11 @@
     "transactionIdRequired": "Transaction ID (required for Success)",
     "failureReasonUsed": "Failure Reason (used when marking Failed)",
     "amountBlankForFull": "Amount (leave blank for full refund)",
-    "confirmRefund": "Confirm Refund"
+    "confirmRefund": "Confirm Refund",
+    "markRefundManual": "Mark as Manually Refunded",
+    "markRefundManualHelp": "Use this only after you've already paid the customer yourself (UPI/bank transfer). This does not send money - it just records what you paid.",
+    "manualReferenceRequired": "UPI / bank transaction reference (required)",
+    "manualRefundReference": "Manually refunded · ref: {{reference}}"
   },
   "measurementManage": {
     "male": "Male",

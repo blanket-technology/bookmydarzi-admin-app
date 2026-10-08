@@ -41,6 +41,7 @@ import { AssignTailorSheet } from '@/features/orders/components/AssignTailorShee
 import { AssignBridgeEmployeeSheet } from '@/features/orders/components/AssignBridgeEmployeeSheet';
 import { SchedulePickupSheet } from '@/features/orders/components/SchedulePickupSheet';
 import { CorrectStatusSheet } from '@/features/orders/components/CorrectStatusSheet';
+import { RefuseDeliverySheet } from '@/features/orders/components/RefuseDeliverySheet';
 import { RejectOrderSheet } from '@/features/orders/components/RejectOrderSheet';
 import { CancelOrderSheet } from '@/features/orders/components/CancelOrderSheet';
 import { CollectPaymentSheet } from '@/features/orders/components/CollectPaymentSheet';
@@ -89,6 +90,7 @@ export default function OrderDetailsScreen() {
   // service_id needed to fetch that item's own add-on catalog.
   const [addAddonTargetItem, setAddAddonTargetItem] = useState<{ id?: number; label?: string; serviceId?: number } | null>(null);
   const [rejectSheetVisible, setRejectSheetVisible] = useState(false);
+  const [refuseDeliverySheetVisible, setRefuseDeliverySheetVisible] = useState(false);
   const [cancelSheetVisible, setCancelSheetVisible] = useState(false);
   const [collectSheetVisible, setCollectSheetVisible] = useState(false);
   const [confirmAction, setConfirmAction] = useState<OrderAction | null>(null);
@@ -232,6 +234,9 @@ export default function OrderDetailsScreen() {
     switch (action.id) {
       case 'reject':
         setRejectSheetVisible(true);
+        return;
+      case 'refuse_delivery':
+        setRefuseDeliverySheetVisible(true);
         return;
       case 'schedule_pickup':
         setSchedulePickupSheetVisible(true);
@@ -749,6 +754,8 @@ export default function OrderDetailsScreen() {
       <CorrectStatusSheet visible={statusSheetVisible} onClose={() => setStatusSheetVisible(false)} onSelect={handleCorrectStatus} />
 
       <RejectOrderSheet visible={rejectSheetVisible} onClose={() => setRejectSheetVisible(false)} orderId={order.order_id} />
+
+      <RefuseDeliverySheet visible={refuseDeliverySheetVisible} onClose={() => setRefuseDeliverySheetVisible(false)} orderId={order.order_id} />
 
       <CancelOrderSheet visible={cancelSheetVisible} onClose={() => setCancelSheetVisible(false)} orderId={order.order_id} />
 

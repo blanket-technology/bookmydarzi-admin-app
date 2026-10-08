@@ -126,6 +126,8 @@ export const ENDPOINTS = {
       `/api/v1/employee/orders/${orderId}/hand-to-tailor`,
     ORDER_DELIVERY: (orderId: string) => `/api/v1/employee/orders/${orderId}/delivery`,
     ORDER_COMPLETE: (orderId: string) => `/api/v1/employee/orders/${orderId}/complete`,
+    ORDER_REFUSE_DELIVERY: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/refuse-delivery`,
     ORDER_COLLECT_PAYMENT: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/collect-payment`,
     ORDER_MEASUREMENT: (orderId: string) =>
@@ -223,6 +225,8 @@ export const ENDPOINTS = {
     BY_ID: (paymentId: string) => `/api/v1/payments/${paymentId}`,
     UPDATE_STATUS: (paymentId: string) => `/api/v1/payments/${paymentId}/status`,
     REFUND: (paymentId: string) => `/api/v1/payments/${paymentId}/refund`,
+    REFUND_MARK_MANUAL: (paymentId: string, refundId: string) =>
+      `/api/v1/payments/${paymentId}/refund/${refundId}/manual`,
   },
   MEASUREMENTS: {
     LIST: '/api/v1/users/measurements',

@@ -5,6 +5,7 @@ import type {
   PaymentStatusUpdateRequest,
   RefundCreateRequest,
   RefundDetail,
+  RefundMarkManualRequest,
 } from '@/types/payments';
 
 export const paymentService = {
@@ -40,6 +41,22 @@ export const paymentService = {
   ): Promise<RefundDetail> => {
     const { data } = await apiClient.post<RefundDetail>(
       ENDPOINTS.PAYMENTS.REFUND(paymentId),
+      payload,
+    );
+    return data;
+  },
+
+  // Fallback for a refund the Razorpay gateway could not process - does
+  // NOT send money anywhere, the admin has already paid the customer
+  // manually (UPI/bank transfer via their own banking) and this just
+  // records the reference. Only valid on a refund currently "failed".
+  markRefundManual: async (
+    paymentId: string,
+    refundId: string,
+    payload: RefundMarkManualRequest,
+  ): Promise<RefundDetail> => {
+    const { data } = await apiClient.post<RefundDetail>(
+      ENDPOINTS.PAYMENTS.REFUND_MARK_MANUAL(paymentId, refundId),
       payload,
     );
     return data;

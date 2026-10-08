@@ -11,6 +11,7 @@ import {
   useCompleteRepairMutation,
   useConfirmPickupMutation,
   useHandToTailorMutation,
+  useRefuseDeliveryMutation,
   useRejectOrderMutation,
   useSchedulePickupMutation,
   useUpdateOrderStatusMutation,
@@ -30,6 +31,7 @@ export type OrderActionId =
   | 'out_for_delivery'
   | 'collect_cod'
   | 'complete'
+  | 'refuse_delivery'
   | 'assign_tailor'
   | 'complete_repair'
   | 'cancel'
@@ -91,6 +93,7 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
   const confirmPickupMutation = useConfirmPickupMutation();
   const handToTailorMutation = useHandToTailorMutation();
   const completeMutation = useCompleteOrderMutation();
+  const refuseDeliveryMutation = useRefuseDeliveryMutation();
   const collectPaymentMutation = useCollectPaymentMutation();
   const assignTailorMutation = useAssignTailorMutation();
   const cancelMutation = useCancelOrderMutation();
@@ -273,6 +276,22 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
             run: () => completeMutation.mutate({ orderId, payload: undefined }),
           });
         }
+        // Customer declined to accept the finished garment at the door -
+        // reason required, same requiresInput/sheet pattern as 'reject'
+        // above (see RefuseDeliverySheet.tsx - caller must collect the
+        // reason and call useRefuseDeliveryMutation directly, same as
+        // every other requiresInput action).
+        list.push({
+          id: 'refuse_delivery',
+          label: 'Customer Refused Delivery',
+          tone: 'destructive',
+          requiresInput: true,
+          requiresConfirmation: true,
+          isLoading: refuseDeliveryMutation.isPending,
+          run: () => {
+            // Caller supplies the reason - see RefuseDeliverySheet.
+          },
+        });
       }
 
       // No action from DELIVERED: complete_employee_order (employee_order_service.py)

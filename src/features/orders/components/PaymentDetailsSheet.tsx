@@ -6,6 +6,7 @@ import { Badge, BottomSheet, Button, Input, Loader, Pressable } from '@/componen
 import { PAYMENT_STATUS_COLORS, PAYMENT_STATUS_OPTIONS, paymentStatusLabel } from '@/constants/paymentStatus';
 import {
   useCreateRefundMutation,
+  useMarkRefundManualMutation,
   usePaymentByOrder,
   usePaymentRefunds,
   useUpdatePaymentStatusMutation,
@@ -72,11 +73,33 @@ export const PaymentDetailsSheet = ({
   const [refundReason, setRefundReason] = useState('');
   const [txnId, setTxnId] = useState('');
   const [failureReason, setFailureReason] = useState('');
+  const [manualRefundTargetId, setManualRefundTargetId] = useState<number | null>(null);
+  const [manualRefundReference, setManualRefundReference] = useState('');
+  const [manualRefundNote, setManualRefundNote] = useState('');
 
   const { data: payment, isLoading: isPaymentLoading, isError: isPaymentError } = usePaymentByOrder(orderId, visible);
   const { data: refunds } = usePaymentRefunds(payment?.Id, visible && isStaffRole);
   const updatePaymentStatusMutation = useUpdatePaymentStatusMutation(orderId);
   const createRefundMutation = useCreateRefundMutation(orderId);
+  const markRefundManualMutation = useMarkRefundManualMutation(orderId);
+
+  const handleMarkRefundManual = () => {
+    if (!payment || manualRefundTargetId === null || !manualRefundReference.trim()) return;
+    markRefundManualMutation.mutate(
+      {
+        paymentId: String(payment.Id),
+        refundId: String(manualRefundTargetId),
+        payload: { reference: manualRefundReference.trim(), note: manualRefundNote || undefined },
+      },
+      {
+        onSuccess: () => {
+          setManualRefundTargetId(null);
+          setManualRefundReference('');
+          setManualRefundNote('');
+        },
+      },
+    );
+  };
 
   const handleCorrectPaymentStatus = (status: string) => {
     if (!payment) return;
@@ -171,13 +194,29 @@ export const PaymentDetailsSheet = ({
                   {t('paymentDetails.refundHistory')}
                 </Text>
                 {refunds.map((refund) => (
-                  <View key={refund.id} className="flex-row justify-between py-2 border-b" style={{ borderColor: colors.border }}>
-                    <Text className="text-sm" style={{ color: colors.textSecondary }}>
-                      {refund.refund_code ?? `#${refund.id}`} · {capitalize(refund.status)}
-                    </Text>
-                    <Text className="text-sm font-medium" style={{ color: colors.text }}>
-                      {formatCurrency(refund.amount)}
-                    </Text>
+                  <View key={refund.id} className="py-2 border-b" style={{ borderColor: colors.border }}>
+                    <View className="flex-row justify-between">
+                      <Text className="text-sm" style={{ color: colors.textSecondary }}>
+                        {refund.refund_code ?? `#${refund.id}`} · {capitalize(refund.status)}
+                      </Text>
+                      <Text className="text-sm font-medium" style={{ color: colors.text }}>
+                        {formatCurrency(refund.amount)}
+                      </Text>
+                    </View>
+                    {refund.status === 'manual_completed' && refund.manual_reference ? (
+                      <Text className="text-xs mt-1" style={{ color: colors.textSecondary }}>
+                        {t('paymentDetails.manualRefundReference', { reference: refund.manual_reference })}
+                      </Text>
+                    ) : null}
+                    {isAdminRole && refund.status === 'failed' ? (
+                      <Button
+                        title={t('paymentDetails.markRefundManual')}
+                        variant="outline"
+                        className="mt-2"
+                        onPress={() => setManualRefundTargetId(refund.id)}
+                        fullWidth
+                      />
+                    ) : null}
                   </View>
                 ))}
               </View>
@@ -220,6 +259,36 @@ export const PaymentDetailsSheet = ({
       >
         <Input label={t('paymentDetails.amountBlankForFull')} value={refundAmount} onChangeText={setRefundAmount} keyboardType="decimal-pad" />
         <Input label={t('rejectOrder.reasonOptional')} value={refundReason} onChangeText={setRefundReason} multiline />
+      </BottomSheet>
+
+      <BottomSheet
+        visible={manualRefundTargetId !== null}
+        onClose={() => {
+          setManualRefundTargetId(null);
+          setManualRefundReference('');
+          setManualRefundNote('');
+        }}
+        title={t('paymentDetails.markRefundManual')}
+        footer={
+          <Button
+            title={t('paymentDetails.markRefundManual')}
+            variant="outline"
+            onPress={handleMarkRefundManual}
+            loading={markRefundManualMutation.isPending}
+            disabled={!manualRefundReference.trim()}
+            fullWidth
+          />
+        }
+      >
+        <Text className="text-sm leading-5 mb-3" style={{ color: colors.textSecondary }}>
+          {t('paymentDetails.markRefundManualHelp')}
+        </Text>
+        <Input
+          label={t('paymentDetails.manualReferenceRequired')}
+          value={manualRefundReference}
+          onChangeText={setManualRefundReference}
+        />
+        <Input label={t('rejectOrder.reasonOptional')} value={manualRefundNote} onChangeText={setManualRefundNote} multiline />
       </BottomSheet>
     </>
   );
