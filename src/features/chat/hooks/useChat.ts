@@ -35,6 +35,10 @@ export const useChatMessages = (sessionUuid: string, enabled = true) =>
     queryKey: QUERY_KEYS.CHAT_MESSAGES(sessionUuid),
     queryFn: () => chatService.getMessages(sessionUuid, { limit: 100 }),
     enabled: enabled && !!sessionUuid,
+    // The socket has no replay, so cached history can be missing messages that
+    // arrived while the thread was closed: always refetch when it is opened.
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
 export const useChatSession = (sessionUuid: string, enabled = true) =>
