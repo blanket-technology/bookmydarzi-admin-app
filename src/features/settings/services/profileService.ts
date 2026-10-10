@@ -67,6 +67,23 @@ export const profileService = {
     return data;
   },
 
+  // Stores a portfolio image and returns its URL WITHOUT touching the profile photo
+  // (the profile-photo route replaces the avatar and deletes the previous file).
+  uploadPortfolioImage: async (file: { uri: string; fileName?: string; mimeType?: string }) => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: file.uri,
+      name: file.fileName ?? 'portfolio.jpg',
+      type: file.mimeType ?? 'image/jpeg',
+    } as unknown as Blob);
+    const { data } = await apiClient.post<{ url: string; file_id: string }>(
+      ENDPOINTS.TAILOR.PORTFOLIO_UPLOAD,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120_000 },
+    );
+    return data;
+  },
+
   changePassword: async (payload: ChangePasswordRequest) => {
     // Backend route is PATCH /users/change-password (app/api/v1/endpoints/
     // users.py) - POST returns 405 Method Not Allowed.
