@@ -42,3 +42,20 @@ export const ORDER_PAYMENT_STATUS_OPTIONS: { label: string; value: string }[] = 
   { label: 'Failed', value: 'advance_failed' },
   { label: 'Pay on Delivery', value: 'cod_pending' },
 ];
+
+// Mirrors backend status_service.VALID_TRANSITIONS: only these corrections are
+// accepted, so only these are offered.
+export const PAYMENT_STATUS_TRANSITIONS: Record<string, string[]> = {
+  initiated: ['success', 'failed'],
+  success: ['refunded'],
+  failed: ['initiated', 'success'],
+  refunded: [],
+};
+
+export function allowedPaymentStatusOptions(current?: string | null) {
+  const allowed = PAYMENT_STATUS_TRANSITIONS[(current ?? '').toLowerCase()] ?? [];
+  return [
+    { label: 'Initiated', value: 'initiated' },
+    ...PAYMENT_STATUS_OPTIONS,
+  ].filter((option) => allowed.includes(option.value));
+}

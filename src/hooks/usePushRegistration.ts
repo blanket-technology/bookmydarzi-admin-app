@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { notificationService } from '@/features/notifications/services/notificationService';
 import { useAuth } from '@/hooks/useAuth';
 import { isExpoGo } from '@/utils/expoGo';
@@ -13,6 +13,23 @@ const platformName = (): 'android' | 'ios' | 'web' => {
 };
 
 let handlerConfigured = false;
+
+// The token registered for this session, held at module level so logout can
+// unregister it WHILE the user is still authenticated. (Doing it from an effect
+// after logout meant a credential-less DELETE -> 401 -> a false "Session
+// expired" modal, and the token stayed active for the next person on the phone.)
+let registeredPushToken: string | null = null;
+
+export async function unregisterPushTokenBestEffort(): Promise<void> {
+  const token = registeredPushToken;
+  registeredPushToken = null;
+  if (!token) return;
+  try {
+    await notificationService.unregisterDeviceToken(token, platformName());
+  } catch {
+    // Best-effort - the token rotating or expiring server-side is not worth surfacing.
+  }
+}
 
 // Controls whether a notification alerts (sound/banner) while the app is in
 // the FOREGROUND - without this, expo-notifications' default handler
@@ -50,20 +67,9 @@ export function configureNotificationHandler(): void {
 // Runs once per authenticated session; unregisters on logout.
 export const usePushRegistration = () => {
   const { isAuthenticated } = useAuth();
-  const registeredTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      if (registeredTokenRef.current) {
-        const token = registeredTokenRef.current;
-        registeredTokenRef.current = null;
-        notificationService.unregisterDeviceToken(token, platformName()).catch(() => {
-          // Best-effort — the token expiring/rotating server-side on its own
-          // isn't worth surfacing to the user on logout.
-        });
-      }
-      return;
-    }
+    if (!isAuthenticated) return;
 
     if (isExpoGo) return;
 
@@ -110,7 +116,7 @@ export const usePushRegistration = () => {
         if (cancelled || !expoToken) return;
 
         await notificationService.registerDeviceToken(expoToken, platformName());
-        registeredTokenRef.current = expoToken;
+        registeredPushToken = expoToken;
       } catch {
         // Push registration is a background enhancement, not a blocking
         // requirement — a device that can't get a token (no EAS project

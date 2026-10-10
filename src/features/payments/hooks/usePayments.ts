@@ -24,6 +24,11 @@ export const usePaymentRefunds = (paymentId: number | undefined, enabled = true)
     queryKey: QUERY_KEYS.PAYMENT_REFUNDS(String(paymentId ?? '')),
     queryFn: () => paymentService.listRefunds(String(paymentId)),
     enabled: Boolean(paymentId) && enabled,
+    // Gateway refunds settle asynchronously (initiated -> processed/failed):
+    // keep watching until none is in flight so a failure is never missed.
+    staleTime: 0,
+    refetchInterval: (query) =>
+      query.state.data?.some((refund) => refund.status === 'initiated') ? 5000 : false,
   });
 
 // Superadmin-only escape hatch for manually correcting a stuck payment record
@@ -71,7 +76,7 @@ export const useCreateRefundMutation = (orderId?: string) => {
       });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
-      toast.success('Refund issued');
+      toast.success('Refund initiated - the status updates here when the gateway confirms');
     },
     onError: (error) => toast.error(formatApiErrorDetail(error)),
   });
@@ -100,6 +105,8 @@ export const useMarkRefundManualMutation = (orderId?: string) => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.PAYMENT_REFUNDS(variables.paymentId),
       });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
       toast.success('Refund marked as manually completed');
     },
     onError: (error) => toast.error(formatApiErrorDetail(error)),

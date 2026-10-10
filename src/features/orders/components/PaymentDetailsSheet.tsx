@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
-import { Badge, BottomSheet, Button, Input, Loader, Pressable } from '@/components/ui';
-import { PAYMENT_STATUS_COLORS, PAYMENT_STATUS_OPTIONS, paymentStatusLabel } from '@/constants/paymentStatus';
+import { Badge, BottomSheet, Button, ConfirmModal, Input, Loader, Pressable } from '@/components/ui';
+import { PAYMENT_STATUS_COLORS, allowedPaymentStatusOptions, paymentStatusLabel } from '@/constants/paymentStatus';
 import {
   useCreateRefundMutation,
   useMarkRefundManualMutation,
@@ -14,7 +14,7 @@ import {
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/store/toastStore';
-import { capitalize, formatCurrency, formatDateTime } from '@/utils/errors';
+import { capitalize, formatMoney, formatDateTime } from '@/utils/errors';
 import { DetailRow } from './DetailRow';
 
 // Same field mapping as web's PaymentDetailModal.jsx: TransactionId is
@@ -76,6 +76,8 @@ export const PaymentDetailsSheet = ({
   const [manualRefundTargetId, setManualRefundTargetId] = useState<number | null>(null);
   const [manualRefundReference, setManualRefundReference] = useState('');
   const [manualRefundNote, setManualRefundNote] = useState('');
+  const [pendingRefundAmount, setPendingRefundAmount] = useState<number | 'full' | null>(null);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
 
   const { data: payment, isLoading: isPaymentLoading, isError: isPaymentError } = usePaymentByOrder(orderId, visible);
   const { data: refunds } = usePaymentRefunds(payment?.Id, visible && isStaffRole);
@@ -101,15 +103,26 @@ export const PaymentDetailsSheet = ({
     );
   };
 
+  // Asks first - this edits a financial record - and validates what the backend
+  // would otherwise reject with a raw 422.
+  const requestCorrectPaymentStatus = (status: string) => {
+    if (!payment || updatePaymentStatusMutation.isPending) return;
+    if (status === 'success' && !txnId.trim()) {
+      toast.error(t('paymentDetails.transactionIdNeeded'));
+      return;
+    }
+    setPendingStatus(status);
+  };
+
   const handleCorrectPaymentStatus = (status: string) => {
-    if (!payment) return;
+    if (!payment || updatePaymentStatusMutation.isPending) return;
     updatePaymentStatusMutation.mutate(
       {
         paymentId: String(payment.Id),
         payload: {
           status,
-          transaction_id: status === 'success' ? txnId || undefined : undefined,
-          failure_reason: status === 'failed' ? failureReason || undefined : undefined,
+          transaction_id: status === 'success' ? txnId.trim() || undefined : undefined,
+          failure_reason: status === 'failed' ? failureReason.trim() || undefined : undefined,
         },
       },
       {
@@ -118,16 +131,44 @@ export const PaymentDetailsSheet = ({
           setTxnId('');
           setFailureReason('');
         },
+        onSettled: () => setPendingStatus(null),
       },
     );
   };
 
+  // A blank amount means "refund everything refundable"; anything else must be
+  // a real amount within what was paid. A typo must never turn a partial refund
+  // into a full one (refunds cannot be undone), so the amount is parsed
+  // strictly and confirmed before it is sent.
+  const requestRefund = () => {
+    if (!payment || createRefundMutation.isPending) return;
+    const trimmed = refundAmount.trim().replace(',', '.');
+    if (!trimmed) {
+      setPendingRefundAmount('full');
+      return;
+    }
+    const value = Number(trimmed);
+    const paid = Number(payment.Amount);
+    if (!/^\d+(\.\d{1,2})?$/.test(trimmed) || !Number.isFinite(value) || value <= 0 || value > paid) {
+      toast.error(t('paymentDetails.invalidRefundAmount', { max: formatMoney(paid) }));
+      return;
+    }
+    setPendingRefundAmount(value);
+  };
+
   const handleRefund = () => {
-    if (!payment) return;
-    const amount = refundAmount ? Number(refundAmount) : undefined;
+    if (!payment || pendingRefundAmount === null || createRefundMutation.isPending) return;
+    const amount = pendingRefundAmount === 'full' ? undefined : pendingRefundAmount;
     createRefundMutation.mutate(
-      { paymentId: String(payment.Id), payload: { amount, reason: refundReason || undefined } },
-      { onSuccess: () => { setRefundSheetVisible(false); setRefundAmount(''); setRefundReason(''); } },
+      { paymentId: String(payment.Id), payload: { amount, reason: refundReason.trim() || undefined } },
+      {
+        onSuccess: () => {
+          setRefundSheetVisible(false);
+          setRefundAmount('');
+          setRefundReason('');
+        },
+        onSettled: () => setPendingRefundAmount(null),
+      },
     );
   };
 
@@ -154,7 +195,7 @@ export const PaymentDetailsSheet = ({
                 color={PAYMENT_STATUS_COLORS[payment.Status] ?? colors.primary}
               />
               <Text className="text-lg font-bold" style={{ color: colors.primary }}>
-                {formatCurrency(payment.Amount)}
+                {formatMoney(payment.Amount)}
               </Text>
             </View>
 
@@ -200,7 +241,7 @@ export const PaymentDetailsSheet = ({
                         {refund.refund_code ?? `#${refund.id}`} · {capitalize(refund.status)}
                       </Text>
                       <Text className="text-sm font-medium" style={{ color: colors.text }}>
-                        {formatCurrency(refund.amount)}
+                        {formatMoney(refund.amount)}
                       </Text>
                     </View>
                     {refund.status === 'manual_completed' && refund.manual_reference ? (
@@ -242,11 +283,24 @@ export const PaymentDetailsSheet = ({
       <BottomSheet visible={correctPaymentSheetVisible} onClose={() => setCorrectPaymentSheetVisible(false)} title={t('paymentDetails.correctPaymentStatus')}>
         <Input label={t('paymentDetails.transactionIdRequired')} value={txnId} onChangeText={setTxnId} />
         <Input label={t('paymentDetails.failureReasonUsed')} value={failureReason} onChangeText={setFailureReason} multiline />
-        {PAYMENT_STATUS_OPTIONS.map((option) => (
-          <Pressable key={option.value} onPress={() => handleCorrectPaymentStatus(option.value)} className="py-3 border-b" style={{ borderColor: colors.border }}>
-            <Text style={{ color: colors.text }}>{option.label}</Text>
-          </Pressable>
-        ))}
+        {allowedPaymentStatusOptions(payment?.Status).length === 0 ? (
+          <Text className="text-sm py-3" style={{ color: colors.textSecondary }}>
+            {t('paymentDetails.noStatusChanges')}
+          </Text>
+        ) : (
+          allowedPaymentStatusOptions(payment?.Status).map((option) => (
+            <Pressable
+              key={option.value}
+              onPress={() => requestCorrectPaymentStatus(option.value)}
+              disabled={updatePaymentStatusMutation.isPending}
+              accessibilityRole="button"
+              className="py-3 border-b"
+              style={{ borderColor: colors.border, opacity: updatePaymentStatusMutation.isPending ? 0.5 : 1 }}
+            >
+              <Text style={{ color: colors.text }}>{option.label}</Text>
+            </Pressable>
+          ))
+        )}
       </BottomSheet>
 
       <BottomSheet
@@ -254,12 +308,42 @@ export const PaymentDetailsSheet = ({
         onClose={() => setRefundSheetVisible(false)}
         title={t('paymentDetails.issueRefund')}
         footer={
-          <Button title={t('paymentDetails.confirmRefund')} variant="danger" onPress={handleRefund} loading={createRefundMutation.isPending} fullWidth />
+          <Button title={t('paymentDetails.confirmRefund')} variant="danger" onPress={requestRefund} loading={createRefundMutation.isPending} fullWidth />
         }
       >
         <Input label={t('paymentDetails.amountBlankForFull')} value={refundAmount} onChangeText={setRefundAmount} keyboardType="decimal-pad" />
         <Input label={t('rejectOrder.reasonOptional')} value={refundReason} onChangeText={setRefundReason} multiline />
       </BottomSheet>
+
+      <ConfirmModal
+        visible={pendingRefundAmount !== null}
+        title={t('paymentDetails.confirmRefundTitle')}
+        message={
+          pendingRefundAmount === 'full'
+            ? t('paymentDetails.confirmRefundFull', { amount: formatMoney(payment?.Amount) })
+            : t('paymentDetails.confirmRefundPartial', {
+                amount: formatMoney(typeof pendingRefundAmount === 'number' ? pendingRefundAmount : 0),
+              })
+        }
+        confirmLabel={t('paymentDetails.confirmRefund')}
+        loading={createRefundMutation.isPending}
+        onConfirm={handleRefund}
+        onCancel={() => setPendingRefundAmount(null)}
+      />
+
+      <ConfirmModal
+        visible={pendingStatus !== null}
+        title={t('paymentDetails.confirmStatusTitle')}
+        message={
+          pendingStatus === 'refunded'
+            ? t('paymentDetails.confirmStatusRefunded')
+            : t('paymentDetails.confirmStatusBody', { status: paymentStatusLabel(pendingStatus) })
+        }
+        confirmLabel={t('paymentDetails.correctPaymentStatus')}
+        loading={updatePaymentStatusMutation.isPending}
+        onConfirm={() => pendingStatus && handleCorrectPaymentStatus(pendingStatus)}
+        onCancel={() => setPendingStatus(null)}
+      />
 
       <BottomSheet
         visible={manualRefundTargetId !== null}

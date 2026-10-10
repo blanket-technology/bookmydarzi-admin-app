@@ -419,7 +419,16 @@
     "markRefundManual": "Mark as Manually Refunded",
     "markRefundManualHelp": "Use this only after you've already paid the customer yourself (UPI/bank transfer). This does not send money - it just records what you paid.",
     "manualReferenceRequired": "UPI / bank transaction reference (required)",
-    "manualRefundReference": "Manually refunded · ref: {{reference}}"
+    "manualRefundReference": "Manually refunded · ref: {{reference}}",
+    "invalidRefundAmount": "Enter an amount greater than 0 and up to {{max}}, using digits only (e.g. 499.50). Leave it blank to refund the full amount.",
+    "confirmRefundTitle": "Confirm refund",
+    "confirmRefundFull": "Refund the FULL refundable amount (up to {{amount}}) to the customer? This cannot be undone.",
+    "confirmRefundPartial": "Refund {{amount}} to the customer? This cannot be undone.",
+    "transactionIdNeeded": "Enter the transaction ID to mark this payment as successful.",
+    "noStatusChanges": "No status changes are possible from the current status.",
+    "confirmStatusTitle": "Change payment status?",
+    "confirmStatusBody": "Set this payment to \"{{status}}\"? This edits the payment record and the order's settlement.",
+    "confirmStatusRefunded": "This only marks the record as refunded. It does NOT send any money to the customer. Use \"Issue refund\" to actually refund. Continue?"
   },
   "measurementManage": {
     "male": "Male",

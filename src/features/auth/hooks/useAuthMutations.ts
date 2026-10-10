@@ -39,7 +39,15 @@ const completeAuthSession = async (
 
   let user = data.user ? normalizeAuthUser(data.user) : null;
   if (!user) {
-    user = await authService.getCurrentUser();
+    try {
+      user = await authService.getCurrentUser();
+    } catch (error) {
+      // Tokens are already stored: without a profile the app would sit on the
+      // loader forever (authenticated, no user). Roll back so the user can retry.
+      useAuthStore.getState().logout();
+      await tokenStorage.clearAll();
+      throw error;
+    }
   }
 
   await login({

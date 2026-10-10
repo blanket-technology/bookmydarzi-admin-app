@@ -4,7 +4,7 @@ import { BottomSheet, Button, Input } from '@/components/ui';
 import { useMarkPayoutPaidMutation } from '@/features/payouts/hooks/usePayouts';
 import { useTheme } from '@/hooks/useTheme';
 import type { Payout } from '@/types/payouts';
-import { formatCurrency } from '@/utils/errors';
+import { formatMoney } from '@/utils/errors';
 
 export function MarkPaidSheet({ payout, onClose }: { payout: Payout; onClose: () => void }) {
   const { colors } = useTheme();
@@ -47,7 +47,7 @@ export function MarkPaidSheet({ payout, onClose }: { payout: Payout; onClose: ()
         <View className="flex-row justify-between mb-1.5">
           <Text className="text-sm" style={{ color: colors.textSecondary }}>Order amount</Text>
           <Text className="text-sm font-semibold" style={{ color: colors.text }}>
-            {formatCurrency(Number(payout.order_amount))}
+            {formatMoney(Number(payout.order_amount))}
           </Text>
         </View>
         <View className="flex-row justify-between mb-1.5">
@@ -62,7 +62,7 @@ export function MarkPaidSheet({ payout, onClose }: { payout: Payout; onClose: ()
         >
           <Text className="text-sm font-semibold" style={{ color: colors.text }}>Payout amount</Text>
           <Text className="text-sm font-bold" style={{ color: '#10b981' }}>
-            {formatCurrency(Number(payout.payout_amount))}
+            {formatMoney(Number(payout.payout_amount))}
           </Text>
         </View>
       </View>

@@ -45,6 +45,11 @@ interface AuthState {
   setHydrated: (value: boolean) => void;
 }
 
+// Bumped on every logout so work that started before it (e.g. a token refresh
+// still in flight) can tell its session has ended and must not write tokens back.
+let sessionEpoch = 0;
+export const getSessionEpoch = (): number => sessionEpoch;
+
 const zustandStorage = {
   getItem: async (name: string) => {
     const value = await secureStorage.getItem(name);
@@ -98,6 +103,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        sessionEpoch += 1;
         void tokenStorage.clearAll();
         void secureStorage.removeItem(STORAGE_KEYS.SELECTED_ROLE);
         set({

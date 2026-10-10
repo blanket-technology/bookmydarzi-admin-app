@@ -4,7 +4,7 @@ import { BottomSheet, Button, Input } from '@/components/ui';
 import { useMarkBridgePayoutPaidMutation } from '@/features/payouts/hooks/useBridgePayouts';
 import { useTheme } from '@/hooks/useTheme';
 import type { BridgePayout } from '@/types/bridgePayouts';
-import { formatCurrency } from '@/utils/errors';
+import { formatMoney } from '@/utils/errors';
 import { LEG_TYPE_LABELS } from '@/features/payouts/legTypeLabels';
 
 export function MarkBridgePaidSheet({ payout, onClose }: { payout: BridgePayout; onClose: () => void }) {
@@ -57,7 +57,7 @@ export function MarkBridgePaidSheet({ payout, onClose }: { payout: BridgePayout;
         >
           <Text className="text-sm font-semibold" style={{ color: colors.text }}>Payout amount</Text>
           <Text className="text-sm font-bold" style={{ color: '#10b981' }}>
-            {formatCurrency(Number(payout.rate_amount))}
+            {formatMoney(Number(payout.rate_amount))}
           </Text>
         </View>
       </View>

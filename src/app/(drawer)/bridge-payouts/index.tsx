@@ -8,7 +8,7 @@ import { LEG_TYPE_LABELS } from '@/features/payouts/legTypeLabels';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { BridgePayout } from '@/types/bridgePayouts';
-import { formatApiErrorDetail, formatCurrency, formatDate } from '@/utils/errors';
+import { formatApiErrorDetail, formatMoney, formatDate } from '@/utils/errors';
 
 const LIMIT = 20;
 
@@ -48,7 +48,7 @@ export default function BridgePayoutsScreen() {
         </View>
         <View className="items-end">
           <Text className="font-bold text-base" style={{ color: colors.text }}>
-            {formatCurrency(Number(item.rate_amount))}
+            {formatMoney(Number(item.rate_amount))}
           </Text>
           <Badge
             label={item.status}
