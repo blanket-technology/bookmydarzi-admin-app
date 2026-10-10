@@ -281,7 +281,9 @@
     "noAttempts": "No broadcast attempts yet."
   },
   "incomingBroadcast": {
-    "title": "New Order Offer!"
+    "title": "New Order Offer!",
+    "loading": "Loading order details...",
+    "dismiss": "Dismiss"
   },
   "pendingOffer": {
     "pickupOfferTitle": "Pickup offer for you",

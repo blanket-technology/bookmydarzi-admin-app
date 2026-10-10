@@ -11,6 +11,12 @@ import { t as translate } from '@/i18n';
 // IncomingOfferModal.tsx all render offers identically instead of drifting
 // into three slightly-different visual languages.
 
+/** Expiry decided from the timestamp itself - never from the (translated,
+ * effect-updated) countdown label, which lags a render behind and could make a
+ * brand-new offer look expired. */
+export const hasExpired = (expiresAt?: string | null): boolean =>
+  !!expiresAt && new Date(expiresAt).getTime() <= Date.now();
+
 export const useCountdown = (expiresAt?: string | null) => {
   const [label, setLabel] = useState('');
   useEffect(() => {
