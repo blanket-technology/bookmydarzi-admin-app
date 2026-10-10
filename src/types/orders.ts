@@ -337,6 +337,8 @@ export interface OrdersQueryParams {
   tailor_id?: string;
   customer_id?: string;
   employee_id?: string;
+  /** Orders whose DELIVERY leg is held by this employee (employee_id is the pickup leg). */
+  delivery_employee_id?: string;
   date_from?: string;
   date_to?: string;
   /** true = only orders where the tailor broadcast exhausted every round

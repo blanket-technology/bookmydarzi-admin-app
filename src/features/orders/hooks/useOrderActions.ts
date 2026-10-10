@@ -64,9 +64,20 @@ export interface OrderAction {
 
 interface UseOrderActionsArgs {
   role: UserRole | string | null | undefined;
+  /** The signed-in user's id: the backend only lets the employee who claimed the
+   * pickup leg (assigned_employee_id) or the delivery leg (delivery_employee_id)
+   * act on it, so other employees must not be offered those actions. */
+  userId?: string | number | null;
   order: Pick<
     AdminOrderItem,
-    'order_id' | 'status' | 'tailor_id' | 'remaining_amount' | 'payment_status' | 'customer_id' | 'assigned_employee_id'
+    | 'order_id'
+    | 'status'
+    | 'tailor_id'
+    | 'remaining_amount'
+    | 'payment_status'
+    | 'customer_id'
+    | 'assigned_employee_id'
+    | 'delivery_employee_id'
   > | null
     | undefined;
 }
@@ -86,7 +97,7 @@ interface UseOrderActionsResult {
  * Add new screens (dashboard cards, list quick-actions, notifications) by
  * calling this hook rather than re-deriving role/status logic locally.
  */
-export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderActionsResult {
+export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): UseOrderActionsResult {
   const acceptMutation = useAcceptOrderMutation();
   const rejectMutation = useRejectOrderMutation();
   const schedulePickupMutation = useSchedulePickupMutation();
@@ -110,6 +121,13 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
   const isTailor = normalizedRole === 'tailor';
   // Employee endpoints (app/api/v1/endpoints/employee.py) accept admin/superadmin too.
   const canUseEmployeeActions = isEmployee || isAdmin;
+
+  // Admins bypass claim checks server-side; an employee only acts on legs they hold.
+  const myId = String(userId ?? '');
+  const assignedToOtherEmployee =
+    isEmployee && !!order?.assigned_employee_id && String(order.assigned_employee_id) !== myId;
+  const isMyDelivery =
+    isAdmin || (!!order?.delivery_employee_id && String(order.delivery_employee_id) === myId);
 
   const status = (order?.status ?? '') as OrderStatus;
   const orderId = order?.order_id;
@@ -196,7 +214,10 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
       // an employee still isn't assigned by then.
       const noBridgeEmployee = !order?.assigned_employee_id;
 
-      if (status === ORDER_STATUS.ORDER_ACCEPTED || status === ORDER_STATUS.TAILOR_ASSIGNED) {
+      if (
+        !assignedToOtherEmployee &&
+        (status === ORDER_STATUS.ORDER_ACCEPTED || status === ORDER_STATUS.TAILOR_ASSIGNED)
+      ) {
         list.push({
           id: 'schedule_pickup',
           label: 'Schedule Pickup',
@@ -212,7 +233,10 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
         });
       }
 
-      if (status === ORDER_STATUS.PICKUP_SCHEDULED || status === ORDER_STATUS.PICKUP_PENDING) {
+      if (
+        !assignedToOtherEmployee &&
+        (status === ORDER_STATUS.PICKUP_SCHEDULED || status === ORDER_STATUS.PICKUP_PENDING)
+      ) {
         list.push({
           id: 'confirm_pickup',
           label: 'Confirm Pickup',
@@ -225,7 +249,7 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
         });
       }
 
-      if (status === ORDER_STATUS.PICKED_UP) {
+      if (!assignedToOtherEmployee && status === ORDER_STATUS.PICKED_UP) {
         list.push({
           id: 'hand_to_tailor',
           label: 'Hand to Tailor',
@@ -252,7 +276,7 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
       // automatically; the employee claims it via Accept on the Deliveries
       // screen (see (drawer)/deliveries/index.tsx), not a button here.
 
-      if (status === ORDER_STATUS.OUT_FOR_DELIVERY) {
+      if (status === ORDER_STATUS.OUT_FOR_DELIVERY && isMyDelivery) {
         if (isCodCollectionRequired) {
           list.push({
             id: 'collect_cod',
@@ -306,7 +330,7 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
       // use the separate 'update_measurement' admin-only endpoint/action
       // instead, so this is deliberately isEmployee-only to avoid a
       // duplicate button on the same screen for admin viewers.
-      if (isEmployee && !EMPLOYEE_QUEUE_EXCLUDED_STATUSES.has(status)) {
+      if (isEmployee && !assignedToOtherEmployee && !EMPLOYEE_QUEUE_EXCLUDED_STATUSES.has(status)) {
         list.push({
           id: 'manage_measurement',
           label: 'Update Measurement',
@@ -351,7 +375,7 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
         // claimed by this employee and a measurement to already exist;
         // distinct precondition from admin's unrestricted
         // /admin/orders/{id}/assign-tailor route.
-        if (!order?.tailor_id) {
+        if (!order?.tailor_id && !assignedToOtherEmployee) {
           list.push({
             id: 'assign_tailor',
             label: 'Assign Tailor',
@@ -389,11 +413,11 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
     // EMPLOYEE too) already allow this server-side; this was previously
     // tailor-only client-side with no equivalent staff action at all.
     // Tailor-only: repair completion is a dedicated two-step server
-    // transition (IN_REPAIR -> REPAIR_COMPLETED -> INSPECTION_WINDOW, see
+    // transition (AT_TAILOR_FOR_REPAIR -> REPAIR_COMPLETED -> INSPECTION_WINDOW, see
     // repair_service.complete_repair), not a plain status PATCH - so this
     // isn't folded into the stitchingStageFor map below, which only drives
     // the generic single-hop PATCH mutations.
-    if (isTailor && status === ORDER_STATUS.IN_REPAIR) {
+    if (isTailor && status === ORDER_STATUS.AT_TAILOR_FOR_REPAIR) {
       list.push({
         id: 'complete_repair',
         label: 'Mark Repair Complete',
@@ -405,7 +429,7 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
       });
     }
 
-    if (isTailor || canUseEmployeeActions) {
+    if (isTailor || (canUseEmployeeActions && !assignedToOtherEmployee)) {
       // Server enforces strict sequential progression for tailors
       // (order_status_rules.py); staff bypass that graph entirely, but the
       // UI still only ever offers the immediate next stage to keep the
@@ -535,6 +559,8 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
     status,
     isTerminal,
     canUseEmployeeActions,
+    assignedToOtherEmployee,
+    isMyDelivery,
     isTailor,
     isAdmin,
     isCodCollectionRequired,

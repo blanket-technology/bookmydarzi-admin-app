@@ -1,6 +1,12 @@
-import { MutationCache, onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  MutationCache,
+  onlineManager,
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient,
+} from '@tanstack/react-query';
 import NetInfo from '@react-native-community/netinfo';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Toast } from '@/components/ui/Toast';
@@ -13,6 +19,9 @@ import { AuthProvider } from '@/contexts/authContext';
 import { OfferAlerts } from '@/features/pickups/components/OfferAlerts';
 import { useAppSocket } from '@/hooks/useAppSocket';
 import { useAutoOnline } from '@/hooks/useAutoOnline';
+import { incomingBroadcastQueue } from '@/store/incomingBroadcastStore';
+import { incomingOfferQueue } from '@/store/incomingOfferStore';
+import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
 import { getMutationError } from '@/utils/errors';
 import type { ApiError } from '@/types/api';
@@ -33,6 +42,25 @@ const AppSocketConnection = () => {
 // useAuth(), which requires being inside AuthProvider.
 const AutoOnlineConnection = () => {
   useAutoOnline();
+  return null;
+};
+
+// When the session ends (logout, forced sign-out, expiry) drop everything that
+// belongs to that user: cached query data (query keys are not user-scoped, so
+// the next account would otherwise see the previous account's orders and
+// profile) and any job offers still waiting in the popup queues.
+const SessionCacheReset = () => {
+  const queryClient = useQueryClient();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const wasAuthenticated = useRef(isAuthenticated);
+  useEffect(() => {
+    if (wasAuthenticated.current && !isAuthenticated) {
+      queryClient.clear();
+      incomingOfferQueue.clear();
+      incomingBroadcastQueue.clear();
+    }
+    wasAuthenticated.current = isAuthenticated;
+  }, [isAuthenticated, queryClient]);
   return null;
 };
 
@@ -89,6 +117,7 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             {children}
+            <SessionCacheReset />
             <AppSocketConnection />
             <AutoOnlineConnection />
             <OfferAlerts />

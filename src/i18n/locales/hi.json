@@ -281,7 +281,9 @@
     "noAttempts": "अभी तक कोई ब्रॉडकास्ट प्रयास नहीं हुआ।"
   },
   "incomingBroadcast": {
-    "title": "नया ऑर्डर ऑफर!"
+    "title": "नया ऑर्डर ऑफर!",
+    "loading": "ऑर्डर का विवरण लोड हो रहा है...",
+    "dismiss": "बंद करें"
   },
   "pendingOffer": {
     "pickupOfferTitle": "आपके लिए पिकअप ऑफर",

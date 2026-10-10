@@ -56,6 +56,9 @@ interface IncomingOfferState {
   queue: IncomingOffer[];
   enqueue: (offer: IncomingOffer) => void;
   dequeue: () => void;
+  /** Remove one specific offer (never "whatever is first": the head may have changed). */
+  remove: (kind: IncomingOfferKind, orderId: string) => void;
+  clear: () => void;
 }
 
 export const useIncomingOfferStore = create<IncomingOfferState>((set, get) => ({
@@ -78,9 +81,14 @@ export const useIncomingOfferStore = create<IncomingOfferState>((set, get) => ({
     set({ queue: [...queue, offer] });
   },
   dequeue: () => set((state) => ({ queue: state.queue.slice(1) })),
+  remove: (kind, orderId) =>
+    set((state) => ({ queue: state.queue.filter((o) => !(o.kind === kind && o.orderId === orderId)) })),
+  clear: () => set({ queue: [] }),
 }));
 
 export const incomingOfferQueue = {
   enqueue: (offer: IncomingOffer) => useIncomingOfferStore.getState().enqueue(offer),
   dequeue: () => useIncomingOfferStore.getState().dequeue(),
+  remove: (kind: IncomingOfferKind, orderId: string) => useIncomingOfferStore.getState().remove(kind, orderId),
+  clear: () => useIncomingOfferStore.getState().clear(),
 };

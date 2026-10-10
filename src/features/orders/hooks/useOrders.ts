@@ -42,15 +42,36 @@ export const useOrders = (params?: OrdersQueryParams, enabled = true) => {
   const isTailor = role === 'tailor';
   const isEmployee = role === 'employee';
 
-  const scopedParams: OrdersQueryParams | undefined =
-    isEmployee && !params?.employee_id && user?.id
-      ? { ...params, employee_id: user.id }
-      : params;
+  // For an employee "my orders" means every job they hold: the pickup leg
+  // (employee_id) AND the delivery leg (delivery_employee_id). Filtering on the
+  // pickup leg alone hid every order they were delivering.
+  const scopeToSelf = isEmployee && !params?.employee_id && !params?.delivery_employee_id && !!user?.id;
+  const scopedParams: OrdersQueryParams | undefined = scopeToSelf
+    ? { ...params, employee_id: user?.id }
+    : params;
 
   return useQuery({
-    queryKey: QUERY_KEYS.ORDERS({ ...(scopedParams as Record<string, unknown>), role }),
-    queryFn: () =>
-      isTailor ? orderService.getMyOrders(scopedParams) : orderService.getOrders(scopedParams),
+    queryKey: QUERY_KEYS.ORDERS({ ...(scopedParams as Record<string, unknown>), role, scopeToSelf }),
+    queryFn: async () => {
+      if (isTailor) return orderService.getMyOrders(scopedParams);
+      if (!scopeToSelf) return orderService.getOrders(scopedParams);
+
+      const [pickupLeg, deliveryLeg] = await Promise.all([
+        orderService.getOrders(scopedParams),
+        orderService.getOrders({ ...params, delivery_employee_id: user?.id }),
+      ]);
+      const byId = new Map<string, (typeof pickupLeg.orders)[number]>();
+      [...pickupLeg.orders, ...deliveryLeg.orders].forEach((order) => byId.set(String(order.order_id), order));
+      const orders = [...byId.values()].sort(
+        (a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime(),
+      );
+      return {
+        orders,
+        total: Math.max(pickupLeg.total, deliveryLeg.total, orders.length),
+        page: pickupLeg.page,
+        limit: pickupLeg.limit,
+      };
+    },
     enabled,
   });
 };
