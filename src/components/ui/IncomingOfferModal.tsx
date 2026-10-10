@@ -39,6 +39,7 @@ import {
 } from '@/features/repairDeliveries/hooks/useRepairDeliveries';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
+import { useBiometricStore } from '@/store/biometricStore';
 import { useTheme } from '@/hooks/useTheme';
 import { useOfferAlertSound } from '@/hooks/useOfferAlertSound';
 import { useIncomingOfferStore, type IncomingOfferLocation } from '@/store/incomingOfferStore';
@@ -56,6 +57,8 @@ import { formatCurrency } from '@/utils/errors';
 export const IncomingOfferModal = () => {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
+  // Offer popups are mounted outside the lock gate: never show customer addresses over it.
+  const appLocked = useBiometricStore((s) => s.locked);
   const insets = useSafeAreaInsets();
   const { permissions } = usePermissions();
   const staffEnabled = !!permissions.deliveries;
@@ -187,7 +190,7 @@ export const IncomingOfferModal = () => {
     if (offer && listConfirmsGone) removeOffer(offer.kind, offer.orderId);
   }, [offer, listConfirmsGone, removeOffer]);
 
-  const visible = !!offer && staffEnabled;
+  const visible = !!offer && staffEnabled && !appLocked;
   useOfferAlertSound(visible && !isExpired);
 
   // Physical cue the moment an offer lands (the looping sound alone is easy to

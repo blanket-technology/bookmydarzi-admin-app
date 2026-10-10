@@ -13,6 +13,7 @@ import {
 } from '@/features/broadcasts/hooks/useBroadcasts';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useBiometricStore } from '@/store/biometricStore';
 import { useTheme } from '@/hooks/useTheme';
 import { useOfferAlertSound } from '@/hooks/useOfferAlertSound';
 import { useIncomingBroadcastStore } from '@/store/incomingBroadcastStore';
@@ -26,6 +27,8 @@ import { useIncomingBroadcastStore } from '@/store/incomingBroadcastStore';
 export const IncomingBroadcastModal = () => {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
+  // Offer popups are mounted outside the lock gate: never show customer addresses over it.
+  const appLocked = useBiometricStore((s) => s.locked);
   const insets = useSafeAreaInsets();
   const { permissions } = usePermissions();
   const tailorEnabled = !!permissions.broadcasts;
@@ -34,7 +37,7 @@ export const IncomingBroadcastModal = () => {
   const removeOffer = useIncomingBroadcastStore((s) => s.remove);
   const pending = queue[0] ?? null;
 
-  const visible = !!pending && tailorEnabled;
+  const visible = !!pending && tailorEnabled && !appLocked;
 
   // Enabled independent of the tailor's online/offline toggle on the
   // Broadcasts screen - if a WS event enqueued this, the offer already
