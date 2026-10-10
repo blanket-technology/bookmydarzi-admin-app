@@ -65,7 +65,8 @@
     "fix-deps": "expo install --fix",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tests/unit/utils.test.mjs"
   },
   "private": true
 }
