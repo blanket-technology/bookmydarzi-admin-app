@@ -68,42 +68,50 @@ export const enrichApiError = (
   } as ApiError & { endpoint?: string };
 };
 
-export const formatApiErrorDetail = (error: unknown): string => {
-  if (!error) return '';
+const SERVER_ERROR_MESSAGE = 'Something went wrong on our side. Please try again in a moment.';
 
+/** The message a person should read: plain language, no HTTP codes, URLs or
+ * stack-ish detail. Server errors carry the backend's request id as a short
+ * reference so support can find the exact failure in the logs. */
+export const getUserFacingMessage = (error: unknown): string => {
+  if (!error) return 'Something went wrong. Please try again.';
+  const parsed = parseApiError(error);
+  const details = parsed.details as { request_id?: unknown } | undefined;
+  const ref =
+    details && typeof details.request_id === 'string' ? ` (Ref: ${details.request_id.slice(0, 8)})` : '';
+
+  if (parsed.status && parsed.status >= 500) return `${SERVER_ERROR_MESSAGE}${ref}`;
+  if (parsed.status === 429) return 'Too many attempts. Please wait a moment and try again.';
+  if (parsed.status === 404 && /^endpoint not found/i.test(parsed.message)) {
+    return 'We could not find that. It may have been removed or moved.';
+  }
+  return parsed.message || 'Something went wrong. Please try again.';
+};
+
+/** Developer diagnostics (status, code, endpoint, body) - console only in dev builds. */
+const logApiErrorDetail = (error: unknown): void => {
+  if (!__DEV__) return;
   const parsed = parseApiError(error);
   const endpoint = (parsed as ApiError & { endpoint?: string }).endpoint;
-  const parts = [
-    parsed.message,
-    parsed.status ? `HTTP ${parsed.status}` : null,
-    parsed.code ? `(${parsed.code})` : null,
-    endpoint ? `→ ${endpoint}` : null,
-  ].filter(Boolean);
-
-  if (parsed.details && typeof parsed.details === 'object') {
-    try {
-      const body = JSON.stringify(parsed.details);
-      if (body !== '{}' && body.length < 280) {
-        parts.push(body);
-      }
-    } catch {
-      // ignore serialization errors
-    }
-  }
-
-  const message = parts.join(' ');
-  if (__DEV__) {
-    console.error('[API Error Detail]', message, parsed);
-  }
-  return message;
+  console.error('[API Error Detail]', {
+    message: parsed.message,
+    status: parsed.status,
+    code: parsed.code,
+    endpoint,
+    details: parsed.details,
+  });
 };
 
-// Bare message for toasts — no HTTP status/code/endpoint noise, unlike
-// formatApiErrorDetail (which is for inline diagnostic display).
-export const getMutationError = (error: unknown): string => {
-  if (!error) return 'Something went wrong';
-  return parseApiError(error).message ?? 'Something went wrong';
+// Used for toasts and inline error states. Always returns the clean,
+// user-facing message; technical detail goes to the dev console only.
+export const formatApiErrorDetail = (error: unknown): string => {
+  if (!error) return '';
+  logApiErrorDetail(error);
+  return getUserFacingMessage(error);
 };
+
+// Bare message for toasts.
+export const getMutationError = (error: unknown): string => getUserFacingMessage(error);
 
 export const formatCurrency = (amount?: number): string => {
   if (amount === undefined || amount === null) return '₹0';

@@ -229,7 +229,7 @@ apiClient.interceptors.response.use(
       return Promise.reject(
         enrichApiError(
           {
-            message: `Server error (${status}). Please try again later.`,
+            message: 'Something went wrong on our side. Please try again in a moment.',
             status,
             code: 'SERVER_ERROR',
             details: error.response.data,
