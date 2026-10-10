@@ -609,5 +609,12 @@
     "updating": "अपडेट हो रहा है…",
     "onlineReceivingChats": "आप ऑनलाइन हैं — चैट मिल रही हैं",
     "offlineGoOnline": "आप ऑफलाइन हैं — चैट पाने के लिए ऑनलाइन हो जाएं"
+  },
+  "appLock": {
+    "title": "ऐप लॉक है",
+    "hint": "जारी रखने के लिए Face ID या फिंगरप्रिंट से अनलॉक करें।",
+    "unlock": "अनलॉक करें",
+    "verifying": "सत्यापित हो रहा है...",
+    "prompt": "BookMyDarzi Admin अनलॉक करें"
   }
 }

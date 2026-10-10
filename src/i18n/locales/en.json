@@ -609,5 +609,12 @@
     "updating": "Updating…",
     "onlineReceivingChats": "You're online — receiving chats",
     "offlineGoOnline": "You're offline — go online to receive chats"
+  },
+  "appLock": {
+    "title": "App Locked",
+    "hint": "Unlock with Face ID or fingerprint to continue.",
+    "unlock": "Unlock",
+    "verifying": "Verifying...",
+    "prompt": "Unlock BookMyDarzi Admin"
   }
 }
