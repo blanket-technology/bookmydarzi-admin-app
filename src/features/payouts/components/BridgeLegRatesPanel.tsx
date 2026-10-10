@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { Button, Input, Loader, Pressable } from '@/components/ui';
 import { useStaff } from '@/features/staff/hooks/useStaff';
 import {
@@ -34,8 +34,14 @@ export function BridgeLegRatesPanel() {
   const employeeList = employees ?? [];
 
   const handleSave = () => {
+    if (upsertMutation.isPending) return;
     if (!employeeId || !amount) {
       setFormError('Select a Bridge employee and enter a rate amount.');
+      return;
+    }
+    const cleaned = amount.trim().replace(',', '.');
+    if (!/^\d+(\.\d{1,2})?$/.test(cleaned) || Number(cleaned) <= 0) {
+      setFormError('Enter a rate greater than 0, e.g. 40 or 42.50.');
       return;
     }
     setFormError('');
@@ -43,7 +49,7 @@ export function BridgeLegRatesPanel() {
       {
         employee_id: Number(employeeId),
         leg_type: legType || null,
-        rate_amount: amount,
+        rate_amount: cleaned,
       },
       {
         onSuccess: () => {
@@ -56,8 +62,22 @@ export function BridgeLegRatesPanel() {
   };
 
   const handleDelete = (rateId: number) => {
-    setDeletingId(rateId);
-    deleteMutation.mutate(String(rateId), { onSettled: () => setDeletingId(null) });
+    if (deleteMutation.isPending) return;
+    Alert.alert(
+      'Remove leg rate?',
+      'Earnings for this employee will fall back to the default leg rate.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            setDeletingId(rateId);
+            deleteMutation.mutate(String(rateId), { onSettled: () => setDeletingId(null) });
+          },
+        },
+      ],
+    );
   };
 
   return (
