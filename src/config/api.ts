@@ -1,4 +1,9 @@
-const DEFAULT_BASE_URL = 'http://192.168.1.29:8000';
+// Release builds must never fall back to a developer's LAN address: if the
+// build forgot EXPO_PUBLIC_API_BASE_URL every request would fail with a
+// confusing "network error". Dev builds keep the local default.
+const DEFAULT_BASE_URL = __DEV__
+  ? 'http://192.168.1.29:8000'
+  : 'https://web-production-efff7.up.railway.app';
 
 export const API_CONFIG = {
   BASE_URL: (process.env.EXPO_PUBLIC_API_BASE_URL ?? DEFAULT_BASE_URL).replace(/\/$/, ''),
