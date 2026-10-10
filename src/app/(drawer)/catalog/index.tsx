@@ -22,6 +22,8 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { toast } from '@/store/toastStore';
 import type { CategoryTree, ServiceLineTree, StitchingTypeSummary } from '@/types/catalog';
 import { formatApiErrorDetail, formatCurrency } from '@/utils/errors';
+import { optionalText } from '@/utils/forms';
+import { requireAmountInput } from '@/utils/money';
 
 type SheetKind = 'category' | 'service_line' | 'service' | null;
 
@@ -128,8 +130,8 @@ export default function CatalogScreen() {
     if (!categoryForm.name.trim()) return;
     const payload = {
       name: categoryForm.name.trim(),
-      description: categoryForm.description || undefined,
-      image_url: categoryForm.image_url || undefined,
+      description: optionalText(categoryForm.description, !!editingCategory),
+      image_url: optionalText(categoryForm.image_url, !!editingCategory),
       display_order: Math.max(0, Number(categoryForm.display_order) || 0),
       is_active: categoryForm.is_active,
     };
@@ -164,8 +166,8 @@ export default function CatalogScreen() {
     const payload = {
       name: lineForm.name.trim(),
       category_id: lineParentCategoryId,
-      description: lineForm.description || undefined,
-      image_url: lineForm.image_url || undefined,
+      description: optionalText(lineForm.description, !!editingLine),
+      image_url: optionalText(lineForm.image_url, !!editingLine),
       display_order: Math.max(0, Number(lineForm.display_order) || 0),
       is_active: lineForm.is_active,
     };
@@ -207,13 +209,20 @@ export default function CatalogScreen() {
   };
   const handleSaveService = () => {
     if (!serviceForm.name.trim() || !serviceParentCategoryId) return;
+    // A blank or garbled price used to become 0 and create an active Rs 0 service.
+    const price = requireAmountInput(serviceForm.base_price);
+    if (!price || price.value === undefined) {
+      if (price) toast.error('Enter the service price.');
+      return;
+    }
     const payload = {
       name: serviceForm.name.trim(),
       category_id: serviceParentCategoryId,
       service_line_id: serviceParentLineId ?? undefined,
-      description: serviceForm.description || undefined,
-      image_url: serviceForm.image_url || undefined,
-      base_price: Math.max(0, Number(serviceForm.base_price) || 0),
+      description: optionalText(serviceForm.description, !!editingService),
+      image_url: optionalText(serviceForm.image_url, !!editingService),
+      // The backend stores whole rupees.
+      base_price: Math.round(price.value),
       estimated_delivery_days: Math.max(1, Number(serviceForm.estimated_delivery_days) || 7),
       // Only one of these is ever meaningful - the backend treats hours as
       // taking precedence over days whenever set (eta_service.py), so

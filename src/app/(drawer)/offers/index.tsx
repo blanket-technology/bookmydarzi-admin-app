@@ -14,6 +14,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { toast } from '@/store/toastStore';
 import type { OfferItem } from '@/types/offers';
+import { optionalText } from '@/utils/forms';
 import { formatApiErrorDetail, formatCurrency, formatDate } from '@/utils/errors';
 
 // The backend stores ValidFrom/ValidUntil as full datetimes (see
@@ -129,16 +130,25 @@ export default function OffersScreen() {
 
   const buildPayload = () => ({
     title: form.title.trim() || undefined,
-    description: form.description.trim() || undefined,
+    // Clearing a field while editing must send '' (omitted = "leave unchanged").
+    description: optionalText(form.description, !!editingItem),
     discount_type: form.discount_type,
     discount_percent: form.discount_type === 'percentage' ? clampedDiscountPercent : undefined,
     discount_amount: form.discount_type === 'flat' ? Math.max(0, Number(form.discount_amount) || 0) || undefined : undefined,
     min_order_value: Math.max(0, Number(form.min_order_value) || 0),
     max_uses: form.max_uses.trim() ? Math.max(1, Number(form.max_uses) || 1) : undefined,
-    coupon_code: form.coupon_code.trim() || undefined,
-    image_url: form.image_url.trim() || undefined,
-    valid_from: form.valid_from ? isoDateToStartOfDay(form.valid_from) : undefined,
-    valid_until: form.valid_until ? isoDateToEndOfDay(form.valid_until) : undefined,
+    coupon_code: optionalText(form.coupon_code, !!editingItem),
+    image_url: optionalText(form.image_url, !!editingItem),
+    // Only send a date the admin actually changed: re-sending the loaded value
+    // rewrote the exact start/end time to 00:00:00 / 23:59:59 on every edit.
+    valid_from:
+      form.valid_from && !(editingItem && form.valid_from === toDateOnly(editingItem.ValidFrom))
+        ? isoDateToStartOfDay(form.valid_from)
+        : undefined,
+    valid_until:
+      form.valid_until && !(editingItem && form.valid_until === toDateOnly(editingItem.ValidUntil))
+        ? isoDateToEndOfDay(form.valid_until)
+        : undefined,
   });
 
   const handleSave = () => {

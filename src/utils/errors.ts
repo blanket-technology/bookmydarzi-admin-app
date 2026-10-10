@@ -143,10 +143,13 @@ export const formatMoney = (amount?: number | string | null): string => {
 
 export const formatCurrency = (amount?: number): string => {
   if (amount === undefined || amount === null) return '₹0';
+  // Whole rupees stay clean ("₹500"); a fractional amount keeps its paise
+  // ("₹12.50", "₹49.50 off") instead of being silently rounded.
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
   }).format(amount);
 };
 

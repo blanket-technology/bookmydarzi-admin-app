@@ -253,6 +253,7 @@ export const ENDPOINTS = {
     LIST: '/api/v1/lookbook',
     ADMIN_LIST: '/api/v1/admin/lookbook',
     ADMIN_DETAIL: (itemId: string) => `/api/v1/admin/lookbook/${itemId}`,
+    ADMIN_UPLOAD_IMAGE: '/api/v1/admin/lookbook/upload-image',
   },
   CATALOG: {
     TREE: '/api/v1/catalog/categories/tree',
