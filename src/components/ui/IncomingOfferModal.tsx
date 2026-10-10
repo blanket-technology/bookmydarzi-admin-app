@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useEffect, useMemo } from 'react';
 import { ActivityIndicator, Modal, ScrollView, Text, View } from 'react-native';
@@ -159,6 +160,14 @@ export const IncomingOfferModal = () => {
   const visible = !!offer && staffEnabled;
   useOfferAlertSound(visible && !isExpired);
 
+  // Physical cue the moment an offer lands (the looping sound alone is easy to
+  // miss in a pocket or a noisy street). Once per offer, not per re-render.
+  const offerKey = offer ? `${offer.kind}:${offer.orderId}` : null;
+  useEffect(() => {
+    if (!offerKey || !staffEnabled) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => undefined);
+  }, [offerKey, staffEnabled]);
+
   if (!offer) return null;
 
   // Real server-computed per-leg distance (employee.py's distance_km) -
@@ -234,13 +243,25 @@ export const IncomingOfferModal = () => {
               className="px-4 py-1.5 rounded-full"
               style={{ backgroundColor: isExpired ? `${colors.error}20` : `${colors.primary}20` }}
             >
-              <Text className="text-lg font-black" style={{ color: isExpired ? colors.error : colors.primary }}>
+              <Text
+                className="text-lg font-black"
+                style={{ color: isExpired || countdownProgress < 0.1 ? colors.error : colors.primary }}
+                accessibilityRole="timer"
+                accessibilityLiveRegion="none"
+              >
                 {countdown}
               </Text>
             </View>
             {rateAmount != null ? (
-              <View className="px-4 py-1.5 rounded-full" style={{ backgroundColor: '#16a34a20' }}>
-                <Text className="text-lg font-black" style={{ color: '#16a34a' }}>
+              <View
+                className="px-4 py-1.5 rounded-full flex-row items-center"
+                style={{ backgroundColor: `${colors.success}20`, gap: 6 }}
+                accessibilityLabel={`${t('pickups.youEarn')} ${formatCurrency(rateAmount)}`}
+              >
+                <Text className="text-xs font-semibold" style={{ color: colors.success }}>
+                  {t('pickups.youEarn')}
+                </Text>
+                <Text className="text-lg font-black" style={{ color: colors.success }}>
                   {formatCurrency(rateAmount)}
                 </Text>
               </View>

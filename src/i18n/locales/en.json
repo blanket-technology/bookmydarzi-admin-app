@@ -484,7 +484,8 @@
     "declineOfferTitle": "Decline Offer",
     "declineOfferMessage": "Decline this pickup offer? It will be sent to the next available Bridge employee.",
     "away": "away",
-    "moreOffersWaiting": "+{{count}} more offer(s) waiting"
+    "moreOffersWaiting": "+{{count}} more offer(s) waiting",
+    "youEarn": "You earn"
   },
   "deliveries": {
     "title": "Deliveries",
