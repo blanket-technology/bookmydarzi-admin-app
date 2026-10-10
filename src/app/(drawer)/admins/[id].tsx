@@ -98,6 +98,9 @@ function ScreenPermissionCard({
   const clearOverride = useClearOverrideMutation(userId);
 
   const handlePress = async (perm: RbacPermission) => {
+    // Without the effective permissions every cell would read as "not allowed" and a
+    // tap would write a grant/revoke based on that wrong picture: never act blind.
+    if (!effective || busyKey) return;
     const state = cellState(screen.screen_name, perm.permission_name, effective);
     const key = `${screen.id}-${perm.id}`;
     setBusyKey(key);
@@ -113,6 +116,8 @@ function ScreenPermissionCard({
         // granted-override -> revoke removes this account's extra access
         await revoke.mutateAsync({ screenId: screen.id, permissionId: perm.id });
       }
+    } catch {
+      // The mutations already toast the reason; nothing else to do here.
     } finally {
       setBusyKey(null);
     }
@@ -145,10 +150,15 @@ export default function AdminPermissionsScreen() {
   const userId = Number(id);
   const [unlockConfirmVisible, setUnlockConfirmVisible] = useState(false);
 
-  const { data: admin, isLoading: adminLoading } = useStaffMember(id);
+  const { data: admin, isLoading: adminLoading, isError: adminError, refetch: refetchAdmin } = useStaffMember(id);
   const { data: screens, isLoading: screensLoading } = useRbacScreens();
   const { data: permissions, isLoading: permsLoading } = useRbacPermissions();
-  const { data: effective, isLoading: effectiveLoading } = useEffectivePermissions(userId);
+  const {
+    data: effective,
+    isLoading: effectiveLoading,
+    isError: effectiveError,
+    refetch: refetchEffective,
+  } = useEffectivePermissions(userId);
   const { data: lockout } = useLockoutStatus(userId);
   const unlock = useUnlockAccountMutation(userId);
 
@@ -160,6 +170,25 @@ export default function AdminPermissionsScreen() {
   );
 
   if (isLoading) return <Loader fullScreen message="Loading permissions..." />;
+
+  // A failed load must offer Retry, not claim the admin does not exist or show
+  // every permission as revoked.
+  if (adminError || effectiveError) {
+    return (
+      <View className="flex-1" style={{ backgroundColor: colors.background }}>
+        <Header title="Admin Access" showMenu={false} />
+        <EmptyState
+          title="Couldn't load permissions"
+          description="Check your connection and try again."
+          actionLabel="Retry"
+          onAction={() => {
+            refetchAdmin();
+            refetchEffective();
+          }}
+        />
+      </View>
+    );
+  }
 
   if (!admin) {
     return (
