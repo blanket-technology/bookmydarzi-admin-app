@@ -256,7 +256,7 @@ export function useOrderActions({ role, order }: UseOrderActionsArgs): UseOrderA
         if (isCodCollectionRequired) {
           list.push({
             id: 'collect_cod',
-            label: 'Collect COD',
+            label: 'Collect Payment',
             tone: 'primary',
             requiresInput: true,
             requiresConfirmation: false,
