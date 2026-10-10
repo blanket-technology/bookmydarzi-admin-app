@@ -168,14 +168,18 @@ export default function OrdersScreen() {
       />
 
       <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
-        <SearchBar
-          value={search}
-          onChangeText={(text) => {
-            setSearch(text);
-            setPage(1);
-          }}
-          placeholder={t('orders.searchPlaceholder')}
-        />
+        {/* GET /orders/my-orders (the tailor's list) has no search parameter, so a search
+            box there would do nothing. */}
+        {!isTailorRole ? (
+          <SearchBar
+            value={search}
+            onChangeText={(text) => {
+              setSearch(text);
+              setPage(1);
+            }}
+            placeholder={t('orders.searchPlaceholder')}
+          />
+        ) : null}
 
         {showAdminFilters ? (
           <Pressable
