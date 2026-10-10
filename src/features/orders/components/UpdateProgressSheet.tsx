@@ -104,6 +104,10 @@ export const UpdateProgressSheet = ({
           mimeType: photo.mimeType,
           stage: nextStage,
         });
+        // Uploaded photos are visible to the customer: drop each one from the
+        // list as soon as it lands so a retry after a later failure does not
+        // upload (and show) it a second time.
+        setPhotos((prev) => prev.filter((p) => p.uri !== photo.uri));
       }
       await statusMutation.mutateAsync({ orderId, payload: { status: nextStage } });
       handleClose();

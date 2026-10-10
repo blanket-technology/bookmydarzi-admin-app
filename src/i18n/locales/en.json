@@ -20,7 +20,8 @@
     "view": "View",
     "yes": "Yes",
     "no": "No",
-    "ok": "OK"
+    "ok": "OK",
+    "invalidAmount": "Enter a valid amount greater than 0 (digits only, up to 2 decimals)."
   },
   "settings": {
     "title": "Settings",
