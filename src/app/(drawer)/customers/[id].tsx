@@ -13,6 +13,7 @@ import {
   useUpdateUserStatusMutation,
   useUser,
 } from '@/features/users/hooks/useUsers';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useTheme } from '@/hooks/useTheme';
 import type { AdminOrderItem } from '@/types/orders';
 import { formatCurrency, formatDate } from '@/utils/errors';
@@ -81,6 +82,9 @@ const SectionCard = ({
 export default function CustomerDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  // DELETE /admin/users/{id} is superadmin-only on the backend.
+  const { role } = usePermissions();
+  const canDeleteCustomer = String(role ?? '').toLowerCase() === 'superadmin';
   const [activeTab, setActiveTab] = useState('overview');
   const [statusConfirmVisible, setStatusConfirmVisible] = useState(false);
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
@@ -175,9 +179,8 @@ export default function CustomerDetailsScreen() {
   };
 
   const handleConfirmDelete = () => {
-    if (!user) return;
-    deleteMutation.mutate(user.id);
-    setDeleteConfirmVisible(false);
+    if (!user || deleteMutation.isPending) return;
+    deleteMutation.mutate(user.id, { onSettled: () => setDeleteConfirmVisible(false) });
   };
 
   const handleResetPassword = () => {
@@ -256,12 +259,15 @@ export default function CustomerDetailsScreen() {
             loading={resetPasswordMutation.isPending}
             onPress={handleResetPassword}
           />
-          <Button
-            title="Delete"
-            size="sm"
-            variant="danger"
-            onPress={() => setDeleteConfirmVisible(true)}
-          />
+          {canDeleteCustomer ? (
+            <Button
+              title="Delete"
+              size="sm"
+              variant="danger"
+              loading={deleteMutation.isPending}
+              onPress={() => setDeleteConfirmVisible(true)}
+            />
+          ) : null}
         </View>
       </Card>
 

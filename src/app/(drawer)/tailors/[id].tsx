@@ -3,7 +3,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Alert, Linking, Text, View } from 'react-native';
 import { Button, Card, ConfirmModal, DocumentPreviewModal, EmptyState, Header, Input, Loader, Pressable, ScreenContent, Tabs, type TabItem } from '@/components/ui';
 import { useOrders } from '@/features/orders/hooks/useOrders';
 import {
@@ -27,7 +27,7 @@ import {
   useUpdateTailorMutation,
   useUploadTailorKycMutation,
 } from '@/features/tailors/hooks/useTailors';
-import { useUploadUserPhotoMutation } from '@/features/users/hooks/useUsers';
+import { useResetCustomerPasswordMutation, useUploadUserPhotoMutation } from '@/features/users/hooks/useUsers';
 import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/store/toastStore';
 import type { UpdateTailorRequest } from '@/types/tailors';
@@ -81,7 +81,10 @@ export default function TailorDetailsScreen() {
   const updateMutation = useUpdateTailorMutation(id);
   const approvalMutation = useSetTailorApprovalMutation(id);
   const deleteMutation = useDeleteTailorMutation(id);
-  const uploadPhotoMutation = useUploadUserPhotoMutation(id, [['tailor', id], ['tailors']]);
+  // `id` is the tailor PROFILE id; the photo endpoint needs the tailor's USER id
+  // (using the profile id replaced the photo of whichever user had that id).
+  const uploadPhotoMutation = useUploadUserPhotoMutation(String(tailor?.user_id ?? ''), [['tailor', id], ['tailors']]);
+  const resetPasswordMutation = useResetCustomerPasswordMutation();
 
   const [activeTab, setActiveTab] = useState('overview');
   const [sourcePickerFor, setSourcePickerFor] = useState<KycDocKey | null>(null);
@@ -174,47 +177,77 @@ export default function TailorDetailsScreen() {
       email: editForm.email.trim() || undefined,
       mobile: editForm.mobile.trim() || undefined,
       specialization: editForm.specialization.trim() || undefined,
+      // is_available is deliberately not sent: it is the tailor's own busy/free
+      // choice, and an edit of an unrelated field must not overwrite it.
       is_active: editForm.isActive,
-      is_available: editForm.isActive,
     };
-    updateMutation.mutate(payload, {
-      onSuccess: () => {
-        setEditMode(false);
-        setEditForm(null);
-      },
-    });
+    const save = () =>
+      updateMutation.mutate(payload, {
+        onSuccess: () => {
+          setEditMode(false);
+          setEditForm(null);
+        },
+      });
+    // Deactivating through the form must ask the same question the Deactivate
+    // action asks.
+    if (tailor?.is_active && !editForm.isActive) {
+      Alert.alert(
+        'Deactivate tailor?',
+        'The tailor will stop receiving orders and offers. You can reactivate them later.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Deactivate', style: 'destructive', onPress: save },
+        ],
+      );
+      return;
+    }
+    save();
   };
 
   const handleToggleVerification = () => {
-    if (!tailor) return;
-    approvalMutation.mutate(!tailor.is_approved);
+    if (!tailor || approvalMutation.isPending) return;
+    if (tailor.is_approved) {
+      // Un-verifying removes the tailor from broadcast and assignment eligibility.
+      Alert.alert(
+        'Remove verification?',
+        'This tailor will no longer be eligible for new orders until verified again.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Unverify', style: 'destructive', onPress: () => approvalMutation.mutate(false) },
+        ],
+      );
+      return;
+    }
+    approvalMutation.mutate(true);
   };
 
   const handleDelete = () => {
-    setDeleteConfirmVisible(false);
-    deleteMutation.mutate();
+    if (deleteMutation.isPending) return;
+    deleteMutation.mutate(undefined, { onSettled: () => setDeleteConfirmVisible(false) });
   };
 
-  // No backend endpoint exists for admin-triggered password reset (verified
-  // against app/api/v1/endpoints/admin.py) - BMD-Admin web's equivalent
-  // button (handleResetPassword, TailorFullDetails.jsx) is also just a
-  // client-side confirmation with no API call. Matching that exactly here
-  // rather than inventing new backend behavior beyond what web actually does.
+  // Sends the tailor a real password-reset email (same flow the customer screen uses).
   const handleResetPassword = () => {
-    Alert.alert('Password Reset', 'Password reset link sent successfully.');
+    if (!tailor?.email) {
+      Alert.alert('No email on file', 'Add an email address for this tailor before sending a reset link.');
+      return;
+    }
+    if (resetPasswordMutation.isPending) return;
+    resetPasswordMutation.mutate(tailor.email);
   };
 
   const handleViewDocument = (url?: string | null) => {
     const resolved = resolveDocUrl(url);
     if (!resolved) return;
     if (isPdfUrl(resolved)) {
-      toast.info('Opening document…');
+      Linking.openURL(resolved).catch(() => toast.error('Could not open the document. Try again.'));
       return;
     }
     setPreviewUrl(resolved);
   };
 
   const handlePickAvatarPhoto = async () => {
+    if (!tailor?.user_id) return;
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       toast.error('Photo library permission is required to upload a photo');

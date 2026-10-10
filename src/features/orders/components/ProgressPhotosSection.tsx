@@ -90,6 +90,9 @@ export const ProgressPhotosSection = ({
           stage,
         });
       }
+    } catch {
+      // The upload mutation already toasted the reason; remaining photos are
+      // skipped so the user can retry deliberately.
     } finally {
       setUploadingCount(0);
     }

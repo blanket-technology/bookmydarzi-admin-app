@@ -53,6 +53,11 @@ export const useUpdateUserStatusMutation = () => {
     }) => customerService.updateStatus(userId, payload),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      // Employees/admins/tailors are users too: their detail and list screens read
+      // the staff/tailor queries, which otherwise showed the old status.
+      queryClient.invalidateQueries({ queryKey: ['staff'] });
+      queryClient.invalidateQueries({ queryKey: ['tailors'] });
+      queryClient.invalidateQueries({ queryKey: ['tailor'] });
       // The list screen works around this with its own manual refetch(), but
       // the customer detail screen (customers/[id].tsx) reads useUser/
       // useCustomerFullDetail directly and has no such workaround - without
