@@ -1,3 +1,4 @@
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -64,10 +65,11 @@ export default function TailorsScreen() {
   const { colors } = useTheme();
   const { contentMaxWidth } = useResponsive();
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 350);
   const [page, setPage] = useState(1);
   const [view, setView] = useState<TailorsView>('list');
   const { data, isLoading, isError, error, refetch, isRefetching } = useTailorsPaginated(
-    { search: search || undefined, page, limit: LIMIT },
+    { search: debouncedSearch || undefined, page, limit: LIMIT },
     view === 'list',
   );
   const {

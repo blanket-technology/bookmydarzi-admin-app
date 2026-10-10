@@ -1,3 +1,4 @@
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -44,6 +45,7 @@ export default function OrdersScreen() {
   const { status: statusParam } = useLocalSearchParams<{ status?: string }>();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 350);
   const [filters, setFilters] = useState<OrdersFilters>(
     statusParam ? { ...EMPTY_FILTERS, status: statusParam } : EMPTY_FILTERS,
   );
@@ -64,7 +66,7 @@ export default function OrdersScreen() {
     () => ({
       page,
       limit: LIMIT,
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       status: filters.status || undefined,
       payment_status: filters.paymentStatus || undefined,
       tailor_id: filters.tailorId || undefined,
@@ -74,7 +76,7 @@ export default function OrdersScreen() {
       date_to: filters.dateTo ? `${filters.dateTo}T23:59:59` : undefined,
       needs_manual_assignment: needsManualAssignment || undefined,
     }),
-    [page, search, filters, needsManualAssignment],
+    [page, debouncedSearch, filters, needsManualAssignment],
   );
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useOrders(params);

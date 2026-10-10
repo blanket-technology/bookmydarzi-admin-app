@@ -1,3 +1,4 @@
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -69,6 +70,7 @@ export default function PaymentsScreen() {
   const isAdminRole = isSuperadmin || normalizedRole === 'admin';
   const isStaffRole = isAdminRole || normalizedRole === 'employee';
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 350);
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [filterVisible, setFilterVisible] = useState(false);
@@ -82,10 +84,10 @@ export default function PaymentsScreen() {
     () => ({
       page,
       limit: LIMIT,
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       payment_status: statusFilter || undefined,
     }),
-    [page, search, statusFilter],
+    [page, debouncedSearch, statusFilter],
   );
   const { data, isLoading, isError, error, refetch, isRefetching } = useOrders(params);
 
