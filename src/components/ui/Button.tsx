@@ -42,6 +42,8 @@ export const Button = ({
   return (
     <Pressable
       disabled={disabled || loading}
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: !!(disabled || loading), busy: loading }}
       pressScale={0.96}
       haptic={variant === 'danger' ? 'medium' : 'light'}
       className={`rounded-2xl items-center justify-center flex-row ${sizeClasses} ${fullWidth ? 'w-full' : ''} ${className ?? ''}`}

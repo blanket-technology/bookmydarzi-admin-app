@@ -1,3 +1,4 @@
+import { setManuallyOffline } from '@/hooks/useAutoOnline';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -247,11 +248,13 @@ export default function DeliveriesScreen() {
           longitude: location.coords?.longitude,
         });
         setIsOnline(true);
+        setManuallyOffline(false);
         toast.success("You're online");
       } else {
         await setOnlineStatus.mutateAsync({ is_online: false });
         location.stop();
         setIsOnline(false);
+        setManuallyOffline(true);
         toast.success("You're offline");
       }
     } catch {

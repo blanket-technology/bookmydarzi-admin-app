@@ -104,7 +104,8 @@ export default function SupportTicketDetailScreen() {
 
         <ScrollView className="px-5 flex-1 mt-3" showsVerticalScrollIndicator={false}>
           {ticket.messages.map((msg) => {
-            const isMine = msg.sender_id === user?.id;
+            // sender_id is a number from the API, user.id a string: compare as strings.
+            const isMine = String(msg.sender_id) === String(user?.id);
             // isMine alone only separates "my own replies" from everyone
             // else's - a tailor's message and another staff member's reply
             // both landed on the same left-aligned, identically-styled

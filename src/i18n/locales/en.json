@@ -20,7 +20,8 @@
     "view": "View",
     "yes": "Yes",
     "no": "No",
-    "ok": "OK"
+    "ok": "OK",
+    "invalidAmount": "Enter a valid amount greater than 0 (digits only, up to 2 decimals)."
   },
   "settings": {
     "title": "Settings",
@@ -170,7 +171,11 @@
     "firstName": "First Name",
     "lastName": "Last Name",
     "logout": "Logout",
-    "addYourNameBelow": "Add your name below"
+    "addYourNameBelow": "Add your name below",
+    "removeDocTitle": "Remove document?",
+    "removeDocBody": "This permanently deletes the uploaded file and you will need to upload it again for review.",
+    "removeDoc": "Remove",
+    "portfolioUploadPaused": "Adding portfolio photos is temporarily unavailable. Your existing photos are safe."
   },
   "orders": {
     "title": "Orders",
@@ -281,7 +286,9 @@
     "noAttempts": "No broadcast attempts yet."
   },
   "incomingBroadcast": {
-    "title": "New Order Offer!"
+    "title": "New Order Offer!",
+    "loading": "Loading order details...",
+    "dismiss": "Dismiss"
   },
   "pendingOffer": {
     "pickupOfferTitle": "Pickup offer for you",
@@ -363,16 +370,39 @@
     "existingRequestWarning": "A customer cancellation request ({{code}}) is already {{status}} in the Cancellations queue. This will start a separate, independent cancellation."
   },
   "collectPayment": {
-    "title": "Collect COD Payment",
-    "cash": "Cash",
-    "qr": "QR",
-    "amountCollected": "Amount Collected",
-    "scanQrHint": "Ask the customer to scan this QR with any UPI app",
-    "enterAmountHint": "Enter an amount above to generate the QR code.",
-    "confirmCollection": "Confirm Collection"
+    "title": "Collect payment",
+    "amountDue": "Amount due",
+    "scanToPay": "Scan to pay",
+    "cash": "Cash (COD)",
+    "qr": "Scan QR",
+    "scanQrHint": "Ask the customer to scan this QR with any UPI app (GPay, PhonePe, Paytm...).",
+    "generating": "Generating QR...",
+    "waiting": "Waiting for the customer's payment...",
+    "autoConfirm": "This screen updates automatically as soon as the payment is received.",
+    "expiresIn": "Expires in {{time}}",
+    "expired": "This QR has expired",
+    "regenerate": "Generate new QR",
+    "paid": "Payment received",
+    "paidBy": "Paid by UPI QR - order settled.",
+    "paidCash": "Paid in cash - order settled.",
+    "qrFailed": "Could not generate the QR",
+    "retry": "Try again",
+    "qrNotWorking": "QR not working? Collect cash instead",
+    "backToQr": "Use QR instead",
+    "cashTitle": "Collect cash",
+    "cashHint": "Collect exactly {{amount}} in cash from the customer, then confirm below.",
+    "cashConfirmCheck": "I have received {{amount}} in cash",
+    "confirmCash": "Confirm cash received",
+    "alreadyPaid": "The customer has already paid. No cash is due.",
+    "noBalance": "There is no balance to collect for this order.",
+    "notOnline": "Online QR payment is not available right now. Please collect cash.",
+    "close": "Close"
   },
   "correctStatus": {
-    "title": "Correct Status"
+    "title": "Correct Status",
+    "confirmTitle": "Change order status?",
+    "confirmBody": "Set this order to \"{{status}}\"? This skips the normal workflow checks and is recorded in the audit log.",
+    "confirm": "Change status"
   },
   "paymentDetails": {
     "copied": "{{label}} copied",
@@ -399,7 +429,16 @@
     "markRefundManual": "Mark as Manually Refunded",
     "markRefundManualHelp": "Use this only after you've already paid the customer yourself (UPI/bank transfer). This does not send money - it just records what you paid.",
     "manualReferenceRequired": "UPI / bank transaction reference (required)",
-    "manualRefundReference": "Manually refunded · ref: {{reference}}"
+    "manualRefundReference": "Manually refunded · ref: {{reference}}",
+    "invalidRefundAmount": "Enter an amount greater than 0 and up to {{max}}, using digits only (e.g. 499.50). Leave it blank to refund the full amount.",
+    "confirmRefundTitle": "Confirm refund",
+    "confirmRefundFull": "Refund the FULL refundable amount (up to {{amount}}) to the customer? This cannot be undone.",
+    "confirmRefundPartial": "Refund {{amount}} to the customer? This cannot be undone.",
+    "transactionIdNeeded": "Enter the transaction ID to mark this payment as successful.",
+    "noStatusChanges": "No status changes are possible from the current status.",
+    "confirmStatusTitle": "Change payment status?",
+    "confirmStatusBody": "Set this payment to \"{{status}}\"? This edits the payment record and the order's settlement.",
+    "confirmStatusRefunded": "This only marks the record as refunded. It does NOT send any money to the customer. Use \"Issue refund\" to actually refund. Continue?"
   },
   "measurementManage": {
     "male": "Male",
@@ -464,7 +503,8 @@
     "declineOfferTitle": "Decline Offer",
     "declineOfferMessage": "Decline this pickup offer? It will be sent to the next available Bridge employee.",
     "away": "away",
-    "moreOffersWaiting": "+{{count}} more offer(s) waiting"
+    "moreOffersWaiting": "+{{count}} more offer(s) waiting",
+    "youEarn": "You earn"
   },
   "deliveries": {
     "title": "Deliveries",
@@ -570,5 +610,12 @@
     "updating": "Updating…",
     "onlineReceivingChats": "You're online — receiving chats",
     "offlineGoOnline": "You're offline — go online to receive chats"
+  },
+  "appLock": {
+    "title": "App Locked",
+    "hint": "Unlock with Face ID or fingerprint to continue.",
+    "unlock": "Unlock",
+    "verifying": "Verifying...",
+    "prompt": "Unlock BookMyDarzi Admin"
   }
 }

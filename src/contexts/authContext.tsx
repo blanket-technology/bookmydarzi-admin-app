@@ -6,10 +6,12 @@ import {
   normalizeAuthUser,
 } from '@/services/authService';
 import { STORAGE_KEYS } from '@/constants/storage';
+import { unregisterPushTokenBestEffort } from '@/hooks/usePushRegistration';
 import { refreshAccessToken } from '@/services/refreshCoordinator';
 import { tokenStorage } from '@/services/tokenStorage';
 import { useAuthStore } from '@/store/authStore';
 import type { AuthUser } from '@/types/auth';
+import { isTransientApiError } from '@/utils/errors';
 import { secureStorage } from '@/utils/secureStorage';
 
 const SESSION_INIT_TIMEOUT_MS = 8_000;
@@ -96,10 +98,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const logout = useCallback(async () => {
-    const refreshToken = useAuthStore.getState().refreshToken;
+    const { refreshToken, accessToken } = useAuthStore.getState();
+    // Unregister this device's push token first, while the session is still valid.
+    await withTimeout(unregisterPushTokenBestEffort(), 3_000).catch(() => undefined);
     if (refreshToken) {
       try {
-        await withTimeout(authService.logout(refreshToken), 5_000);
+        await withTimeout(authService.logout(refreshToken, accessToken), 5_000);
       } catch {
         // proceed with local logout even if API is unavailable
       }
@@ -145,11 +149,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // which does retry network errors before giving up) take it from
       // here.
       const isTimeout = error instanceof Error && error.message === 'SESSION_INIT_TIMEOUT';
-      const isNetworkError =
-        typeof error === 'object' &&
-        error !== null &&
-        'message' in error &&
-        (error as { message?: unknown }).message === 'Network Error';
+      const isNetworkError = isTransientApiError(error);
 
       if (__DEV__) {
         console.warn('[AuthProvider] refreshSession failed', error, { isTimeout, isNetworkError });

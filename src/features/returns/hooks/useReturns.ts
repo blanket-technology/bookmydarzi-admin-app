@@ -19,9 +19,11 @@ export const useAcceptReturnBroadcastMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (orderId: string) => returnService.accept(orderId),
-    onSuccess: () => {
+    onSuccess: (_data, orderId) => {
       queryClient.invalidateQueries({ queryKey: ['return-broadcasts'] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(String(orderId)) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
       toast.success('Return pickup accepted');
     },
     onError: (error) => toast.error(getMutationError(error)),

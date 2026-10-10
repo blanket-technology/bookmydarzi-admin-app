@@ -11,6 +11,7 @@ import {
 } from '@/features/cancellations/hooks/useCancellations';
 import { useTheme } from '@/hooks/useTheme';
 import { capitalize, formatApiErrorDetail, formatCurrency, formatDateTime } from '@/utils/errors';
+import { requireAmountInput } from '@/utils/money';
 
 const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
   pending: { bg: '#fef3c7', color: '#d97706' },
@@ -57,11 +58,14 @@ export default function CancellationDetailScreen() {
   const effectiveRefund = cancellation.OverrideRefundAmount ?? cancellation.RefundAmount;
 
   const handleApprove = () => {
+    if (approveMutation.isPending) return;
+    const override = requireAmountInput(approveOverride);
+    if (!override) return;
     approveMutation.mutate(
       {
         id,
         payload: {
-          override_refund_amount: approveOverride ? Number(approveOverride) : undefined,
+          override_refund_amount: override.value,
           admin_notes: approveNotes || undefined,
         },
       },
@@ -84,11 +88,14 @@ export default function CancellationDetailScreen() {
   };
 
   const handleEdit = () => {
+    if (patchMutation.isPending) return;
+    const override = requireAmountInput(editOverride);
+    if (!override) return;
     patchMutation.mutate(
       {
         id,
         payload: {
-          override_refund_amount: editOverride ? Number(editOverride) : undefined,
+          override_refund_amount: override.value,
           admin_notes: editNotes || undefined,
         },
       },

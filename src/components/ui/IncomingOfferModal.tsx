@@ -1,10 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useRef } from 'react';
 import { ActivityIndicator, Modal, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
-import { LocationRow, itemsLabel, useCountdown, useCountdownProgress } from '@/features/broadcasts/offerCardHelpers';
+import {
+  LocationRow,
+  hasExpired,
+  itemsLabel,
+  useCountdown,
+  useCountdownProgress,
+} from '@/features/broadcasts/offerCardHelpers';
 import {
   useAcceptDeliveryBroadcastMutation,
   useDeclineDeliveryBroadcastMutation,
@@ -32,6 +39,7 @@ import {
 } from '@/features/repairDeliveries/hooks/useRepairDeliveries';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
+import { useBiometricStore } from '@/store/biometricStore';
 import { useTheme } from '@/hooks/useTheme';
 import { useOfferAlertSound } from '@/hooks/useOfferAlertSound';
 import { useIncomingOfferStore, type IncomingOfferLocation } from '@/store/incomingOfferStore';
@@ -49,12 +57,14 @@ import { formatCurrency } from '@/utils/errors';
 export const IncomingOfferModal = () => {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
+  // Offer popups are mounted outside the lock gate: never show customer addresses over it.
+  const appLocked = useBiometricStore((s) => s.locked);
   const insets = useSafeAreaInsets();
   const { permissions } = usePermissions();
   const staffEnabled = !!permissions.deliveries;
 
   const queue = useIncomingOfferStore((s) => s.queue);
-  const dequeue = useIncomingOfferStore((s) => s.dequeue);
+  const removeOffer = useIncomingOfferStore((s) => s.remove);
   const offer = queue[0] ?? null;
 
   // Pickup offers arrive with no location payload at all (see
@@ -66,15 +76,16 @@ export const IncomingOfferModal = () => {
   // useAppSocket.ts's approxExpiresAt comment), so look those up too purely
   // to correct the countdown/round display once available.
   const needsPickupLookup = offer?.kind === 'pickup' && !offer.pickup;
-  const { data: pickupOffersData } = usePickupBroadcastOffers(staffEnabled && offer?.kind === 'pickup');
-  const { data: deliveryOffersData } = useDeliveryBroadcastOffers(staffEnabled && offer?.kind === 'delivery');
-  const { data: returnOffersData } = useReturnBroadcastOffers(staffEnabled && offer?.kind === 'return');
-  const { data: repairPickupOffersData } = useRepairPickupBroadcastOffers(
-    staffEnabled && offer?.kind === 'repair_pickup',
-  );
-  const { data: repairDeliveryOffersData } = useRepairDeliveryBroadcastOffers(
-    staffEnabled && offer?.kind === 'repair_delivery',
-  );
+  const pickupQuery = usePickupBroadcastOffers(staffEnabled && offer?.kind === 'pickup');
+  const deliveryQuery = useDeliveryBroadcastOffers(staffEnabled && offer?.kind === 'delivery');
+  const returnQuery = useReturnBroadcastOffers(staffEnabled && offer?.kind === 'return');
+  const repairPickupQuery = useRepairPickupBroadcastOffers(staffEnabled && offer?.kind === 'repair_pickup');
+  const repairDeliveryQuery = useRepairDeliveryBroadcastOffers(staffEnabled && offer?.kind === 'repair_delivery');
+  const pickupOffersData = pickupQuery.data;
+  const deliveryOffersData = deliveryQuery.data;
+  const returnOffersData = returnQuery.data;
+  const repairPickupOffersData = repairPickupQuery.data;
+  const repairDeliveryOffersData = repairDeliveryQuery.data;
 
   // order_id comes back as a number from these list endpoints
   // (employee.py: "order_id": order.Id) while offer.orderId is always a
@@ -128,36 +139,67 @@ export const IncomingOfferModal = () => {
   const acceptRepairDelivery = useAcceptRepairDeliveryBroadcastMutation();
   const declineRepairDelivery = useDeclineRepairDeliveryBroadcastMutation();
 
-  const { acceptMutation, declineMutation } = useMemo(() => {
-    switch (offer?.kind) {
-      case 'delivery':
-        return { acceptMutation: acceptDelivery, declineMutation: declineDelivery };
-      case 'return':
-        return { acceptMutation: acceptReturn, declineMutation: declineReturn };
-      case 'repair_pickup':
-        return { acceptMutation: acceptRepairPickup, declineMutation: declineRepairPickup };
-      case 'repair_delivery':
-        return { acceptMutation: acceptRepairDelivery, declineMutation: declineRepairDelivery };
-      case 'pickup':
-      default:
-        return { acceptMutation: acceptPickup, declineMutation: declinePickup };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [offer?.kind]);
+  // Selected on every render (NOT memoised): memoising froze the mutation
+  // results at their first-render values, so `isPending` stayed false and a
+  // double-tap on Accept sent two requests.
+  const mutationPair = {
+    delivery: [acceptDelivery, declineDelivery],
+    return: [acceptReturn, declineReturn],
+    repair_pickup: [acceptRepairPickup, declineRepairPickup],
+    repair_delivery: [acceptRepairDelivery, declineRepairDelivery],
+    pickup: [acceptPickup, declinePickup],
+  }[offer?.kind ?? 'pickup'];
+  const [acceptMutation, declineMutation] = mutationPair;
 
   const countdown = useCountdown(expiresAt);
-  const isExpired = countdown === t('pickups.expired');
+  const isExpired = hasExpired(expiresAt);
   const countdownProgress = useCountdownProgress(notifiedAt, expiresAt);
 
   // The broadcast already timed out server-side by the time the countdown
   // hits zero - nothing to decline, just stop showing it and move to
   // whatever's next in the queue.
   useEffect(() => {
-    if (offer && isExpired) dequeue();
-  }, [offer, isExpired, dequeue]);
+    if (offer && isExpired) removeOffer(offer.kind, offer.orderId);
+  }, [offer, isExpired, removeOffer]);
 
-  const visible = !!offer && staffEnabled;
+  // The offer can be gone before its timer runs out (another employee accepted,
+  // the round rotated). Once a list fetched AFTER this offer appeared no longer
+  // contains it, drop it instead of showing a dead offer.
+  const activeQuery =
+    offer?.kind === 'delivery'
+      ? deliveryQuery
+      : offer?.kind === 'return'
+        ? returnQuery
+        : offer?.kind === 'repair_pickup'
+          ? repairPickupQuery
+          : offer?.kind === 'repair_delivery'
+            ? repairDeliveryQuery
+            : pickupQuery;
+  const shownAt = useRef<{ key: string; at: number }>({ key: '', at: 0 });
+  const offerIdentity = offer ? `${offer.kind}:${offer.orderId}` : '';
+  if (offerIdentity && shownAt.current.key !== offerIdentity) {
+    shownAt.current = { key: offerIdentity, at: Date.now() };
+  }
+  const listConfirmsGone =
+    !!offer &&
+    !resolvedOffer &&
+    !activeQuery.isFetching &&
+    activeQuery.isSuccess &&
+    activeQuery.dataUpdatedAt >= shownAt.current.at;
+  useEffect(() => {
+    if (offer && listConfirmsGone) removeOffer(offer.kind, offer.orderId);
+  }, [offer, listConfirmsGone, removeOffer]);
+
+  const visible = !!offer && staffEnabled && !appLocked;
   useOfferAlertSound(visible && !isExpired);
+
+  // Physical cue the moment an offer lands (the looping sound alone is easy to
+  // miss in a pocket or a noisy street). Once per offer, not per re-render.
+  const offerKey = offer ? `${offer.kind}:${offer.orderId}` : null;
+  useEffect(() => {
+    if (!offerKey || !staffEnabled) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => undefined);
+  }, [offerKey, staffEnabled]);
 
   if (!offer) return null;
 
@@ -197,17 +239,20 @@ export const IncomingOfferModal = () => {
           : 'cube-outline';
 
   const handleAccept = () => {
+    if (acceptMutation.isPending || declineMutation.isPending) return;
     acceptMutation.mutate(offer.orderId, {
       onSuccess: () => {
-        dequeue();
+        removeOffer(offer.kind, offer.orderId);
         router.push(`/(drawer)/orders/${offer.orderId}` as never);
       },
-      onError: () => dequeue(),
+      // The mutation already toasted why (usually "no longer available").
+      onError: () => removeOffer(offer.kind, offer.orderId),
     });
   };
 
   const handleDecline = () => {
-    declineMutation.mutate(offer.orderId, { onSettled: () => dequeue() });
+    if (acceptMutation.isPending || declineMutation.isPending) return;
+    declineMutation.mutate(offer.orderId, { onSettled: () => removeOffer(offer.kind, offer.orderId) });
   };
 
   const acting = acceptMutation.isPending || declineMutation.isPending;
@@ -234,13 +279,25 @@ export const IncomingOfferModal = () => {
               className="px-4 py-1.5 rounded-full"
               style={{ backgroundColor: isExpired ? `${colors.error}20` : `${colors.primary}20` }}
             >
-              <Text className="text-lg font-black" style={{ color: isExpired ? colors.error : colors.primary }}>
+              <Text
+                className="text-lg font-black"
+                style={{ color: isExpired || countdownProgress < 0.1 ? colors.error : colors.primary }}
+                accessibilityRole="timer"
+                accessibilityLiveRegion="none"
+              >
                 {countdown}
               </Text>
             </View>
             {rateAmount != null ? (
-              <View className="px-4 py-1.5 rounded-full" style={{ backgroundColor: '#16a34a20' }}>
-                <Text className="text-lg font-black" style={{ color: '#16a34a' }}>
+              <View
+                className="px-4 py-1.5 rounded-full flex-row items-center"
+                style={{ backgroundColor: `${colors.success}20`, gap: 6 }}
+                accessibilityLabel={`${t('pickups.youEarn')} ${formatCurrency(rateAmount)}`}
+              >
+                <Text className="text-xs font-semibold" style={{ color: colors.success }}>
+                  {t('pickups.youEarn')}
+                </Text>
+                <Text className="text-lg font-black" style={{ color: colors.success }}>
                   {formatCurrency(rateAmount)}
                 </Text>
               </View>

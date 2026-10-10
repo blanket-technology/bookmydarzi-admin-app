@@ -22,5 +22,13 @@ module.exports = ({ config }) => {
     return plugin;
   });
 
-  return { ...config, plugins };
+  // Android push (FCM) needs google-services.json at build time. Supply it as an EAS
+  // file secret named GOOGLE_SERVICES_JSON (or a local ./google-services.json);
+  // without it Android release builds cannot get an Expo push token.
+  const googleServicesFile = process.env.GOOGLE_SERVICES_JSON;
+  const android = googleServicesFile
+    ? { ...(config.android ?? {}), googleServicesFile }
+    : config.android;
+
+  return { ...config, android, plugins };
 };

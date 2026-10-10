@@ -41,6 +41,10 @@ export const useApproveApplicationMutation = () => {
     }) => applicationService.approveApplication(applicationId, { overridePanRequirement, panWaiverReason }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
+      // The detail screen reads ['application', id] (a different key) and approval
+      // creates a tailor, so both of those would otherwise show stale data.
+      queryClient.invalidateQueries({ queryKey: ['application'] });
+      queryClient.invalidateQueries({ queryKey: ['tailors'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
       toast.success('Application approved');
     },
@@ -74,6 +78,7 @@ export const useRejectApplicationMutation = () => {
     }) => applicationService.rejectApplication(applicationId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ['application'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
       toast.success('Application rejected');
     },

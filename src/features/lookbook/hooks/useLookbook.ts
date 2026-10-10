@@ -48,3 +48,9 @@ export const useDeleteLookbookItemMutation = () => {
     onError: (error) => toast.error(getMutationError(error)),
   });
 };
+
+export const useUploadLookbookImageMutation = () =>
+  useMutation({
+    mutationFn: (file: { uri: string; fileName?: string; mimeType?: string }) => lookbookService.uploadImage(file),
+    onError: (error) => toast.error(getMutationError(error)),
+  });

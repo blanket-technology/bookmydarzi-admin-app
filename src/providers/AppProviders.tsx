@@ -1,6 +1,12 @@
-import { MutationCache, onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  MutationCache,
+  onlineManager,
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient,
+} from '@tanstack/react-query';
 import NetInfo from '@react-native-community/netinfo';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Toast } from '@/components/ui/Toast';
@@ -13,6 +19,9 @@ import { AuthProvider } from '@/contexts/authContext';
 import { OfferAlerts } from '@/features/pickups/components/OfferAlerts';
 import { useAppSocket } from '@/hooks/useAppSocket';
 import { useAutoOnline } from '@/hooks/useAutoOnline';
+import { incomingBroadcastQueue } from '@/store/incomingBroadcastStore';
+import { incomingOfferQueue } from '@/store/incomingOfferStore';
+import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
 import { getMutationError } from '@/utils/errors';
 import type { ApiError } from '@/types/api';
@@ -36,6 +45,25 @@ const AutoOnlineConnection = () => {
   return null;
 };
 
+// When the session ends (logout, forced sign-out, expiry) drop everything that
+// belongs to that user: cached query data (query keys are not user-scoped, so
+// the next account would otherwise see the previous account's orders and
+// profile) and any job offers still waiting in the popup queues.
+const SessionCacheReset = () => {
+  const queryClient = useQueryClient();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const wasAuthenticated = useRef(isAuthenticated);
+  useEffect(() => {
+    if (wasAuthenticated.current && !isAuthenticated) {
+      queryClient.clear();
+      incomingOfferQueue.clear();
+      incomingBroadcastQueue.clear();
+    }
+    wasAuthenticated.current = isAuthenticated;
+  }, [isAuthenticated, queryClient]);
+  return null;
+};
+
 // A 4xx means the request itself is wrong (bad auth, bad input, not found) —
 // retrying sends the exact same request and gets the exact same rejection,
 // just 3x the network calls and 3x the identical console noise. Only retry
@@ -51,7 +79,7 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
   // instead of leaving it stuck in an errored state until manual refresh.
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
-      onlineManager.setOnline(state.isConnected != null ? state.isConnected : true);
+      onlineManager.setOnline((state.isConnected ?? true) && state.isInternetReachable !== false);
     });
     return unsubscribe;
   }, []);
@@ -89,6 +117,7 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             {children}
+            <SessionCacheReset />
             <AppSocketConnection />
             <AutoOnlineConnection />
             <OfferAlerts />

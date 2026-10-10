@@ -85,7 +85,7 @@ const resolveDeepLink = (notification: NotificationItem): string | null => {
   const orderId = notification.data?.order_id;
   const applicationId = notification.data?.application_id;
   const ticketId = notification.data?.ticket_id;
-  const sessionId = notification.data?.session_id;
+  const sessionId = notification.data?.session_id ?? notification.data?.session_uuid;
 
   switch (notification.deep_link) {
     case 'order_details':
@@ -108,6 +108,9 @@ const resolveDeepLink = (notification: NotificationItem): string | null => {
     default:
       break;
   }
+
+  // Chat notifications (type="chat") carry session_uuid and no deep_link: open the thread.
+  if (notification.type === 'chat' && sessionId != null) return `/(drawer)/support/chat/${sessionId}`;
 
   // Fallback for notifications created before deep_link existed, or any
   // type not covered above - infer from whichever id is present.

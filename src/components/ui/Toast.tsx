@@ -18,13 +18,15 @@ const ICONS: Record<ToastType, keyof typeof Ionicons.glyphMap> = {
 export const Toast = () => {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { visible, message, type, hide } = useToastStore();
+  const { visible, id, message, type, hide } = useToastStore();
 
+  // Keyed on `id` so a second toast shown while one is up gets its own full
+  // 3 s instead of inheriting the first one's remaining time.
   useEffect(() => {
     if (!visible) return;
-    const timer = setTimeout(hide, 3000);
+    const timer = setTimeout(hide, type === 'error' ? 4500 : 3000);
     return () => clearTimeout(timer);
-  }, [visible, hide]);
+  }, [visible, id, type, hide]);
 
   if (!visible) return null;
 
@@ -38,6 +40,10 @@ export const Toast = () => {
     <Animated.View
       entering={FadeInUp}
       exiting={FadeOutUp}
+      pointerEvents="none"
+      // Announced by screen readers (errors assertively).
+      accessibilityRole="alert"
+      accessibilityLiveRegion={type === 'error' ? 'assertive' : 'polite'}
       className="absolute left-5 right-5 rounded-2xl px-4 py-3 border z-50"
       style={{
         top: insets.top + 8,

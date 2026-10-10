@@ -10,7 +10,9 @@ import {
 } from '@/features/catalog/hooks/useCatalog';
 import { useTheme } from '@/hooks/useTheme';
 import type { ServiceAddon } from '@/types/catalog';
-import { formatCurrency } from '@/utils/errors';
+import { formatApiErrorDetail, formatCurrency } from '@/utils/errors';
+import { optionalText } from '@/utils/forms';
+import { requireAmountInput } from '@/utils/money';
 
 interface ServiceAddonsManagerSheetProps {
   visible: boolean;
@@ -27,7 +29,7 @@ const ADDON_FORM = { name: '', description: '', price: '0', display_order: '0', 
 // alongside a brand-new one).
 export function ServiceAddonsManagerSheet({ visible, onClose, serviceId, serviceName }: ServiceAddonsManagerSheetProps) {
   const { colors } = useTheme();
-  const { data: addons, isLoading } = useAdminServiceAddons(serviceId ?? '', visible && !!serviceId);
+  const { data: addons, isLoading, isError, error, refetch } = useAdminServiceAddons(serviceId ?? '', visible && !!serviceId);
   const createMutation = useCreateServiceAddonMutation(serviceId ?? '');
   const updateMutation = useUpdateServiceAddonMutation(serviceId ?? '');
   const deleteMutation = useDeleteServiceAddonMutation(serviceId ?? '');
@@ -56,10 +58,13 @@ export function ServiceAddonsManagerSheet({ visible, onClose, serviceId, service
 
   const handleSave = () => {
     if (!form.name.trim()) return;
+    // A garbled price used to become 0 and create a free add-on.
+    const price = requireAmountInput(form.price === '0' ? '0.01' : form.price);
+    if (!price || price.value === undefined) return;
     const payload = {
       name: form.name.trim(),
-      description: form.description || undefined,
-      price: Math.max(0, Number(form.price) || 0),
+      description: optionalText(form.description, !!editingAddon),
+      price: Math.round(form.price === '0' ? 0 : price.value),
       display_order: Math.max(0, Number(form.display_order) || 0),
       is_active: form.is_active,
     };
@@ -80,6 +85,15 @@ export function ServiceAddonsManagerSheet({ visible, onClose, serviceId, service
       >
         {isLoading ? (
           <Loader message="Loading add-ons..." />
+        ) : isError ? (
+          // A failed load must not look like "no add-ons" (that invites duplicates).
+          <EmptyState
+            icon="alert-circle-outline"
+            title="Couldn't load add-ons"
+            description={formatApiErrorDetail(error)}
+            actionLabel="Retry"
+            onAction={() => refetch()}
+          />
         ) : !addons || addons.length === 0 ? (
           <EmptyState icon="add-circle-outline" title="No add-ons yet" description="Extras like Button Replacement or Length Shortening" />
         ) : (

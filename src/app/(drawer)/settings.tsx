@@ -57,11 +57,13 @@ export default function SettingsScreen() {
       setNotificationsGranted(false);
       return;
     }
-    import('expo-notifications').then((Notifications) =>
-      Notifications.getPermissionsAsync().then(({ status }) =>
-        setNotificationsGranted(status === 'granted'),
-      ),
-    );
+    import('expo-notifications')
+      .then((Notifications) =>
+        Notifications.getPermissionsAsync().then(({ status }) =>
+          setNotificationsGranted(status === 'granted'),
+        ),
+      )
+      .catch(() => setNotificationsGranted(false));
   }, []);
 
   const handleToggleNotifications = async (value: boolean) => {
@@ -83,7 +85,16 @@ export default function SettingsScreen() {
 
   const handleToggleBiometric = async (value: boolean) => {
     if (!value) {
-      setBiometricEnabled(false);
+      // Turning the lock OFF needs the same proof as turning it on: anyone holding an
+      // unlocked phone could otherwise just switch the app lock off.
+      try {
+        const verified = await LocalAuthentication.authenticateAsync({
+          promptMessage: t('settings.alerts.confirmAppLock'),
+        });
+        if (verified.success) setBiometricEnabled(false);
+      } catch {
+        // Could not verify: leave the lock on.
+      }
       return;
     }
     const hasHardware = await LocalAuthentication.hasHardwareAsync();

@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { TailorSelfPayout } from '@/types/payouts';
-import { formatApiErrorDetail, formatCurrency, formatDate } from '@/utils/errors';
+import { formatApiErrorDetail, formatMoney, formatDate } from '@/utils/errors';
 
 const LIMIT = 20;
 
@@ -98,7 +98,7 @@ export default function MyEarningsScreen() {
         </View>
         <View className="items-end">
           <Text className="font-bold text-base" style={{ color: colors.text }}>
-            {formatCurrency(payoutAmount(item))}
+            {formatMoney(payoutAmount(item))}
           </Text>
           <Badge
             label={item.status}
@@ -132,7 +132,7 @@ export default function MyEarningsScreen() {
           <View className="flex-row mb-4" style={{ gap: 12 }}>
             <View className="flex-1 rounded-2xl p-3.5" style={{ backgroundColor: '#f59e0b20' }}>
               <Text className="text-xl font-bold" style={{ color: '#f59e0b' }}>
-                {formatCurrency(Number(summary.pending_amount))}
+                {formatMoney(Number(summary.pending_amount))}
               </Text>
               <Text className="text-[11px] mt-0.5" style={{ color: colors.textSecondary }}>
                 Pending ({summary.pending_count})
@@ -140,7 +140,7 @@ export default function MyEarningsScreen() {
             </View>
             <View className="flex-1 rounded-2xl p-3.5" style={{ backgroundColor: '#10b98120' }}>
               <Text className="text-xl font-bold" style={{ color: '#10b981' }}>
-                {formatCurrency(Number(summary.paid_amount))}
+                {formatMoney(Number(summary.paid_amount))}
               </Text>
               <Text className="text-[11px] mt-0.5" style={{ color: colors.textSecondary }}>
                 Paid ({summary.paid_count})

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { Alert, FlatList, RefreshControl, Text, View } from 'react-native';
 import {
   Badge,
   Button,
@@ -146,10 +146,21 @@ export const AdminLeaveReviewPanel = () => {
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / LIMIT));
 
   const handleApprove = (item: LeaveRequestListItem) => {
-    setBusyId(item.Id);
-    approveMutation.mutate(
-      { requestId: String(item.Id) },
-      { onSettled: () => setBusyId(null) },
+    if (approveMutation.isPending) return;
+    // Approval cannot be undone and approved leave blocks job assignment: confirm first.
+    Alert.alert(
+      'Approve leave?',
+      'Approved leave cannot be reversed and the employee will not be assigned jobs while on leave.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Approve',
+          onPress: () => {
+            setBusyId(item.Id);
+            approveMutation.mutate({ requestId: String(item.Id) }, { onSettled: () => setBusyId(null) });
+          },
+        },
+      ],
     );
   };
 

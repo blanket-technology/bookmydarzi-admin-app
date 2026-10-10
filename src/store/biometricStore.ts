@@ -6,6 +6,10 @@ import { secureStorage } from '@/utils/secureStorage';
 interface BiometricState {
   enabled: boolean;
   setEnabled: (enabled: boolean) => void;
+  /** Runtime only (not persisted): true while the app-lock screen is up. Anything
+   * rendered outside the lock gate (job-offer popups) must hide while locked. */
+  locked: boolean;
+  setLocked: (locked: boolean) => void;
 }
 
 const zustandStorage = {
@@ -23,10 +27,13 @@ export const useBiometricStore = create<BiometricState>()(
     (set) => ({
       enabled: false,
       setEnabled: (enabled) => set({ enabled }),
+      locked: false,
+      setLocked: (locked) => set({ locked }),
     }),
     {
       name: STORAGE_KEYS.BIOMETRIC_LOCK,
       storage: createJSONStorage(() => zustandStorage),
+      partialize: (state) => ({ enabled: state.enabled }),
     },
   ),
 );

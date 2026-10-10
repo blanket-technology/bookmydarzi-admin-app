@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Pressable } from '@/components/ui/Pressable';
+import { Toast } from '@/components/ui/Toast';
 import { useTheme } from '@/hooks/useTheme';
 import { useOpenSheetStore } from '@/store/openSheetStore';
 
@@ -128,7 +129,7 @@ export const BottomSheet = ({
               ) : (
                 <View />
               )}
-              <Pressable onPress={onClose} hitSlop={8}>
+              <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button" accessibilityLabel="Close">
                 <Ionicons name="close" size={24} color={colors.textSecondary} />
               </Pressable>
             </View>
@@ -144,6 +145,9 @@ export const BottomSheet = ({
             {footer ? <View className="pt-3">{footer}</View> : null}
           </RNPressable>
         </KeyboardAvoidingView>
+        {/* A native Modal draws above the root Toast, so toasts raised from inside a
+            sheet (validation, save errors) would be invisible without this copy. */}
+        <Toast />
       </RNPressable>
     </Modal>
   );

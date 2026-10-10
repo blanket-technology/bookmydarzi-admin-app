@@ -1,3 +1,4 @@
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
@@ -20,12 +21,13 @@ export default function CustomersScreen() {
   const { colors } = useTheme();
   const { contentMaxWidth } = useResponsive();
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 350);
   const [page, setPage] = useState(1);
   const [activeFilter, setActiveFilter] = useState<'' | 'true' | 'false'>('');
   const [confirmUser, setConfirmUser] = useState<AdminUserItem | null>(null);
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useUsers({
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     page,
     limit: LIMIT,
     // Filtered server-side now, not client-side after fetch - previously

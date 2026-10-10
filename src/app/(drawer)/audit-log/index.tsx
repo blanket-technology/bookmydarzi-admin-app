@@ -6,7 +6,7 @@ import { useAuditLogFilterOptions, useAuditLogs } from '@/features/auditLog/hook
 import { getAuditActionMeta, toneColor } from '@/features/auditLog/utils/auditActionMeta';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
-import { formatApiErrorDetail, formatDate } from '@/utils/errors';
+import { formatApiErrorDetail, formatDate, formatDateTime } from '@/utils/errors';
 import type { AuditLogItem } from '@/types/auditLog';
 
 const PAGE_LIMIT = 25;
@@ -51,7 +51,7 @@ export default function AuditLogScreen() {
     performed_by: actorFilter ? Number(actorFilter) : undefined,
     action: actionFilter || undefined,
     date_from: dateFrom ?? undefined,
-    date_to: dateTo ?? undefined,
+    date_to: dateTo ? `${dateTo}T23:59:59` : undefined,
   });
 
   const items = data?.items ?? [];
@@ -283,7 +283,7 @@ function AuditLogCard({ item }: { item: AuditLogItem }) {
               {meta.label}
             </Text>
             <Text className="text-[11px]" style={{ color: colors.textMuted }}>
-              {item.created_at ? formatDate(item.created_at) : ''}
+              {item.created_at ? formatDateTime(item.created_at) : ''}
             </Text>
           </View>
           <Text className="text-xs mt-0.5" style={{ color: colors.textSecondary }}>
