@@ -343,6 +343,7 @@ function TailorProfileSection() {
 // this screen accumulating multiple URLs into one array instead of setting
 // a single field).
 const MAX_PORTFOLIO_IMAGES = 12;
+const PORTFOLIO_UPLOAD_PAUSED = true;
 
 function PortfolioSection({ images }: { images: string[] }) {
   const { colors } = useTheme();
@@ -354,6 +355,14 @@ function PortfolioSection({ images }: { images: string[] }) {
   const atLimit = images.length >= MAX_PORTFOLIO_IMAGES;
 
   const pickAndAdd = async () => {
+    // Uploading through the profile-photo endpoint REPLACES the account's avatar and
+    // deletes the previously stored file, so every new portfolio photo wiped the one
+    // before it (leaving broken links) and overwrote the profile picture. Adding is
+    // paused until the backend has a dedicated portfolio upload endpoint.
+    if (PORTFOLIO_UPLOAD_PAUSED) {
+      toast.info(t('profile.portfolioUploadPaused'));
+      return;
+    }
     if (atLimit) {
       toast.error(t('profile.portfolioLimit', { count: MAX_PORTFOLIO_IMAGES }));
       return;

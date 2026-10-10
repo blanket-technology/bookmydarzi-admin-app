@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, LayoutAnimation, Platform, Text, UIManager, View } from 'react-native';
 import { Pressable } from '@/components/ui';
+import { QUERY_KEYS } from '@/constants/queryKeys';
 import { catalogService } from '@/services/catalogService';
 import { useTheme } from '@/hooks/useTheme';
 import type { StitchingTypeSummary } from '@/types/catalog';
@@ -34,7 +35,8 @@ export function SpecializationChecklist({ selectedIds, onChange, error }: Specia
   const [expandedCategoryIds, setExpandedCategoryIds] = useState<Set<string>>(new Set());
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['catalog', 'admin-tree', 'specialization-checklist'],
+    // Under the catalog-tree key prefix so any catalog edit invalidates it too.
+    queryKey: [...QUERY_KEYS.CATALOG_TREE, 'specialization-checklist'],
     queryFn: () => catalogService.getAdminTree(),
     staleTime: 5 * 60 * 1000,
   });
