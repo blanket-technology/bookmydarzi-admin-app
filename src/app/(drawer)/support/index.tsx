@@ -49,6 +49,7 @@ const CHAT_STATUS_COLORS: Record<ChatSessionStatus, string> = {
   closed: '#94a3b8',
 };
 
+const MAX_VISIBLE = 100;
 const PAGE_SIZE = 20;
 
 function ConversationsTab() {
@@ -96,7 +97,8 @@ function ConversationsTab() {
         String(s.user_id).includes(q),
     );
   }, [allSessions, search]);
-  const hasMore = allSessions.length >= visibleCount;
+  // The backend caps `limit` at 100 (a larger value is a 422 that blanks the list).
+  const hasMore = allSessions.length >= visibleCount && visibleCount < MAX_VISIBLE;
 
   const renderItem = ({ item }: { item: ChatSession }) => {
     const statusColor = CHAT_STATUS_COLORS[item.status] ?? colors.primary;
@@ -191,7 +193,7 @@ function ConversationsTab() {
             ListFooterComponent={
               hasMore ? (
                 <Pressable
-                  onPress={() => setVisibleCount((count) => count + PAGE_SIZE)}
+                  onPress={() => setVisibleCount((count) => Math.min(count + PAGE_SIZE, MAX_VISIBLE))}
                   disabled={isRefetching}
                   className="items-center justify-center py-4 flex-row gap-2"
                 >

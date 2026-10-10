@@ -1,6 +1,9 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_CONFIG } from '@/config/api';
+import { QUERY_KEYS } from '@/constants/queryKeys';
 import { ENDPOINTS } from '@/services/endpoints';
+import { refreshAccessToken } from '@/services/refreshCoordinator';
 import { useAuthStore } from '@/store/authStore';
 import type { ChatMessage, ChatWsIncomingFrame, ChatWsOutgoingFrame, LocalChatMessage } from '@/types/chat';
 
@@ -20,6 +23,13 @@ const HEARTBEAT_INTERVAL_MS = 25000;
 // enough for normal latency, short enough that a genuinely lost message
 // doesn't sit "Sending..." forever.
 const SEND_ACK_TIMEOUT_MS = 10000;
+// A connection must stay up this long before the reconnect backoff is forgotten
+// (the server accepts, THEN rejects a bad token/session, so 'open' alone proves nothing).
+const STABLE_CONNECTION_MS = 5000;
+// The peer's "typing" indicator clears itself if the stop frame never arrives.
+const TYPING_CLEAR_MS = 5000;
+// Minimum gap between typing_start frames while the agent keeps typing.
+const TYPING_SEND_INTERVAL_MS = 3000;
 
 function wsUrl(sessionUuid: string): string {
   const httpBase = API_CONFIG.BASE_URL;
@@ -62,8 +72,13 @@ export function useChatSocket(
   sessionUuid: string,
   onSessionEvent?: (event: ChatSocketSessionEvent) => void,
 ): UseChatSocketResult {
+  const queryClient = useQueryClient();
   const [isConnected, setIsConnected] = useState(false);
   const [peerTyping, setPeerTyping] = useState(false);
+  const hasConnectedBeforeRef = useRef(false);
+  const stableTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typingClearRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingSentRef = useRef(0);
   const [messages, setMessages] = useState<LocalChatMessage[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -101,8 +116,21 @@ export function useChatSocket(
     setMessages((prev) => prev.map((m) => (m.client_id === clientId ? { ...m, deliveryStatus: status } : m)));
   }, []);
 
+  // Merge, never replace: a history refetch (after a reconnect, an invalidate)
+  // must not wipe the agent's unsent/failed bubbles or a frame the socket
+  // delivered after the REST snapshot was taken.
   const setInitialMessages = useCallback((initial: ChatMessage[]) => {
-    setMessages(initial);
+    setMessages((prev) => {
+      const known = new Set(initial.map((m) => m.id));
+      const knownClient = new Set(initial.map((m) => m.client_id).filter(Boolean));
+      const extras = prev.filter((m) => {
+        if (m.deliveryStatus === 'pending' || m.deliveryStatus === 'failed') {
+          return !(m.client_id && knownClient.has(m.client_id));
+        }
+        return m.id > 0 && !known.has(m.id) && !(m.client_id && knownClient.has(m.client_id));
+      });
+      return [...initial, ...extras];
+    });
   }, []);
 
   const send = useCallback((frame: ChatWsOutgoingFrame): boolean => {
@@ -155,7 +183,16 @@ export function useChatSocket(
 
       socket.onopen = () => {
         try { socket.send(JSON.stringify({ type: 'auth', token })); } catch {}
-        reconnectDelayRef.current = RECONNECT_DELAY_INITIAL_MS;
+        if (stableTimerRef.current) clearTimeout(stableTimerRef.current);
+        stableTimerRef.current = setTimeout(() => {
+          reconnectDelayRef.current = RECONNECT_DELAY_INITIAL_MS;
+        }, STABLE_CONNECTION_MS);
+        // Anything sent while the socket was down is not replayed by the server:
+        // pull the history again so no message is silently missing.
+        if (hasConnectedBeforeRef.current) {
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CHAT_MESSAGES(sessionUuid) });
+        }
+        hasConnectedBeforeRef.current = true;
         if (heartbeatTimerRef.current) clearInterval(heartbeatTimerRef.current);
         heartbeatTimerRef.current = setInterval(() => {
           if (wsRef.current === socket && socket.readyState === WebSocket.OPEN) {
@@ -209,7 +246,14 @@ export function useChatSocket(
             markMessageStatus(clientId, 'failed');
           }
         } else if (frame.event === 'typing_indicator') {
+          // The room echoes our own typing back: only show the other party's.
+          const mine = Number(useAuthStore.getState().user?.id);
+          if (Number(frame.user_id) === mine) return;
           setPeerTyping(frame.is_typing);
+          if (typingClearRef.current) clearTimeout(typingClearRef.current);
+          if (frame.is_typing) {
+            typingClearRef.current = setTimeout(() => setPeerTyping(false), TYPING_CLEAR_MS);
+          }
         } else if (frame.event === 'session_status_changed') {
           onSessionEventRef.current?.({ type: 'status_changed', status: frame.status });
         } else if (frame.event === 'session_assigned') {
@@ -219,15 +263,33 @@ export function useChatSocket(
         }
       };
 
-      socket.onclose = () => {
+      socket.onclose = (closeEvent: { code?: number }) => {
         if (heartbeatTimerRef.current) {
           clearInterval(heartbeatTimerRef.current);
           heartbeatTimerRef.current = null;
         }
+        if (stableTimerRef.current) {
+          clearTimeout(stableTimerRef.current);
+          stableTimerRef.current = null;
+        }
         if (!mountedRef.current) return;
         setIsConnected(false);
+        // 1008: the server refused this session (unknown or not permitted) -
+        // retrying can never succeed, so stop instead of looping forever.
+        if (closeEvent?.code === 1008) return;
         const delay = reconnectDelayRef.current;
         reconnectDelayRef.current = Math.min(delay * 2, RECONNECT_DELAY_MAX_MS);
+        // 4001: bad/expired access token - get a fresh one before the next attempt.
+        if (closeEvent?.code === 4001) {
+          const { refreshToken } = useAuthStore.getState();
+          if (!refreshToken) return;
+          refreshAccessToken(refreshToken)
+            .catch(() => undefined)
+            .finally(() => {
+              if (mountedRef.current) reconnectTimerRef.current = setTimeout(connect, delay);
+            });
+          return;
+        }
         reconnectTimerRef.current = setTimeout(connect, delay);
       };
 
@@ -242,6 +304,8 @@ export function useChatSocket(
       mountedRef.current = false;
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       if (heartbeatTimerRef.current) clearInterval(heartbeatTimerRef.current);
+      if (stableTimerRef.current) clearTimeout(stableTimerRef.current);
+      if (typingClearRef.current) clearTimeout(typingClearRef.current);
       pendingAcksRef.current.forEach((timer) => clearTimeout(timer));
       pendingAcksRef.current.clear();
       wsRef.current?.close();
@@ -287,6 +351,15 @@ export function useChatSocket(
 
   const sendTyping = useCallback(
     (isTyping: boolean) => {
+      if (isTyping) {
+        // One typing_start every few seconds, not one frame (and one Redis
+        // publish) per keystroke.
+        const now = Date.now();
+        if (now - lastTypingSentRef.current < TYPING_SEND_INTERVAL_MS) return;
+        lastTypingSentRef.current = now;
+      } else {
+        lastTypingSentRef.current = 0;
+      }
       send({ event: isTyping ? 'typing_start' : 'typing_stop' });
     },
     [send],
