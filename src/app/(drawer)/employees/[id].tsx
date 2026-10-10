@@ -29,7 +29,7 @@ import { KYC_DOCS, type KycDocKey } from '@/features/staffDetail/types';
 import { useUpdateUserStatusMutation, useUploadUserPhotoMutation } from '@/features/users/hooks/useUsers';
 import { useTheme } from '@/hooks/useTheme';
 import type { BridgeProfileUpdateRequest, StaffUpdateRequest } from '@/types/staff';
-import { isPdfUrl, resolveDocUrl } from '@/utils/documents';
+import { findFreshSignedUrl, isPdfUrl, resolveDocUrl } from '@/utils/documents';
 import { formatCurrency, formatDate } from '@/utils/errors';
 import { isValidEmail, isValidMobile } from '@/utils/validation';
 
@@ -63,7 +63,7 @@ const ORDERS_LIMIT = 10;
 export default function StaffDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
-  const { data: staff, isLoading, isError } = useStaffMember(id);
+  const { data: staff, isLoading, isError, refetch: refetchStaff } = useStaffMember(id);
   const updateStaffMutation = useUpdateStaffMutation(id);
   const updateBridgeProfileMutation = useUpdateBridgeProfileMutation(id);
   const verificationMutation = useSetBridgeVerificationMutation(id);
@@ -611,7 +611,11 @@ export default function StaffDetailsScreen() {
         }}
       />
 
-      <DocumentPreviewModal url={previewUrl} onClose={() => setPreviewUrl(null)} />
+      <DocumentPreviewModal
+        url={previewUrl}
+        onClose={() => setPreviewUrl(null)}
+        onRefreshUrl={async (stale) => findFreshSignedUrl((await refetchStaff()).data, stale)}
+      />
 
       <ConfirmModal
         visible={statusConfirmVisible}
