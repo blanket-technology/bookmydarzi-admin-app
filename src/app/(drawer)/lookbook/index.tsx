@@ -3,18 +3,19 @@ import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { ScrollView, Switch, Text, View } from 'react-native';
 import { Badge, BottomSheet, Button, Card, ConfirmModal, EmptyState, Header, Input, Loader, Pressable } from '@/components/ui';
-import { useUploadCatalogImageMutation } from '@/features/catalog/hooks/useCatalog';
 import {
   useCreateLookbookItemMutation,
   useDeleteLookbookItemMutation,
   useLookbookAdmin,
   useUpdateLookbookItemMutation,
+  useUploadLookbookImageMutation,
 } from '@/features/lookbook/hooks/useLookbook';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { toast } from '@/store/toastStore';
 import type { LookbookAdminItem } from '@/types/lookbook';
 import { formatApiErrorDetail } from '@/utils/errors';
+import { optionalText } from '@/utils/forms';
 
 const EMPTY_FORM = { title: '', image_url: '', category_tag: 'general', caption: '', display_order: '0', is_active: true };
 
@@ -22,7 +23,7 @@ export default function LookbookScreen() {
   const { colors } = useTheme();
   const { contentMaxWidth } = useResponsive();
   const { data, isLoading, isError, error, refetch } = useLookbookAdmin();
-  const uploadImageMutation = useUploadCatalogImageMutation();
+  const uploadImageMutation = useUploadLookbookImageMutation();
   const createMutation = useCreateLookbookItemMutation();
   const updateMutation = useUpdateLookbookItemMutation();
   const deleteMutation = useDeleteLookbookItemMutation();
@@ -61,6 +62,10 @@ export default function LookbookScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
     if (result.canceled || !result.assets?.[0]) return;
     const asset = result.assets[0];
+    if ((asset.fileSize ?? 0) > 5 * 1024 * 1024) {
+      toast.error('Image must be under 5 MB. Pick a smaller photo.');
+      return;
+    }
     uploadImageMutation.mutate(
       { uri: asset.uri, fileName: asset.fileName ?? undefined, mimeType: asset.mimeType ?? 'image/jpeg' },
       { onSuccess: (res) => setForm((f) => ({ ...f, image_url: res.url })) },
@@ -74,10 +79,12 @@ export default function LookbookScreen() {
         {
           id: editingItem.id,
           payload: {
-            title: form.title || undefined,
+            title: optionalText(form.title, true),
             image_url: form.image_url,
-            category_tag: form.category_tag || undefined,
-            caption: form.caption || undefined,
+            // Tags are matched exactly by the customer app's filter: "Wedding" and
+            // "wedding" would otherwise become two separate filters.
+            category_tag: (optionalText(form.category_tag, true) ?? '').toLowerCase(),
+            caption: optionalText(form.caption, true),
             display_order: Number(form.display_order) || 0,
             is_active: form.is_active,
           },
@@ -87,10 +94,10 @@ export default function LookbookScreen() {
     } else {
       createMutation.mutate(
         {
-          title: form.title || undefined,
+          title: optionalText(form.title, false),
           image_url: form.image_url,
-          category_tag: form.category_tag || undefined,
-          caption: form.caption || undefined,
+          category_tag: optionalText(form.category_tag, false)?.toLowerCase(),
+          caption: optionalText(form.caption, false),
           display_order: Number(form.display_order) || 0,
         },
         { onSuccess: () => setSheetVisible(false) },
