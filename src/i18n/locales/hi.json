@@ -484,7 +484,8 @@
     "declineOfferTitle": "ऑफर अस्वीकार करें",
     "declineOfferMessage": "इस पिकअप ऑफर को अस्वीकार करें? यह अगले उपलब्ध ब्रिज कर्मचारी को भेज दिया जाएगा।",
     "away": "दूर",
-    "moreOffersWaiting": "+{{count}} और ऑफर प्रतीक्षा में हैं"
+    "moreOffersWaiting": "+{{count}} और ऑफर प्रतीक्षा में हैं",
+    "youEarn": "आपकी कमाई"
   },
   "deliveries": {
     "title": "डिलीवरी",
