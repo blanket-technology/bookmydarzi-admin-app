@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { EMPLOYEE_QUEUE_EXCLUDED_STATUSES, ORDER_STATUS } from '@/constants/orderStatus';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import type { UserRole } from '@/types/auth';
 import type { AdminOrderItem, OrderStatus } from '@/types/orders';
 import {
@@ -98,6 +99,7 @@ interface UseOrderActionsResult {
  * calling this hook rather than re-deriving role/status logic locally.
  */
 export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): UseOrderActionsResult {
+  const { t } = useAppLanguage();
   const acceptMutation = useAcceptOrderMutation();
   const rejectMutation = useRejectOrderMutation();
   const schedulePickupMutation = useSchedulePickupMutation();
@@ -158,7 +160,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
       if (status === ORDER_STATUS.ORDER_PLACED) {
         list.push({
           id: 'accept',
-          label: 'Accept Order',
+          label: t('orderActions.accept'),
           tone: 'primary',
           requiresInput: false,
           requiresConfirmation: false,
@@ -167,7 +169,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
         });
         list.push({
           id: 'reject',
-          label: 'Reject Order',
+          label: t('orderActions.reject'),
           tone: 'destructive',
           requiresInput: true,
           requiresConfirmation: true,
@@ -188,7 +190,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
       ) {
         list.push({
           id: 'accept',
-          label: 'Acquire for Pickup',
+          label: t('orderActions.acquirePickup'),
           tone: 'primary',
           requiresInput: false,
           requiresConfirmation: false,
@@ -220,7 +222,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
       ) {
         list.push({
           id: 'schedule_pickup',
-          label: 'Schedule Pickup',
+          label: t('orderActions.schedulePickup'),
           tone: 'primary',
           requiresInput: true,
           requiresConfirmation: false,
@@ -239,20 +241,20 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
       ) {
         list.push({
           id: 'confirm_pickup',
-          label: 'Confirm Pickup',
+          label: t('orderActions.confirmPickup'),
           tone: 'primary',
           requiresInput: false,
           requiresConfirmation: false,
           isLoading: confirmPickupMutation.isPending,
           run: () => confirmPickupMutation.mutate({ orderId, payload: undefined }),
-          disabledReason: noBridgeEmployee ? 'Assign a Bridge employee for pickup first' : undefined,
+          disabledReason: noBridgeEmployee ? t('orderActions.needBridge') : undefined,
         });
       }
 
       if (!assignedToOtherEmployee && status === ORDER_STATUS.PICKED_UP) {
         list.push({
           id: 'hand_to_tailor',
-          label: 'Hand to Tailor',
+          label: t('orderActions.handToTailor'),
           tone: 'primary',
           requiresInput: false,
           requiresConfirmation: false,
@@ -262,9 +264,9 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
           // just enabled unconditionally even with no tailor on the order,
           // so tapping it would fail server-side with no explanation of why.
           disabledReason: !order?.tailor_id
-            ? 'Assign a tailor first'
+            ? t('orderActions.needTailor')
             : noBridgeEmployee
-              ? 'Assign a Bridge employee for pickup first'
+              ? t('orderActions.needBridge')
               : undefined,
         });
       }
@@ -280,7 +282,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
         if (isCodCollectionRequired) {
           list.push({
             id: 'collect_cod',
-            label: 'Collect Payment',
+            label: t('orderActions.collectPayment'),
             tone: 'primary',
             requiresInput: true,
             requiresConfirmation: false,
@@ -292,7 +294,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
         } else {
           list.push({
             id: 'complete',
-            label: 'Complete Order',
+            label: t('orderActions.completeOrder'),
             tone: 'primary',
             requiresInput: false,
             requiresConfirmation: true,
@@ -307,7 +309,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
         // every other requiresInput action).
         list.push({
           id: 'refuse_delivery',
-          label: 'Customer Refused Delivery',
+          label: t('orderActions.refuseDelivery'),
           tone: 'destructive',
           requiresInput: true,
           requiresConfirmation: true,
@@ -333,7 +335,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
       if (isEmployee && !assignedToOtherEmployee && !EMPLOYEE_QUEUE_EXCLUDED_STATUSES.has(status)) {
         list.push({
           id: 'manage_measurement',
-          label: 'Update Measurement',
+          label: t('orderActions.updateMeasurement'),
           tone: 'secondary',
           requiresInput: true,
           requiresConfirmation: false,
@@ -354,7 +356,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
         if (['pickup_scheduled', 'pickup_pending', 'picked_up', 'cloth_received_by_tailor'].includes(status)) {
           list.push({
             id: 'add_addon',
-            label: 'Add Extra Service',
+            label: t('orderActions.addExtraService'),
             tone: 'secondary',
             requiresInput: true,
             requiresConfirmation: false,
@@ -378,7 +380,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
         if (!order?.tailor_id && !assignedToOtherEmployee) {
           list.push({
             id: 'assign_tailor',
-            label: 'Assign Tailor',
+            label: t('orderActions.assignTailor'),
             tone: 'secondary',
             requiresInput: true,
             requiresConfirmation: false,
@@ -394,7 +396,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
         // get_refunds_for_payment).
         list.push({
           id: 'view_payment',
-          label: 'View Payment',
+          label: t('orderActions.viewPayment'),
           tone: 'secondary',
           requiresInput: false,
           requiresConfirmation: false,
@@ -420,7 +422,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
     if (isTailor && status === ORDER_STATUS.AT_TAILOR_FOR_REPAIR) {
       list.push({
         id: 'complete_repair',
-        label: 'Mark Repair Complete',
+        label: t('orderActions.completeRepair'),
         tone: 'primary',
         requiresInput: false,
         requiresConfirmation: false,
@@ -441,10 +443,10 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
         [ORDER_STATUS.FINAL_CHECK]: ORDER_STATUS.READY_FOR_DISPATCH,
       };
       const stitchingLabels: Record<string, string> = {
-        [ORDER_STATUS.STITCHING_STARTED]: 'Start Stitching',
-        [ORDER_STATUS.IN_PROGRESS]: 'Update Progress',
-        [ORDER_STATUS.FINAL_CHECK]: 'Send for Final Check',
-        [ORDER_STATUS.READY_FOR_DISPATCH]: 'Ready for Dispatch',
+        [ORDER_STATUS.STITCHING_STARTED]: t('orderActions.startStitching'),
+        [ORDER_STATUS.IN_PROGRESS]: t('orderActions.updateProgress'),
+        [ORDER_STATUS.FINAL_CHECK]: t('orderActions.sendFinalCheck'),
+        [ORDER_STATUS.READY_FOR_DISPATCH]: t('orderActions.readyForDispatch'),
       };
       const nextStage = stitchingStageFor[status];
       if (nextStage) {
@@ -490,7 +492,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
       ) {
         list.push({
           id: 'assign_tailor',
-          label: 'Assign Tailor',
+          label: t('orderActions.assignTailor'),
           tone: 'secondary',
           requiresInput: true,
           requiresConfirmation: false,
@@ -503,7 +505,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
 
       list.push({
         id: 'update_measurement',
-        label: 'Update Measurement',
+        label: t('orderActions.updateMeasurement'),
         tone: 'secondary',
         requiresInput: true,
         requiresConfirmation: false,
@@ -515,7 +517,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
 
       list.push({
         id: 'view_payment',
-        label: 'View Payment',
+        label: t('orderActions.viewPayment'),
         tone: 'secondary',
         requiresInput: false,
         requiresConfirmation: false,
@@ -549,7 +551,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
       ]);
       if (!cancelBlocked.has(status)) list.push({
         id: 'cancel',
-        label: 'Cancel Order',
+        label: t('orderActions.cancelOrder'),
         tone: 'destructive',
         requiresInput: true,
         requiresConfirmation: true,
@@ -561,7 +563,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
 
       list.push({
         id: 'correct_status',
-        label: 'Correct Status',
+        label: t('orderActions.correctStatus'),
         tone: 'secondary',
         requiresInput: true,
         requiresConfirmation: true,
@@ -595,6 +597,7 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
     staffStitchingMutation,
     assignTailorMutation,
     cancelMutation,
+    t,
   ]);
 
   return { actions, isCodCollectionRequired };

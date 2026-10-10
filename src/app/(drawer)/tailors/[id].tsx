@@ -31,7 +31,7 @@ import { useResetCustomerPasswordMutation, useUploadUserPhotoMutation } from '@/
 import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/store/toastStore';
 import type { UpdateTailorRequest } from '@/types/tailors';
-import { resolveDocUrl, isPdfUrl } from '@/utils/documents';
+import { findFreshSignedUrl, resolveDocUrl, isPdfUrl } from '@/utils/documents';
 import { formatDate } from '@/utils/errors';
 import { isValidEmail, isValidMobile } from '@/utils/validation';
 
@@ -75,7 +75,7 @@ const ORDERS_LIMIT = 10;
 export default function TailorDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
-  const { data: tailor, isLoading, isError } = useTailor(id);
+  const { data: tailor, isLoading, isError, refetch: refetchTailor } = useTailor(id);
   const { data: workloadList } = useTailorWorkload(true);
   const uploadKycMutation = useUploadTailorKycMutation(id);
   const updateMutation = useUpdateTailorMutation(id);
@@ -568,7 +568,11 @@ export default function TailorDetailsScreen() {
         }}
       />
 
-      <DocumentPreviewModal url={previewUrl} onClose={() => setPreviewUrl(null)} />
+      <DocumentPreviewModal
+        url={previewUrl}
+        onClose={() => setPreviewUrl(null)}
+        onRefreshUrl={async (stale) => findFreshSignedUrl((await refetchTailor()).data, stale)}
+      />
 
       <ConfirmModal
         visible={deleteConfirmVisible}
