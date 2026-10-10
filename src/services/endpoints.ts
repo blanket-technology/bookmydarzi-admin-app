@@ -130,6 +130,11 @@ export const ENDPOINTS = {
       `/api/v1/employee/orders/${orderId}/refuse-delivery`,
     ORDER_COLLECT_PAYMENT: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/collect-payment`,
+    ORDER_PAYMENT_QR: (orderId: string) => `/api/v1/employee/orders/${orderId}/payment-qr`,
+    ORDER_PAYMENT_QR_CANCEL: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/payment-qr/cancel`,
+    ORDER_PAYMENT_STATUS: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/payment-status`,
     ORDER_MEASUREMENT: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/measurement`,
     ORDER_ADD_ADDON: (orderId: string) => `/api/v1/employee/orders/${orderId}/addons`,

@@ -21,7 +21,7 @@ import type {
 } from '@/types/orders';
 import type { EmployeeOrderMeasurementRequest } from '@/types/measurements';
 import { toast } from '@/store/toastStore';
-import { formatApiErrorDetail } from '@/utils/errors';
+import { formatApiErrorDetail, getMutationError } from '@/utils/errors';
 
 // GET /admin/orders excludes the TAILOR role server-side (require_roles
 // ADMIN/SUPERADMIN/EMPLOYEE) — tailors must use GET /orders/my-orders
@@ -397,7 +397,7 @@ const useEmployeeActionMutation = <TPayload = void>(
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
       toast.success(successMessage);
     },
-    onError: (error) => toast.error(formatApiErrorDetail(error)),
+    onError: (error) => toast.error(getMutationError(error)),
   });
 };
 
@@ -453,11 +453,62 @@ export const useRefuseDeliveryMutation = () =>
     'Delivery marked as refused - return scheduled',
   );
 
+// Cash collection (the fallback when the QR cannot be used). QR payments are
+// confirmed by the backend itself - see useDeliveryPaymentStatus.
 export const useCollectPaymentMutation = () =>
   useEmployeeActionMutation<CollectPaymentRequest>(
     (orderId, payload) => orderService.collectPayment(orderId, payload),
-    'Payment collected',
+    'Cash payment recorded',
   );
+
+const refreshOrderCaches = (queryClient: ReturnType<typeof useQueryClient>, orderId: string) => {
+  queryClient.invalidateQueries({ queryKey: ['orders'] });
+  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(orderId) });
+  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
+};
+
+/** Live delivery-payment state. Polls every 3 s while a QR is waiting for the
+ * customer; stops by itself once the state is final (paid / expired / ...).
+ * The backend also pushes ORDER_STATUS_UPDATED over the socket, so the screen
+ * usually updates before the next poll. */
+export const useDeliveryPaymentStatus = (orderId: string, enabled: boolean) => {
+  const queryClient = useQueryClient();
+  return useQuery({
+    queryKey: [...QUERY_KEYS.ORDER(orderId), 'delivery-payment'] as const,
+    queryFn: async () => {
+      const result = await orderService.getDeliveryPaymentStatus(orderId);
+      if (result.status === 'paid') refreshOrderCaches(queryClient, orderId);
+      return result;
+    },
+    enabled: enabled && !!orderId,
+    refetchInterval: (query) => (query.state.data?.status === 'pending' ? 3000 : false),
+    refetchIntervalInBackground: false,
+    gcTime: 0,
+    retry: 1,
+  });
+};
+
+export const useCreateDeliveryQrMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orderId: string) => orderService.createDeliveryPaymentQr(orderId),
+    onSuccess: (data, orderId) => {
+      queryClient.setQueryData([...QUERY_KEYS.ORDER(orderId), 'delivery-payment'], data);
+    },
+    // The sheet renders the failure inline with a retry action - no toast.
+  });
+};
+
+export const useCancelDeliveryQrMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orderId: string) => orderService.cancelDeliveryPaymentQr(orderId),
+    onSuccess: (data, orderId) => {
+      queryClient.setQueryData([...QUERY_KEYS.ORDER(orderId), 'delivery-payment'], data);
+    },
+    onError: (error) => toast.error(getMutationError(error)),
+  });
+};
 
 // Employee notices at pickup that the customer also wants an extra (e.g.
 // a button replaced) that wasn't selected online - see orderService.

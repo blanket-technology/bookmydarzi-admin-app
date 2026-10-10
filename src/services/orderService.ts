@@ -10,6 +10,7 @@ import type {
   BridgeEmployeeListItem,
   CollectPaymentRequest,
   CollectPaymentResponse,
+  DeliveryPaymentStatus,
   EmployeeAddOrderAddonRequest,
   EmployeeOrderActionResponse,
   MyOrderItem,
@@ -355,6 +356,29 @@ export const orderService = {
     const { data } = await apiClient.post(
       ENDPOINTS.EMPLOYEE.ORDER_COLLECT_PAYMENT(orderId),
       payload,
+    );
+    return data;
+  },
+
+  // Creates (or resumes) the single-use UPI QR for the exact balance due. The
+  // backend settles the order automatically once the customer pays.
+  createDeliveryPaymentQr: async (orderId: string): Promise<DeliveryPaymentStatus> => {
+    const { data } = await apiClient.post<DeliveryPaymentStatus>(
+      ENDPOINTS.EMPLOYEE.ORDER_PAYMENT_QR(orderId),
+    );
+    return data;
+  },
+
+  getDeliveryPaymentStatus: async (orderId: string): Promise<DeliveryPaymentStatus> => {
+    const { data } = await apiClient.get<DeliveryPaymentStatus>(
+      ENDPOINTS.EMPLOYEE.ORDER_PAYMENT_STATUS(orderId),
+    );
+    return data;
+  },
+
+  cancelDeliveryPaymentQr: async (orderId: string): Promise<DeliveryPaymentStatus> => {
+    const { data } = await apiClient.post<DeliveryPaymentStatus>(
+      ENDPOINTS.EMPLOYEE.ORDER_PAYMENT_QR_CANCEL(orderId),
     );
     return data;
   },

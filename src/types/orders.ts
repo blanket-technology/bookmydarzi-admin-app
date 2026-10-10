@@ -355,8 +355,10 @@ export interface RejectOrderRequest {
   reason?: string;
 }
 
+/** Manual collection is cash only: QR payments are confirmed by the backend
+ * (Razorpay) the moment the customer pays - see DeliveryPaymentStatus. */
 export interface CollectPaymentRequest {
-  method: 'qr' | 'cash';
+  method: 'cash';
   amount: number;
   notes?: string;
 }
@@ -403,4 +405,27 @@ export interface OrderBroadcastStatus {
   order_id: string;
   broadcasts: OrderBroadcastAttempt[];
   total: number;
+}
+
+
+/** Delivery-time payment state - GET /employee/orders/{id}/payment-status. */
+export type DeliveryPaymentState = 'pending' | 'paid' | 'expired' | 'cancelled' | 'none';
+
+export interface DeliveryPaymentStatus {
+  status: DeliveryPaymentState;
+  order_id: number;
+  order_code?: string | null;
+  payment_code?: string | null;
+  /** 'qr' | 'cash' once paid. */
+  method?: string | null;
+  amount?: number | null;
+  amount_paise?: number | null;
+  currency: string;
+  qr_id?: string | null;
+  /** Hosted QR image (Razorpay) - render directly. */
+  qr_image_url?: string | null;
+  upi_uri?: string | null;
+  /** ISO-8601 UTC timestamp after which the QR no longer accepts payment. */
+  expires_at?: string | null;
+  transaction_id?: string | null;
 }
