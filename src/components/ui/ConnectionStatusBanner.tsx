@@ -55,7 +55,7 @@ export const ConnectionStatusBanner = () => {
 
   return (
     <Animated.View
-      pointerEvents={show ? 'auto' : 'none'}
+      pointerEvents="none"
       style={[
         {
           position: 'absolute',

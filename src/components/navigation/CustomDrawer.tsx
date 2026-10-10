@@ -186,7 +186,7 @@ export const CustomDrawer = (props: DrawerContentComponentProps) => {
             key={item.route}
             label={item.label}
             icon={item.icon}
-            active={pathname.includes(item.route.split('/').pop() ?? '')}
+            active={pathname.split('/').filter(Boolean)[0] === (item.route.split('/').pop() ?? '')}
             onPress={() => navigate(item.route)}
             badgeCount={
               item.permission === 'notifications'

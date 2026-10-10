@@ -19,6 +19,15 @@ import { useAuth } from '@/hooks/useAuth';
 // Employees: pickup and delivery broadcasts share one online-status endpoint
 // (PATCH /employee/me/online, see pickupService's own comment), so a single
 // call covers both.
+// Set when the user deliberately toggles themselves Offline: the foreground
+// auto-online below must respect that choice (a tailor taking a break must not
+// be switched back on - and start receiving offers - just by reopening the app).
+// Cleared when they toggle Online again, or on a fresh login.
+let manuallyOffline = false;
+export const setManuallyOffline = (value: boolean): void => {
+  manuallyOffline = value;
+};
+
 export function useAutoOnline() {
   const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
@@ -28,9 +37,18 @@ export function useAutoOnline() {
     const role = String(user?.role ?? '').toLowerCase();
     const isTailor = role === 'tailor';
     const isEmployee = role === 'employee';
-    if (!isAuthenticated || (!isTailor && !isEmployee)) return;
+    if (!isAuthenticated) {
+      // New session next time: allow the first auto-online again.
+      attemptedRef.current = false;
+      manuallyOffline = false;
+      return;
+    }
+    if (!isTailor && !isEmployee) return;
 
+    let running = false;
     const goOnlineIfLocationAvailable = async (promptIfUndetermined: boolean) => {
+      if (running || manuallyOffline) return;
+      running = true;
       try {
         let { status } = await Location.getForegroundPermissionsAsync();
         // A brand-new Tailor/Bridge account that has never manually toggled
@@ -70,6 +88,8 @@ export function useAutoOnline() {
         // revoked mid-flight, offline, etc. should never surface to the
         // user or block anything; they can still go online manually.
         if (__DEV__) console.log('[useAutoOnline] failed', err);
+      } finally {
+        running = false;
       }
     };
 

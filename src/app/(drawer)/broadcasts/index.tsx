@@ -1,3 +1,4 @@
+import { setManuallyOffline } from '@/hooks/useAutoOnline';
 import { useEffect, useState } from 'react';
 import { FlatList, RefreshControl, Switch, Text, View } from 'react-native';
 import { Card, ConfirmModal, EmptyState, Header, SkeletonList } from '@/components/ui';
@@ -85,11 +86,13 @@ export default function BroadcastsScreen() {
           longitude: location.coords?.longitude,
         });
         setIsOnline(true);
+        setManuallyOffline(false);
         toast.success("You're online");
       } else {
         await setOnlineStatus.mutateAsync({ is_online: false });
         location.stop();
         setIsOnline(false);
+        setManuallyOffline(true);
         toast.success("You're offline");
       }
     } catch {
