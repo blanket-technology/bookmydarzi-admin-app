@@ -174,7 +174,8 @@
     "addYourNameBelow": "Add your name below",
     "removeDocTitle": "Remove document?",
     "removeDocBody": "This permanently deletes the uploaded file and you will need to upload it again for review.",
-    "removeDoc": "Remove"
+    "removeDoc": "Remove",
+    "portfolioUploadPaused": "Adding portfolio photos is temporarily unavailable. Your existing photos are safe."
   },
   "orders": {
     "title": "Orders",

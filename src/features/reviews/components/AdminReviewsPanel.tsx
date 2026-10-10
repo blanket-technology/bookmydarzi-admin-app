@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 import {
   Badge,
@@ -161,6 +161,10 @@ export const AdminReviewsPanel = () => {
 
   const items = data?.reviews ?? [];
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / LIMIT));
+  // Deleting/hiding the last item on a page must not strand the user on an empty page.
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   const handleUnhide = (item: AdminReview) => {
     setBusyId(item.id);
