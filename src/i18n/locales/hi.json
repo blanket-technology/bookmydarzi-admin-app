@@ -171,7 +171,10 @@
     "firstName": "पहला नाम",
     "lastName": "अंतिम नाम",
     "logout": "लॉगआउट",
-    "addYourNameBelow": "नीचे अपना नाम जोड़ें"
+    "addYourNameBelow": "नीचे अपना नाम जोड़ें",
+    "removeDocTitle": "दस्तावेज़ हटाएँ?",
+    "removeDocBody": "इससे अपलोड की गई फ़ाइल हमेशा के लिए हट जाएगी और समीक्षा के लिए आपको इसे दोबारा अपलोड करना होगा।",
+    "removeDoc": "हटाएँ"
   },
   "orders": {
     "title": "ऑर्डर",

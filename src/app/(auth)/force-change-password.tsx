@@ -5,6 +5,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Text, View } from 'react-native';
 import { z } from 'zod';
 import { Button, Card, PasswordInput, Pressable, ScreenContent } from '@/components/ui';
+import { newPasswordRule } from '@/features/auth/schemas/authSchemas';
 import { useLogoutMutation } from '@/features/auth/hooks/useAuthMutations';
 import { useChangePasswordMutation } from '@/features/settings/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,7 +24,7 @@ import { getMutationError } from '@/utils/errors';
 const schema = z
   .object({
     oldPassword: z.string().min(6, 'Enter your current (default) password'),
-    newPassword: z.string().min(8, 'At least 8 characters'),
+    newPassword: newPasswordRule,
     confirmPassword: z.string(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
