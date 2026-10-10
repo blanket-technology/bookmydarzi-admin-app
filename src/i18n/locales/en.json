@@ -394,7 +394,10 @@
     "close": "Close"
   },
   "correctStatus": {
-    "title": "Correct Status"
+    "title": "Correct Status",
+    "confirmTitle": "Change order status?",
+    "confirmBody": "Set this order to \"{{status}}\"? This skips the normal workflow checks and is recorded in the audit log.",
+    "confirm": "Change status"
   },
   "paymentDetails": {
     "copied": "{{label}} copied",

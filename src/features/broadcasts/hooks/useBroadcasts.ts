@@ -29,6 +29,8 @@ export const useAcceptBroadcastMutation = () => {
       trackBroadcastAccepted({ order_id: orderId });
       queryClient.invalidateQueries({ queryKey: ['broadcasts'] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(String(orderId)) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
       toast.success('Order accepted');
     },
     onError: (error) => toast.error(getMutationError(error)),
