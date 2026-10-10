@@ -79,7 +79,7 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
   // instead of leaving it stuck in an errored state until manual refresh.
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
-      onlineManager.setOnline(state.isConnected != null ? state.isConnected : true);
+      onlineManager.setOnline((state.isConnected ?? true) && state.isInternetReachable !== false);
     });
     return unsubscribe;
   }, []);

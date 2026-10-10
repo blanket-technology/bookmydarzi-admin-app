@@ -46,6 +46,9 @@ export const ScreenContent = ({
       style={style}
       contentContainerStyle={[{ alignItems: 'center' }, contentContainerStyle]}
       scrollEnabled={effectiveScrollEnabled}
+      // Without this the first tap on a button while the keyboard is open only
+      // dismisses the keyboard (forms needed two taps to submit).
+      keyboardShouldPersistTaps="handled"
       {...props}
     >
       <View className="w-full px-5" style={{ maxWidth }}>

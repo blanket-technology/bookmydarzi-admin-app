@@ -18,7 +18,9 @@ export function useNetworkStatus(): NetworkStatus {
   useEffect(() => {
     const apply = (state: NetInfoState) =>
       setStatus({
-        isConnected: state.isConnected ?? true,
+        // Wi-Fi/cellular attached but no actual internet (captive portal, dead
+        // link) must count as offline too.
+        isConnected: (state.isConnected ?? true) && state.isInternetReachable !== false,
         isInternetReachable: state.isInternetReachable,
         isResolved: true,
       });

@@ -4,6 +4,8 @@ export type ToastType = 'success' | 'error' | 'info';
 
 interface ToastState {
   visible: boolean;
+  /** Increments on every show() so a new toast restarts the dismiss timer. */
+  id: number;
   message: string;
   type: ToastType;
   show: (message: string, type?: ToastType) => void;
@@ -12,9 +14,10 @@ interface ToastState {
 
 export const useToastStore = create<ToastState>((set) => ({
   visible: false,
+  id: 0,
   message: '',
   type: 'info',
-  show: (message, type = 'info') => set({ visible: true, message, type }),
+  show: (message, type = 'info') => set((state) => ({ visible: true, id: state.id + 1, message, type })),
   hide: () => set({ visible: false, message: '' }),
 }));
 
