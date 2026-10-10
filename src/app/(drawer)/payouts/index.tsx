@@ -7,7 +7,7 @@ import { CommissionRatesPanel } from '@/features/payouts/components/CommissionRa
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { Payout } from '@/types/payouts';
-import { formatApiErrorDetail, formatCurrency, formatDate } from '@/utils/errors';
+import { formatApiErrorDetail, formatMoney, formatDate } from '@/utils/errors';
 
 const LIMIT = 20;
 
@@ -47,7 +47,7 @@ export default function PayoutsScreen() {
         </View>
         <View className="items-end">
           <Text className="font-bold text-base" style={{ color: colors.text }}>
-            {formatCurrency(Number(item.payout_amount))}
+            {formatMoney(Number(item.payout_amount))}
           </Text>
           <Badge
             label={item.status}
@@ -58,7 +58,7 @@ export default function PayoutsScreen() {
       </View>
       <View className="flex-row items-center justify-between mt-3 pt-3 border-t" style={{ borderColor: colors.border }}>
         <Text className="text-xs" style={{ color: colors.textMuted }}>
-          {formatCurrency(Number(item.order_amount))} · {Number(item.commission_percent).toFixed(2)}%
+          {formatMoney(Number(item.order_amount))} · {Number(item.commission_percent).toFixed(2)}%
         </Text>
         {item.status === 'pending' ? (
           <Pressable

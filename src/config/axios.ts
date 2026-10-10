@@ -10,7 +10,7 @@ import { tokenStorage } from '@/services/tokenStorage';
 import { useAuthStore } from '@/store/authStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { logApiError, logApiRequest, logApiResponse } from '@/utils/apiLogger';
-import { enrichApiError, parseApiError } from '@/utils/errors';
+import { enrichApiError, isTransientApiError, parseApiError } from '@/utils/errors';
 
 type RetryConfig = InternalAxiosRequestConfig & { _retry?: boolean; _networkRetryCount?: number };
 
@@ -23,6 +23,11 @@ type RetryConfig = InternalAxiosRequestConfig & { _retry?: boolean; _networkRetr
  */
 const MAX_NETWORK_RETRIES = 3;
 const NETWORK_RETRY_DELAYS_MS = [3000, 6000, 10000];
+
+// Only methods that are safe to repeat are retried automatically. Replaying a
+// POST whose response was lost can double-submit an action (payment collection,
+// order mutations) or burn the OTP/login rate limit.
+const RETRYABLE_METHODS = new Set(['get', 'head', 'options']);
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -52,6 +57,7 @@ const isAuthRoute = (url?: string): boolean => {
     url.includes(ENDPOINTS.AUTH.LOGIN_VERIFY_OTP) ||
     url.includes(ENDPOINTS.AUTH.LOGIN_RESEND_OTP) ||
     url.includes(ENDPOINTS.AUTH.REFRESH) ||
+    url.includes(ENDPOINTS.AUTH.LOGOUT) ||
     url.includes(ENDPOINTS.AUTH.FORGOT_PASSWORD_REQUEST) ||
     url.includes(ENDPOINTS.AUTH.FORGOT_PASSWORD_VERIFY) ||
     url.includes(ENDPOINTS.AUTH.FORGOT_PASSWORD_RESET)
@@ -61,6 +67,10 @@ const isAuthRoute = (url?: string): boolean => {
 const resolveAccessToken = async (): Promise<string | null> => {
   const storeToken = useAuthStore.getState().accessToken;
   if (storeToken) return storeToken;
+
+  // Logged out: never resurrect a session from leftover secure-storage tokens
+  // (a request still in flight during logout would otherwise re-seed the store).
+  if (!useAuthStore.getState().isAuthenticated) return null;
 
   const secureToken = await tokenStorage.getAccessToken();
   if (!secureToken) return null;
@@ -115,7 +125,12 @@ apiClient.interceptors.response.use(
     // rather than a genuine outage. Timeouts (ECONNABORTED) are excluded -
     // a request that already waited out the full timeout once is unlikely
     // to succeed faster on an identical retry.
-    if (!error.response && originalRequest && error.code !== 'ECONNABORTED') {
+    if (
+      !error.response &&
+      originalRequest &&
+      error.code !== 'ECONNABORTED' &&
+      RETRYABLE_METHODS.has((originalRequest.method ?? 'get').toLowerCase())
+    ) {
       const retryCount = originalRequest._networkRetryCount ?? 0;
       const willRetry = retryCount < MAX_NETWORK_RETRIES;
       logApiError(error, willRetry);
@@ -168,19 +183,20 @@ apiClient.interceptors.response.use(
 
       if (!refreshToken) {
         isRefreshing = false;
+        const missing = enrichApiError(
+          {
+            message: 'Session expired. Please sign in again.',
+            status: 401,
+            code: 'REFRESH_TOKEN_MISSING',
+          },
+          error,
+          requestUrl,
+        );
+        // Settle every request that queued behind this one - otherwise they hang forever.
+        processQueue(missing, null);
         await clearSession();
         useSessionStore.getState().markExpired();
-        return Promise.reject(
-          enrichApiError(
-            {
-              message: 'Session expired. Please sign in again.',
-              status: 401,
-              code: 'REFRESH_TOKEN_MISSING',
-            },
-            error,
-            requestUrl,
-          ),
-        );
+        return Promise.reject(missing);
       }
 
       try {
@@ -202,6 +218,12 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         logApiError(refreshError);
         processQueue(refreshError, null);
+        // A dropped connection, rate limit or a sleeping/overloaded server says
+        // nothing about the refresh token: keep the session and let the caller
+        // see a transient error instead of signing the user out.
+        if (isTransientApiError(refreshError)) {
+          return Promise.reject(enrichApiError(parseApiError(refreshError), refreshError, requestUrl));
+        }
         await clearSession();
         useSessionStore.getState().markExpired();
         return Promise.reject(
@@ -241,13 +263,23 @@ apiClient.interceptors.response.use(
     }
 
     if (status === 401 && isAuthRoute(originalRequest.url)) {
+      // 401 means different things on the auth routes (wrong password, inactive
+      // account, expired reset token, unknown user...). Show the backend's own
+      // message; "Invalid email or password" is only the fallback for login.
+      const parsed = parseApiError(error);
+      const hasBackendMessage = !!parsed.message && parsed.message !== 'Something went wrong';
+      const isLogin = originalRequest.url?.includes(ENDPOINTS.AUTH.LOGIN) ?? false;
       return Promise.reject(
         enrichApiError(
           {
-            message: 'Invalid email or password.',
+            message: hasBackendMessage
+              ? parsed.message
+              : isLogin
+                ? 'Invalid email or password.'
+                : 'This request could not be verified. Please try again.',
             status: 401,
-            code: 'INVALID_CREDENTIALS',
-            details: parseApiError(error),
+            code: parsed.code ?? 'INVALID_CREDENTIALS',
+            details: error.response.data,
           },
           error,
           requestUrl,

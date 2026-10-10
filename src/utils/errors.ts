@@ -12,7 +12,10 @@ export const parseApiError = (error: unknown): ApiError => {
     return { message: 'An unexpected error occurred' };
   }
 
-  if (isApiError(error)) {
+  // An AxiosError also has a string `message` ("Request failed with status
+  // code 400"), so it must NOT take this shortcut - its response body holds the
+  // backend's real message, parsed below.
+  if (!(error as AxiosError).isAxiosError && isApiError(error)) {
     return error;
   }
 
@@ -45,6 +48,19 @@ export const parseApiError = (error: unknown): ApiError => {
     status,
     details: data,
   };
+};
+
+/** True when the failure says nothing about the credentials themselves: no
+ * connection, a timeout, rate limiting or a server/gateway error (e.g. a
+ * sleeping Railway container). Callers must NOT treat these as "session
+ * invalid" - the same token may well work a moment later. */
+export const isTransientApiError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const parsed = parseApiError(error);
+  if (parsed.code === 'NETWORK_ERROR' || parsed.code === 'TIMEOUT' || parsed.code === 'SERVER_ERROR') return true;
+  const raw = error as { code?: string; message?: string };
+  if (raw.code === 'ERR_NETWORK' || raw.code === 'ECONNABORTED' || raw.message === 'Network Error') return true;
+  return parsed.status === 429 || parsed.status === 408 || (parsed.status !== undefined && parsed.status >= 500);
 };
 
 export const enrichApiError = (
@@ -112,6 +128,18 @@ export const formatApiErrorDetail = (error: unknown): string => {
 
 // Bare message for toasts.
 export const getMutationError = (error: unknown): string => getUserFacingMessage(error);
+
+/** Exact rupees-and-paise for anything that is paid out, refunded or reconciled
+ * (formatCurrency rounds to whole rupees and is only for dashboard summaries). */
+export const formatMoney = (amount?: number | string | null): string => {
+  const value = Number(amount ?? 0);
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number.isFinite(value) ? value : 0);
+};
 
 export const formatCurrency = (amount?: number): string => {
   if (amount === undefined || amount === null) return '₹0';

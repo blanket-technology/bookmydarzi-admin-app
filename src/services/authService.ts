@@ -85,8 +85,13 @@ export const authService = {
     return normalized;
   },
 
-  logout: async (refreshToken: string) => {
-    const { data } = await apiClient.post(ENDPOINTS.AUTH.LOGOUT, { refresh_token: refreshToken });
+  logout: async (refreshToken: string, accessToken?: string | null) => {
+    const { data } = await apiClient.post(ENDPOINTS.AUTH.LOGOUT, {
+      refresh_token: refreshToken,
+      // Lets the backend blacklist the access token immediately (it would
+      // otherwise stay valid, including for the websocket, until it expires).
+      access_token: accessToken ?? undefined,
+    });
     return data;
   },
 

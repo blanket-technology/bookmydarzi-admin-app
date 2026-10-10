@@ -1,6 +1,6 @@
 import { authService } from '@/services/authService';
 import { tokenStorage } from '@/services/tokenStorage';
-import { useAuthStore } from '@/store/authStore';
+import { getSessionEpoch, useAuthStore } from '@/store/authStore';
 import type { AuthTokenResponse } from '@/types/auth';
 
 /**
@@ -21,9 +21,17 @@ let inFlightRefresh: Promise<AuthTokenResponse> | null = null;
 export const refreshAccessToken = (refreshToken: string): Promise<AuthTokenResponse> => {
   if (inFlightRefresh) return inFlightRefresh;
 
+  const epochAtStart = getSessionEpoch();
+
   inFlightRefresh = authService
     .refresh(refreshToken)
     .then(async (tokens) => {
+      // The user may have logged out (or another account signed in) while the
+      // request was in flight: persisting these tokens would resurrect a dead
+      // session. Hand them back to the caller but do not store them.
+      if (getSessionEpoch() !== epochAtStart) {
+        return tokens;
+      }
       await tokenStorage.setTokens(tokens.access_token, tokens.refresh_token);
       useAuthStore.getState().refreshSession(tokens.access_token, tokens.refresh_token);
       return tokens;
