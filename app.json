@@ -17,6 +17,9 @@
           "NSAllowsLocalNetworking": true
         },
         "NSFaceIDUsageDescription": "BookMyDarzi Admin uses Face ID to unlock the app after login."
+      },
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
@@ -61,7 +64,8 @@
         "expo-image-picker",
         {
           "photosPermission": "BookMyDarzi Admin needs access to your photos to upload order progress photos.",
-          "cameraPermission": "BookMyDarzi Admin needs camera access to capture order progress photos."
+          "cameraPermission": "BookMyDarzi Admin needs camera access to capture order progress photos.",
+          "microphonePermission": false
         }
       ],
       [
@@ -77,7 +81,12 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false
+        }
+      ],
       "expo-asset",
       "@sentry/react-native"
     ],
