@@ -322,6 +322,7 @@ export default function ApplicationDetailScreen() {
             variant="danger"
             onPress={handleReject}
             loading={rejectMutation.isPending}
+            disabled={rejectReason.trim().length < 5}
             fullWidth
           />
         }

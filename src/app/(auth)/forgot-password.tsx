@@ -13,6 +13,7 @@ import {
   useForgotPasswordResetMutation,
   useForgotPasswordVerifyMutation,
 } from '@/features/auth/hooks/useAuthMutations';
+import { newPasswordRule } from '@/features/auth/schemas/authSchemas';
 import { toast } from '@/store/toastStore';
 import {
   forgotPasswordSchema,
@@ -28,6 +29,7 @@ export default function ForgotPasswordScreen() {
   const [otp, setOtp] = useState('');
   const [resetToken, setResetToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const requestMutation = useForgotPasswordRequestMutation();
   const verifyMutation = useForgotPasswordVerifyMutation();
@@ -50,8 +52,9 @@ export default function ForgotPasswordScreen() {
   };
 
   const handleVerify = () => {
+    if (otp.trim().length !== 6 || verifyMutation.isPending) return;
     verifyMutation.mutate(
-      { email, otp },
+      { email, otp: otp.trim() },
       {
         onSuccess: (data) => {
           setResetToken(data.reset_token);
@@ -62,14 +65,29 @@ export default function ForgotPasswordScreen() {
     );
   };
 
+  const passwordCheck = newPasswordRule.safeParse(newPassword);
+  const passwordError =
+    newPassword.length > 0 && !passwordCheck.success ? passwordCheck.error.issues[0]?.message : undefined;
+  const confirmError =
+    confirmPassword.length > 0 && confirmPassword !== newPassword ? 'Passwords do not match' : undefined;
+
   const handleReset = () => {
+    if (resetMutation.isPending || !passwordCheck.success || confirmPassword !== newPassword) return;
+    // Success feedback and navigation to Login come from the mutation itself.
     resetMutation.mutate(
       { reset_token: resetToken, new_password: newPassword },
+      { onError: (error) => toast.error(getMutationError(error)) },
+    );
+  };
+
+  // Lets the user recover from an expired/over-attempted code without leaving the screen.
+  const handleResend = () => {
+    if (requestMutation.isPending) return;
+    setOtp('');
+    requestMutation.mutate(
+      { email },
       {
-        onSuccess: () => {
-          toast.success('Password reset successfully. Please sign in.');
-          router.replace('/(auth)/login');
-        },
+        onSuccess: () => toast.success('A new code has been sent'),
         onError: (error) => toast.error(getMutationError(error)),
       },
     );
@@ -146,8 +164,21 @@ export default function ForgotPasswordScreen() {
                     title="Verify OTP"
                     onPress={handleVerify}
                     loading={verifyMutation.isPending}
+                    disabled={otp.trim().length !== 6}
                     fullWidth
                   />
+                  <View className="flex-row justify-between mt-3">
+                    <Pressable onPress={handleResend} accessibilityRole="button" hitSlop={10}>
+                      <Text className="text-sm font-semibold" style={{ color: '#7D622A' }}>
+                        Resend code
+                      </Text>
+                    </Pressable>
+                    <Pressable onPress={() => setStep('request')} accessibilityRole="button" hitSlop={10}>
+                      <Text className="text-sm font-semibold" style={{ color: '#7D622A' }}>
+                        Change email
+                      </Text>
+                    </Pressable>
+                  </View>
                 </>
               ) : null}
 
@@ -159,11 +190,21 @@ export default function ForgotPasswordScreen() {
                     value={newPassword}
                     onChangeText={setNewPassword}
                     secureTextEntry
+                    error={passwordError}
+                  />
+                  <Input
+                    label="Confirm Password"
+                    placeholder="Re-enter new password"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry
+                    error={confirmError}
                   />
                   <Button
                     title="Reset Password"
                     onPress={handleReset}
                     loading={resetMutation.isPending}
+                    disabled={!passwordCheck.success || confirmPassword !== newPassword}
                     fullWidth
                   />
                 </>

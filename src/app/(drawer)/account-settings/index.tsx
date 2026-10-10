@@ -17,17 +17,18 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/store/toastStore';
+import { newPasswordRule } from '@/features/auth/schemas/authSchemas';
 import { getMutationError } from '@/utils/errors';
 
 const profileSchema = z.object({
-  firstName: z.string().min(2),
-  lastName: z.string().min(2),
+  firstName: z.string().trim().min(2, 'Enter at least 2 characters'),
+  lastName: z.string().trim().min(2, 'Enter at least 2 characters'),
 });
 
 const passwordSchema = z
   .object({
-    oldPassword: z.string().min(6),
-    newPassword: z.string().min(8),
+    oldPassword: z.string().min(6, 'Enter your current password'),
+    newPassword: newPasswordRule,
     confirmPassword: z.string(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
@@ -176,22 +177,22 @@ export default function AccountSettingsScreen() {
               <Controller
                 control={passwordForm.control}
                 name="oldPassword"
-                render={({ field: { onChange, value } }) => (
-                  <PasswordInput label={t('profile.currentPassword')} value={value} onChangeText={onChange} />
+                render={({ field: { onChange, value }, fieldState }) => (
+                  <PasswordInput label={t('profile.currentPassword')} value={value} onChangeText={onChange} error={fieldState.error?.message} />
                 )}
               />
               <Controller
                 control={passwordForm.control}
                 name="newPassword"
-                render={({ field: { onChange, value } }) => (
-                  <PasswordInput label={t('profile.newPassword')} value={value} onChangeText={onChange} />
+                render={({ field: { onChange, value }, fieldState }) => (
+                  <PasswordInput label={t('profile.newPassword')} value={value} onChangeText={onChange} error={fieldState.error?.message} />
                 )}
               />
               <Controller
                 control={passwordForm.control}
                 name="confirmPassword"
-                render={({ field: { onChange, value } }) => (
-                  <PasswordInput label={t('profile.confirmPassword')} value={value} onChangeText={onChange} />
+                render={({ field: { onChange, value }, fieldState }) => (
+                  <PasswordInput label={t('profile.confirmPassword')} value={value} onChangeText={onChange} error={fieldState.error?.message} />
                 )}
               />
               <Button
@@ -211,15 +212,15 @@ export default function AccountSettingsScreen() {
           <Controller
             control={profileForm.control}
             name="firstName"
-            render={({ field: { onChange, value } }) => (
-              <Input label={t('profile.firstName')} value={value} onChangeText={onChange} />
+            render={({ field: { onChange, value }, fieldState }) => (
+              <Input label={t('profile.firstName')} value={value} onChangeText={onChange} error={fieldState.error?.message} />
             )}
           />
           <Controller
             control={profileForm.control}
             name="lastName"
-            render={({ field: { onChange, value } }) => (
-              <Input label={t('profile.lastName')} value={value} onChangeText={onChange} />
+            render={({ field: { onChange, value }, fieldState }) => (
+              <Input label={t('profile.lastName')} value={value} onChangeText={onChange} error={fieldState.error?.message} />
             )}
           />
           <Button

@@ -171,7 +171,10 @@
     "firstName": "First Name",
     "lastName": "Last Name",
     "logout": "Logout",
-    "addYourNameBelow": "Add your name below"
+    "addYourNameBelow": "Add your name below",
+    "removeDocTitle": "Remove document?",
+    "removeDocBody": "This permanently deletes the uploaded file and you will need to upload it again for review.",
+    "removeDoc": "Remove"
   },
   "orders": {
     "title": "Orders",
