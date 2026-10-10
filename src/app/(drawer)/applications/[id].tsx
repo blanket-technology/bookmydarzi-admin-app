@@ -11,7 +11,7 @@ import {
 } from '@/features/applications/hooks/useApplications';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useTheme } from '@/hooks/useTheme';
-import { isPdfUrl, resolveDocUrl } from '@/utils/documents';
+import { findFreshSignedUrl, isPdfUrl, resolveDocUrl } from '@/utils/documents';
 import { capitalize, formatApiErrorDetail, formatDate } from '@/utils/errors';
 
 export default function ApplicationDetailScreen() {
@@ -336,7 +336,11 @@ export default function ApplicationDetailScreen() {
         />
       </BottomSheet>
 
-      <DocumentPreviewModal url={previewUrl} onClose={() => setPreviewUrl(null)} />
+      <DocumentPreviewModal
+        url={previewUrl}
+        onClose={() => setPreviewUrl(null)}
+        onRefreshUrl={async (stale) => findFreshSignedUrl((await refetch()).data, stale)}
+      />
     </View>
   );
 }
