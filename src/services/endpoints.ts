@@ -192,6 +192,7 @@ export const ENDPOINTS = {
     BROADCAST_DECLINE: (orderId: string) => `/api/v1/tailor/orders/${orderId}/broadcast/decline`,
     ONLINE_STATUS: '/api/v1/tailors/me/online',
     ME: '/api/v1/tailors/me',
+    PORTFOLIO_UPLOAD: '/api/v1/tailors/me/portfolio/upload',
     MY_KYC: '/api/v1/tailors/me/kyc',
     MY_PAYOUTS: '/api/v1/tailors/me/payouts',
     MY_PAYOUT_SUMMARY: '/api/v1/tailors/me/payouts/summary',

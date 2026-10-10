@@ -44,6 +44,12 @@ export const useUploadProfilePhotoMutation = () => {
   });
 };
 
+export const useUploadPortfolioImageMutation = () =>
+  useMutation({
+    mutationFn: (file: { uri: string; fileName?: string; mimeType?: string }) =>
+      profileService.uploadPortfolioImage(file),
+  });
+
 export const useRequestEmailChangeMutation = () =>
   useMutation({
     mutationFn: (payload: RequestEmailChangePayload) => profileService.requestEmailChange(payload),
