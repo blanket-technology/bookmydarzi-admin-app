@@ -42,7 +42,7 @@ export const OfflineBanner = () => {
 
   return (
     <Animated.View
-      pointerEvents={offline ? 'auto' : 'none'}
+      pointerEvents="none"
       style={[
         {
           position: 'absolute',

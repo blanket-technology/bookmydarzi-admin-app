@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import { BottomSheet, Button, Input } from '@/components/ui';
 import { useMarkBridgePayoutPaidMutation } from '@/features/payouts/hooks/useBridgePayouts';
 import { useTheme } from '@/hooks/useTheme';
 import type { BridgePayout } from '@/types/bridgePayouts';
-import { formatCurrency } from '@/utils/errors';
+import { formatMoney, getUserFacingMessage } from '@/utils/errors';
 import { LEG_TYPE_LABELS } from '@/features/payouts/legTypeLabels';
 
 export function MarkBridgePaidSheet({ payout, onClose }: { payout: BridgePayout; onClose: () => void }) {
@@ -15,17 +15,33 @@ export function MarkBridgePaidSheet({ payout, onClose }: { payout: BridgePayout;
   const mutation = useMarkBridgePayoutPaidMutation();
 
   const handleSubmit = () => {
+    if (mutation.isPending) return;
     if (!payoutReference.trim()) {
       setValidationError('A payout reference (bank UTR / transaction ref) is required.');
       return;
     }
     setValidationError('');
-    mutation.mutate(
-      {
-        payoutId: String(payout.id),
-        payload: { payout_reference: payoutReference.trim(), notes: notes.trim() || undefined },
-      },
-      { onSuccess: onClose },
+    // Recording a payout as paid is a ledger entry about real money: confirm
+    // exactly how much and to whom before it is written.
+    Alert.alert(
+      'Mark payout as paid?',
+      `Confirm you have already transferred ${formatMoney(Number(payout.rate_amount))} (ref ${payoutReference.trim()}).`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Mark Paid',
+          onPress: () => {
+            mutation.reset();
+            mutation.mutate(
+              {
+                payoutId: String(payout.id),
+                payload: { payout_reference: payoutReference.trim(), notes: notes.trim() || undefined },
+              },
+              { onSuccess: onClose },
+            );
+          },
+        },
+      ],
     );
   };
 
@@ -57,7 +73,7 @@ export function MarkBridgePaidSheet({ payout, onClose }: { payout: BridgePayout;
         >
           <Text className="text-sm font-semibold" style={{ color: colors.text }}>Payout amount</Text>
           <Text className="text-sm font-bold" style={{ color: '#10b981' }}>
-            {formatCurrency(Number(payout.rate_amount))}
+            {formatMoney(Number(payout.rate_amount))}
           </Text>
         </View>
       </View>
@@ -78,7 +94,7 @@ export function MarkBridgePaidSheet({ payout, onClose }: { payout: BridgePayout;
       />
       {mutation.isError ? (
         <Text className="text-xs mt-1" style={{ color: colors.error }}>
-          Failed to mark payout as paid.
+          {getUserFacingMessage(mutation.error)}
         </Text>
       ) : null}
     </BottomSheet>

@@ -1,3 +1,4 @@
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -10,7 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { AdminOrderItem } from '@/types/orders';
-import { formatApiErrorDetail, formatCurrency, formatDate } from '@/utils/errors';
+import { formatApiErrorDetail, formatMoney, formatDate } from '@/utils/errors';
 
 const LIMIT = 15;
 
@@ -69,6 +70,7 @@ export default function PaymentsScreen() {
   const isAdminRole = isSuperadmin || normalizedRole === 'admin';
   const isStaffRole = isAdminRole || normalizedRole === 'employee';
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 350);
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [filterVisible, setFilterVisible] = useState(false);
@@ -82,10 +84,10 @@ export default function PaymentsScreen() {
     () => ({
       page,
       limit: LIMIT,
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       payment_status: statusFilter || undefined,
     }),
-    [page, search, statusFilter],
+    [page, debouncedSearch, statusFilter],
   );
   const { data, isLoading, isError, error, refetch, isRefetching } = useOrders(params);
 
@@ -126,7 +128,7 @@ export default function PaymentsScreen() {
           </View>
           <View className="items-end">
             <Text className="font-bold text-base" style={{ color: colors.text }}>
-              {formatCurrency(item.final_amount ?? item.amount)}
+              {formatMoney(item.final_amount ?? item.amount)}
             </Text>
             <Badge
               label={paymentStatusLabel(item.payment_status)}
@@ -137,7 +139,7 @@ export default function PaymentsScreen() {
         </View>
         {typeof item.remaining_amount === 'number' && item.remaining_amount > 0 ? (
           <Text className="text-xs mt-2" style={{ color: colors.error }}>
-            Balance due: {formatCurrency(item.remaining_amount)}
+            Balance due: {formatMoney(item.remaining_amount)}
           </Text>
         ) : null}
         {isStaffRole ? (

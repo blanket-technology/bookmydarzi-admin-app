@@ -1,27 +1,42 @@
-import { useEffect, useState } from 'react';
-import { Image, Text, View, useWindowDimensions } from 'react-native';
-import { BottomSheet, Button, Input, Pressable } from '@/components/ui';
-import { useCollectPaymentMutation } from '@/features/orders/hooks/useOrders';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Image, Text, View, useWindowDimensions } from 'react-native';
+import { BottomSheet, Button, Pressable } from '@/components/ui';
+import {
+  useCancelDeliveryQrMutation,
+  useCollectPaymentMutation,
+  useCreateDeliveryQrMutation,
+  useDeliveryPaymentStatus,
+} from '@/features/orders/hooks/useOrders';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
+import { getUserFacingMessage } from '@/utils/errors';
 
-// Same merchant UPI VPA the customer app's balance-payment QR uses
-// (EXPO_PUBLIC_MERCHANT_UPI_ID in react_app/eas.json) - both apps' QR
-// collections land in the same account. No QR library needed: a public
-// QR-image-generation API renders the PNG directly from the UPI deep link.
-const MERCHANT_UPI = process.env.EXPO_PUBLIC_MERCHANT_UPI_ID ?? 'blankettechnolo974972.rzp@raxis';
+type Tab = 'qr' | 'cash';
 
-function buildUpiQrImageUri(upiId: string, amount: number, orderCode: string, qrSize: number): string {
-  const upiLink =
-    `upi://pay?pa=${encodeURIComponent(upiId)}` +
-    `&pn=${encodeURIComponent('BookMyDarzi')}` +
-    `&tr=${encodeURIComponent(orderCode)}` +
-    `&am=${amount.toFixed(2)}` +
-    `&cu=INR` +
-    `&tn=${encodeURIComponent(`COD collection for order ${orderCode}`)}`;
-  return `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&margin=12&data=${encodeURIComponent(upiLink)}`;
-}
+const AUTO_CLOSE_MS = 2200;
 
+const formatRupees = (amount: number): string =>
+  `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+
+const formatCountdown = (seconds: number): string => {
+  const safe = Math.max(0, seconds);
+  const m = Math.floor(safe / 60);
+  const s = safe % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+};
+
+/**
+ * Delivery-time payment, in the style of Blinkit/Flipkart: the delivery person
+ * shows a QR for the exact balance; the customer scans and pays with any UPI
+ * app, and this sheet (and the order) update on their own the moment the money
+ * arrives - nobody taps "paid". If the QR cannot be used there is a Cash (COD)
+ * fallback that records exactly the amount due.
+ *
+ * The amount always comes from the backend (the order's remaining balance); it
+ * is never typed in, so it cannot be mistyped or understated.
+ */
 export const CollectPaymentSheet = ({
   visible,
   onClose,
@@ -33,114 +48,319 @@ export const CollectPaymentSheet = ({
   onClose: () => void;
   orderId: string;
   orderCode?: string | null;
-  /** The order's actual balance due, from the backend - pre-fills the
-   * amount field so the delivery person confirms/edits a known-correct
-   * number instead of typing one from scratch (matches how Blinkit/other
-   * delivery apps prefill COD collection - manual blank entry risks typos
-   * with no source-of-truth check until the backend rejects it after the
-   * fact). Still editable, since a genuine partial collection can happen. */
+  /** The order's balance due as last loaded; the sheet shows the backend's
+   * own figure from the payment status once it has one. */
   remainingAmount?: number | null;
 }) => {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const [method, setMethod] = useState<'qr' | 'cash'>('cash');
-  const [amount, setAmount] = useState('');
-  const collectPaymentMutation = useCollectPaymentMutation();
 
-  // Re-prefill whenever the sheet opens (or the balance changes while it's
-  // open, e.g. an add-on was just added) rather than only on mount - a
-  // stale blank/previous value must never linger across opens.
+  const [tab, setTab] = useState<Tab>('qr');
+  const [cashConfirmed, setCashConfirmed] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  const autoCreatedFor = useRef<string | null>(null);
+
+  const statusQuery = useDeliveryPaymentStatus(orderId, visible);
+  const createQr = useCreateDeliveryQrMutation();
+  const cancelQr = useCancelDeliveryQrMutation();
+  const collectCash = useCollectPaymentMutation();
+
+  const status = statusQuery.data;
+  const state = status?.status;
+  const dueAmount = status?.amount ?? remainingAmount ?? 0;
+  const isPaid = state === 'paid';
+
+  // Fresh state every time the sheet opens.
   useEffect(() => {
-    if (visible && remainingAmount && remainingAmount > 0) {
-      setAmount(String(remainingAmount));
+    if (visible) {
+      setTab('qr');
+      setCashConfirmed(false);
+      setImageFailed(false);
+      autoCreatedFor.current = null;
+      createQr.reset();
     }
-  }, [visible, remainingAmount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
-  const handleCollect = () => {
-    const numAmount = Number(amount);
-    if (!numAmount || numAmount <= 0) return;
-    collectPaymentMutation.mutate(
-      { orderId, payload: { method, amount: numAmount } },
-      { onSuccess: () => { onClose(); setAmount(''); } },
+  // Show the QR straight away: when the backend has no live QR for this order
+  // yet, generate one automatically (once per open).
+  useEffect(() => {
+    if (!visible || tab !== 'qr') return;
+    if (state !== 'none' || dueAmount <= 0) return;
+    if (createQr.isPending || createQr.isError) return;
+    if (autoCreatedFor.current === orderId) return;
+    autoCreatedFor.current = orderId;
+    createQr.mutate(orderId);
+  }, [visible, tab, state, dueAmount, orderId, createQr]);
+
+  // One-second clock for the expiry countdown, only while a QR is live.
+  useEffect(() => {
+    if (!visible || state !== 'pending') return undefined;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [visible, state]);
+
+  const expiresMs = status?.expires_at ? new Date(status.expires_at).getTime() : null;
+  const secondsLeft = expiresMs ? Math.floor((expiresMs - now) / 1000) : null;
+
+  // The moment the countdown hits zero, ask the backend: it closes the QR and
+  // reports `expired`, so a QR can never be shown past its validity.
+  useEffect(() => {
+    if (state === 'pending' && secondsLeft !== null && secondsLeft <= 0) {
+      statusQuery.refetch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, secondsLeft]);
+
+  // Paid: confirm with a haptic, then dismiss on its own.
+  useEffect(() => {
+    if (!visible || !isPaid) return undefined;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+    const id = setTimeout(onClose, AUTO_CLOSE_MS);
+    return () => clearTimeout(id);
+  }, [visible, isPaid, onClose]);
+
+  const regenerate = useCallback(() => {
+    setImageFailed(false);
+    createQr.mutate(orderId);
+  }, [createQr, orderId]);
+
+  const confirmCash = () => {
+    if (!cashConfirmed || dueAmount <= 0) return;
+    collectCash.mutate(
+      { orderId, payload: { method: 'cash', amount: dueAmount } },
+      {
+        onSuccess: () => onClose(),
+        // e.g. "already paid by QR": show the true state instead of a stale one.
+        onError: () => statusQuery.refetch(),
+      },
     );
   };
 
-  // QR size previously scaled off raw screenWidth alone (up to 240px) with
-  // no ceiling tied to the sheet's own available height - on a short/small
-  // device (older phones, split-screen, landscape) the QR block plus the
-  // cash/QR toggle, amount input and confirm button together could exceed
-  // the sheet's maxHeight, forcing a scroll that made the Confirm button
-  // (previously mixed into the same scrollable content) hard to reach or
-  // invisible below the fold. Two fixes: cap QR size more conservatively
-  // against both screen dimensions, and move Confirm into BottomSheet's
-  // dedicated `footer` slot (always pinned, outside the scroll area) - see
-  // BottomSheet.tsx's own `footer` prop doc for exactly this scenario.
-  const qrSize = Math.min(screenWidth - 96, screenHeight * 0.28, 220);
+  const qrSize = Math.max(160, Math.min(screenWidth - 96, screenHeight * 0.3, 240));
+  const qrLive = state === 'pending' && !!status?.qr_image_url && (secondsLeft ?? 1) > 0;
+  const qrDead = state === 'expired' || state === 'cancelled' || (state === 'pending' && (secondsLeft ?? 1) <= 0);
+  const creating = createQr.isPending || (statusQuery.isLoading && !status);
+  const createError = createQr.isError ? getUserFacingMessage(createQr.error) : null;
+  const loadError = statusQuery.isError && !status ? getUserFacingMessage(statusQuery.error) : null;
+  const noBalance = !isPaid && state !== 'pending' && dueAmount <= 0 && !statusQuery.isLoading;
+
+  // ----------------------------------------------------------------- footer
+  let footer: React.ReactNode = null;
+  if (isPaid || noBalance) {
+    footer = <Button title={t('collectPayment.close')} onPress={onClose} fullWidth />;
+  } else if (tab === 'cash') {
+    footer = (
+      <View className="gap-2">
+        <Button
+          title={t('collectPayment.confirmCash')}
+          onPress={confirmCash}
+          loading={collectCash.isPending}
+          disabled={!cashConfirmed || dueAmount <= 0}
+          fullWidth
+        />
+        <Button title={t('collectPayment.backToQr')} variant="ghost" onPress={() => setTab('qr')} fullWidth />
+      </View>
+    );
+  } else if (qrDead || createError || loadError) {
+    footer = (
+      <View className="gap-2">
+        <Button
+          title={createError || loadError ? t('collectPayment.retry') : t('collectPayment.regenerate')}
+          onPress={loadError ? () => statusQuery.refetch() : regenerate}
+          loading={createQr.isPending}
+          fullWidth
+        />
+        <Button title={t('collectPayment.qrNotWorking')} variant="outline" onPress={() => setTab('cash')} fullWidth />
+      </View>
+    );
+  } else {
+    footer = (
+      <Button
+        title={t('collectPayment.qrNotWorking')}
+        variant="outline"
+        onPress={() => setTab('cash')}
+        fullWidth
+      />
+    );
+  }
+
+  // ------------------------------------------------------------------ body
+  const tabButton = (value: Tab, label: string, icon: keyof typeof Ionicons.glyphMap) => (
+    <Pressable
+      onPress={() => setTab(value)}
+      accessibilityRole="button"
+      accessibilityState={{ selected: tab === value }}
+      className="flex-1 py-3 rounded-xl border flex-row items-center justify-center gap-2"
+      style={{
+        borderColor: tab === value ? colors.primary : colors.border,
+        backgroundColor: tab === value ? `${colors.primary}15` : colors.surface,
+      }}
+    >
+      <Ionicons name={icon} size={18} color={tab === value ? colors.primary : colors.textSecondary} />
+      <Text style={{ color: tab === value ? colors.primary : colors.text, fontWeight: '600' }}>{label}</Text>
+    </Pressable>
+  );
+
+  const renderBody = () => {
+    if (isPaid) {
+      return (
+        <View className="items-center py-8">
+          <View
+            className="w-20 h-20 rounded-full items-center justify-center mb-4"
+            style={{ backgroundColor: `${colors.success}20` }}
+          >
+            <Ionicons name="checkmark-circle" size={56} color={colors.success} />
+          </View>
+          <Text className="text-xl font-bold mb-1" style={{ color: colors.text }}>
+            {t('collectPayment.paid')}
+          </Text>
+          <Text className="text-2xl font-bold mb-2" style={{ color: colors.success }}>
+            {formatRupees(status?.amount ?? 0)}
+          </Text>
+          <Text className="text-sm text-center" style={{ color: colors.textSecondary }}>
+            {status?.method === 'cash' ? t('collectPayment.paidCash') : t('collectPayment.paidBy')}
+          </Text>
+        </View>
+      );
+    }
+
+    if (noBalance) {
+      return (
+        <View className="items-center py-8">
+          <Ionicons name="information-circle-outline" size={40} color={colors.textMuted} />
+          <Text className="text-sm text-center mt-3" style={{ color: colors.textSecondary }}>
+            {t('collectPayment.noBalance')}
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <View>
+        <View className="items-center mb-4">
+          <Text className="text-xs uppercase tracking-wide" style={{ color: colors.textMuted }}>
+            {t('collectPayment.amountDue')}
+            {orderCode ? `  ·  ${orderCode}` : ''}
+          </Text>
+          <Text className="text-4xl font-bold mt-1" style={{ color: colors.text }}>
+            {formatRupees(dueAmount)}
+          </Text>
+        </View>
+
+        <View className="flex-row gap-3 mb-5">
+          {tabButton('qr', t('collectPayment.qr'), 'qr-code-outline')}
+          {tabButton('cash', t('collectPayment.cash'), 'cash-outline')}
+        </View>
+
+        {tab === 'cash' ? (
+          <View className="rounded-2xl border p-4" style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
+            <Text className="text-base font-semibold mb-1" style={{ color: colors.text }}>
+              {t('collectPayment.cashTitle')}
+            </Text>
+            <Text className="text-sm mb-4" style={{ color: colors.textSecondary }}>
+              {t('collectPayment.cashHint', { amount: formatRupees(dueAmount) })}
+            </Text>
+            <Pressable
+              onPress={() => setCashConfirmed((v) => !v)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: cashConfirmed }}
+              className="flex-row items-center gap-3"
+            >
+              <Ionicons
+                name={cashConfirmed ? 'checkbox' : 'square-outline'}
+                size={26}
+                color={cashConfirmed ? colors.primary : colors.textMuted}
+              />
+              <Text className="flex-1 text-sm" style={{ color: colors.text }}>
+                {t('collectPayment.cashConfirmCheck', { amount: formatRupees(dueAmount) })}
+              </Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View className="items-center">
+            {creating ? (
+              <View className="items-center justify-center" style={{ height: qrSize }}>
+                <ActivityIndicator color={colors.primary} />
+                <Text className="text-sm mt-3" style={{ color: colors.textSecondary }}>
+                  {t('collectPayment.generating')}
+                </Text>
+              </View>
+            ) : createError || loadError ? (
+              <View className="items-center py-4">
+                <Ionicons name="alert-circle-outline" size={36} color={colors.error} />
+                <Text className="text-base font-semibold mt-2" style={{ color: colors.text }}>
+                  {t('collectPayment.qrFailed')}
+                </Text>
+                <Text className="text-sm text-center mt-1" style={{ color: colors.textSecondary }}>
+                  {createError ?? loadError}
+                </Text>
+              </View>
+            ) : qrDead ? (
+              <View className="items-center py-4">
+                <Ionicons name="time-outline" size={36} color={colors.warning} />
+                <Text className="text-base font-semibold mt-2" style={{ color: colors.text }}>
+                  {t('collectPayment.expired')}
+                </Text>
+              </View>
+            ) : qrLive ? (
+              <>
+                <Text className="text-xs mb-3 text-center" style={{ color: colors.textSecondary }}>
+                  {t('collectPayment.scanQrHint')}
+                </Text>
+                <View
+                  className="rounded-2xl overflow-hidden border p-2"
+                  style={{ borderColor: colors.border, backgroundColor: '#fff' }}
+                >
+                  {imageFailed ? (
+                    <View className="items-center justify-center" style={{ width: qrSize, height: qrSize }}>
+                      <Pressable onPress={() => setImageFailed(false)}>
+                        <Ionicons name="refresh" size={32} color={colors.primary} />
+                      </Pressable>
+                    </View>
+                  ) : (
+                    <Image
+                      source={{ uri: status?.qr_image_url ?? undefined }}
+                      style={{ width: qrSize, height: qrSize }}
+                      resizeMode="contain"
+                      onError={() => setImageFailed(true)}
+                      accessibilityLabel={t('collectPayment.scanToPay')}
+                    />
+                  )}
+                </View>
+                <View className="flex-row items-center gap-2 mt-4">
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text className="text-sm font-medium" style={{ color: colors.text }}>
+                    {t('collectPayment.waiting')}
+                  </Text>
+                </View>
+                {secondsLeft !== null ? (
+                  <Text className="text-xs mt-1" style={{ color: secondsLeft < 60 ? colors.error : colors.textMuted }}>
+                    {t('collectPayment.expiresIn', { time: formatCountdown(secondsLeft) })}
+                  </Text>
+                ) : null}
+                <Text className="text-xs mt-3 text-center" style={{ color: colors.textMuted }}>
+                  {t('collectPayment.autoConfirm')}
+                </Text>
+              </>
+            ) : null}
+          </View>
+        )}
+      </View>
+    );
+  };
 
   return (
     <BottomSheet
       visible={visible}
       onClose={onClose}
       title={t('collectPayment.title')}
-      footer={
-        <Button
-          title={t('collectPayment.confirmCollection')}
-          onPress={handleCollect}
-          loading={collectPaymentMutation.isPending}
-          disabled={!amount || Number(amount) <= 0}
-          fullWidth
-        />
-      }
+      contentKey={`${tab}-${state ?? 'loading'}`}
+      footer={footer}
     >
-      <View className="flex-row gap-3 mb-4">
-        <Pressable
-          onPress={() => setMethod('cash')}
-          className="flex-1 py-3 rounded-xl border items-center"
-          style={{
-            borderColor: method === 'cash' ? colors.primary : colors.border,
-            backgroundColor: method === 'cash' ? `${colors.primary}15` : colors.surface,
-          }}
-        >
-          <Text style={{ color: colors.text }}>{t('collectPayment.cash')}</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setMethod('qr')}
-          className="flex-1 py-3 rounded-xl border items-center"
-          style={{
-            borderColor: method === 'qr' ? colors.primary : colors.border,
-            backgroundColor: method === 'qr' ? `${colors.primary}15` : colors.surface,
-          }}
-        >
-          <Text style={{ color: colors.text }}>{t('collectPayment.qr')}</Text>
-        </Pressable>
-      </View>
-      <Input label={t('collectPayment.amountCollected')} value={amount} onChangeText={setAmount} keyboardType="decimal-pad" />
-      {method === 'qr' ? (
-        Number(amount) > 0 ? (
-          <View className="items-center mb-4">
-            <Text className="text-xs mb-2 text-center" style={{ color: colors.textSecondary }}>
-              {t('collectPayment.scanQrHint')}
-            </Text>
-            <View className="rounded-2xl overflow-hidden border p-2" style={{ borderColor: colors.border, backgroundColor: '#fff' }}>
-              <Image
-                source={{
-                  uri: buildUpiQrImageUri(MERCHANT_UPI, Number(amount), orderCode ?? orderId, qrSize),
-                }}
-                style={{ width: qrSize, height: qrSize }}
-                resizeMode="contain"
-              />
-            </View>
-            <Text className="text-xs mt-2" style={{ color: colors.textMuted }}>
-              {MERCHANT_UPI}
-            </Text>
-          </View>
-        ) : (
-          <Text className="text-xs mb-4" style={{ color: colors.textMuted }}>
-            {t('collectPayment.enterAmountHint')}
-          </Text>
-        )
-      ) : null}
+      {renderBody()}
     </BottomSheet>
   );
 };

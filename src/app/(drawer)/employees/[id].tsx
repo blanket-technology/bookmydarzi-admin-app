@@ -3,7 +3,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Alert, Linking, Text, View } from 'react-native';
 import { Button, Card, ConfirmModal, DocumentPreviewModal, EmptyState, Header, Input, Loader, Pressable, ScreenContent, Tabs, type TabItem } from '@/components/ui';
 import { useOrders } from '@/features/orders/hooks/useOrders';
 import {
@@ -202,14 +202,25 @@ export default function StaffDetailsScreen() {
   };
 
   const handleToggleVerification = () => {
-    if (!staff) return;
-    verificationMutation.mutate(!staff.bridge_documents?.is_approved);
+    if (!staff || verificationMutation.isPending) return;
+    if (staff.bridge_documents?.is_approved) {
+      Alert.alert('Remove verification?', 'This Bridge account will be unverified and lose access to jobs until verified again.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Unverify', style: 'destructive', onPress: () => verificationMutation.mutate(false) },
+      ]);
+      return;
+    }
+    verificationMutation.mutate(true);
   };
 
   const handleViewDocument = (url?: string | null) => {
     const resolved = resolveDocUrl(url);
     if (!resolved) return;
-    if (!isPdfUrl(resolved)) setPreviewUrl(resolved);
+    if (isPdfUrl(resolved)) {
+      Linking.openURL(resolved).catch(() => Alert.alert('Could not open the document', 'Please try again.'));
+      return;
+    }
+    setPreviewUrl(resolved);
   };
 
   const handlePickAvatarPhoto = async () => {

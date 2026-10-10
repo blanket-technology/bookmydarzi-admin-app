@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { Button, Input, Loader, Pressable } from '@/components/ui';
 import { useCatalogTree } from '@/features/catalog/hooks/useCatalog';
 import { useTailors } from '@/features/tailors/hooks/useTailors';
@@ -32,8 +32,15 @@ export function CommissionRatesPanel() {
   const tailorList = tailors?.tailors ?? tailors?.items ?? [];
 
   const handleSave = () => {
+    if (upsertMutation.isPending) return;
     if (!tailorId || !percent) {
       setFormError('Select a tailor and enter a commission percentage.');
+      return;
+    }
+    // Strict: digits with up to 2 decimals, between 0 and 100 (a comma decimal is accepted).
+    const cleaned = percent.trim().replace(',', '.');
+    if (!/^\d{1,3}(\.\d{1,2})?$/.test(cleaned) || Number(cleaned) > 100) {
+      setFormError('Enter a percentage between 0 and 100, e.g. 65 or 62.5.');
       return;
     }
     setFormError('');
@@ -41,7 +48,7 @@ export function CommissionRatesPanel() {
       {
         tailor_id: Number(tailorId),
         category_id: categoryId ? Number(categoryId) : null,
-        commission_percent: percent,
+        commission_percent: cleaned,
       },
       {
         onSuccess: () => {
@@ -54,8 +61,23 @@ export function CommissionRatesPanel() {
   };
 
   const handleDelete = (rateId: number) => {
-    setDeletingId(rateId);
-    deleteMutation.mutate(String(rateId), { onSettled: () => setDeletingId(null) });
+    if (deleteMutation.isPending) return;
+    // Removing a negotiated rate silently drops that tailor back to the platform default.
+    Alert.alert(
+      'Remove commission rate?',
+      'Payouts for this tailor will fall back to the platform default rate.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            setDeletingId(rateId);
+            deleteMutation.mutate(String(rateId), { onSettled: () => setDeletingId(null) });
+          },
+        },
+      ],
+    );
   };
 
   return (

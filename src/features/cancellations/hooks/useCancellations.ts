@@ -33,6 +33,9 @@ export const useApproveCancellationMutation = () => {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['cancellations'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CANCELLATION(variables.id) });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['order'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
       toast.success('Cancellation approved');
     },
     onError: (error) => toast.error(getMutationError(error)),
@@ -47,6 +50,9 @@ export const useRejectCancellationMutation = () => {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['cancellations'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CANCELLATION(variables.id) });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['order'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
       toast.success('Cancellation rejected');
     },
     onError: (error) => toast.error(getMutationError(error)),

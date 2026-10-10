@@ -1,3 +1,4 @@
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
@@ -50,6 +51,7 @@ export default function ApplicationsScreen() {
   const { contentMaxWidth } = useResponsive();
   const { permissions } = usePermissions();
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 350);
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [approveTarget, setApproveTarget] = useState<TailorApplicationListItem | null>(null);
@@ -57,7 +59,7 @@ export default function ApplicationsScreen() {
   const [rejectReason, setRejectReason] = useState('');
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useApplications(
-    { page, limit: LIMIT, search: search || undefined, status: statusFilter || undefined },
+    { page, limit: LIMIT, search: debouncedSearch || undefined, status: statusFilter || undefined },
     permissions.applications,
   );
   const approveMutation = useApproveApplicationMutation();

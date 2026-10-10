@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Image, Text, View } from 'react-native';
 import { Modal, Pressable } from '@/components/ui';
-import { useCountdown } from '@/features/broadcasts/offerCardHelpers';
+import { hasExpired, useCountdown } from '@/features/broadcasts/offerCardHelpers';
 import { DetailRow } from '@/features/orders/components/DetailRow';
 import { useTheme } from '@/hooks/useTheme';
 import type { BroadcastItem, BroadcastOffer } from '@/types/broadcasts';
@@ -140,7 +140,7 @@ export const TailorOfferCard = ({
 }) => {
   const { colors } = useTheme();
   const countdown = useCountdown(offer.expires_at);
-  const isExpired = countdown === 'Expired';
+  const isExpired = hasExpired(offer.expires_at);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // Real job name instead of a redundant "Tailoring Order" label (a tailor

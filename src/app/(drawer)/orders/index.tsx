@@ -1,6 +1,7 @@
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { Badge, EmptyState, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
 import { ORDER_STATUS_COLORS, orderStatusLabel } from '@/constants/orderStatus';
@@ -44,10 +45,19 @@ export default function OrdersScreen() {
   const { status: statusParam } = useLocalSearchParams<{ status?: string }>();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 350);
   const [filters, setFilters] = useState<OrdersFilters>(
     statusParam ? { ...EMPTY_FILTERS, status: statusParam } : EMPTY_FILTERS,
   );
   const [filterVisible, setFilterVisible] = useState(false);
+
+  // The drawer keeps this screen mounted, so a second dashboard card (a different
+  // ?status=) must update the filter too, not only the first one.
+  useEffect(() => {
+    if (statusParam === undefined) return;
+    setFilters((prev) => (prev.status === statusParam ? prev : { ...prev, status: statusParam }));
+    setPage(1);
+  }, [statusParam]);
   const [needsManualAssignment, setNeedsManualAssignment] = useState(false);
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
@@ -56,15 +66,17 @@ export default function OrdersScreen() {
     () => ({
       page,
       limit: LIMIT,
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       status: filters.status || undefined,
       payment_status: filters.paymentStatus || undefined,
       tailor_id: filters.tailorId || undefined,
       date_from: filters.dateFrom || undefined,
-      date_to: filters.dateTo || undefined,
+      // The backend compares CreatedAt <= date_to as a timestamp, so a bare date
+      // would exclude the whole end day: include its last second.
+      date_to: filters.dateTo ? `${filters.dateTo}T23:59:59` : undefined,
       needs_manual_assignment: needsManualAssignment || undefined,
     }),
-    [page, search, filters, needsManualAssignment],
+    [page, debouncedSearch, filters, needsManualAssignment],
   );
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useOrders(params);

@@ -79,6 +79,23 @@ export const ChangeMobileSheet = ({ visible, onClose }: ChangeMobileSheetProps) 
     );
   };
 
+  // Sends (or re-sends) the code to the NEW number. Kept separate because the current
+  // number's code is single-use: once it has been verified the user must be able to
+  // retry just this step, not start over.
+  const sendNewNumberOtp = () => {
+    requestNewOtp.mutate(
+      { new_mobile: newMobile.trim(), password },
+      {
+        onSuccess: (data) => {
+          setError('');
+          toast.success(data.message);
+          Keyboard.dismiss();
+        },
+        onError: (err) => setError(getMutationError(err)),
+      },
+    );
+  };
+
   const handleVerifyCurrent = () => {
     setError('');
     if (otp.length !== 6) {
@@ -87,21 +104,13 @@ export const ChangeMobileSheet = ({ visible, onClose }: ChangeMobileSheetProps) 
     }
     verifyCurrentOtp.mutate(otp, {
       onSuccess: () => {
-        // Current-mobile ownership confirmed - immediately chain into
-        // requesting the OTP for the new number so the user only sees one
-        // more screen, not a third intermediate step.
-        requestNewOtp.mutate(
-          { new_mobile: newMobile.trim(), password },
-          {
-            onSuccess: (data) => {
-              toast.success(data.message);
-              Keyboard.dismiss();
-              setOtp('');
-              setStep('verify-new');
-            },
-            onError: (err) => setError(getMutationError(err)),
-          },
-        );
+        // Current-mobile ownership confirmed (that code is now used up). Move to the
+        // next step immediately; if sending the new code fails the user stays here
+        // with the error and a Resend button instead of being stuck re-entering a
+        // spent code.
+        setOtp('');
+        setStep('verify-new');
+        sendNewNumberOtp();
       },
       onError: (err) => setError(getMutationError(err)),
     });
@@ -252,6 +261,19 @@ export const ChangeMobileSheet = ({ visible, onClose }: ChangeMobileSheetProps) 
           ) : (
             <View className="mb-3" />
           )}
+          {step === 'verify-new' ? (
+            <Pressable
+              onPress={sendNewNumberOtp}
+              disabled={isPending}
+              accessibilityRole="button"
+              className="self-center py-2"
+              hitSlop={10}
+            >
+              <Text className="text-sm font-semibold" style={{ color: colors.primary, opacity: isPending ? 0.5 : 1 }}>
+                Resend code
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       )}
     </BottomSheet>

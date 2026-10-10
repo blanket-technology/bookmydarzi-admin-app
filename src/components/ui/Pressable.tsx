@@ -87,6 +87,10 @@ export const Pressable = forwardRef<View, PressableProps>(
     return (
       <AnimatedPressable
         ref={ref}
+        // Screen readers get a role and the disabled state for every tappable
+        // surface by default; callers can still override either.
+        accessibilityRole={props.accessibilityRole ?? 'button'}
+        accessibilityState={{ disabled: !!disabled, ...props.accessibilityState }}
         disabled={disabled}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}

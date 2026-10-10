@@ -91,11 +91,22 @@ export default function ChatThreadScreen() {
 
   // Mark read up to the latest message whenever the visible list grows -
   // read_receipt_updated then lets the customer app show a read tick.
+  // Depends on isConnected: history usually loads before the socket opens, and a
+  // receipt sent into a closed socket is dropped (the inbox then kept showing
+  // an unread count for a thread the agent was reading).
   useEffect(() => {
-    if (localMessages.length === 0) return;
+    if (!isConnected || localMessages.length === 0) return;
     const lastSeq = Math.max(...localMessages.map((m) => m.seq ?? 0));
     if (lastSeq > 0) sendReadReceipt(lastSeq);
-  }, [localMessages, sendReadReceipt]);
+  }, [isConnected, localMessages, sendReadReceipt]);
+
+  // Leaving the thread: refresh the inbox so its unread badges are correct.
+  useEffect(
+    () => () => {
+      queryClient.invalidateQueries({ queryKey: ['chat-sessions'] });
+    },
+    [queryClient],
+  );
 
   const handleSend = () => {
     const body = draft.trim();

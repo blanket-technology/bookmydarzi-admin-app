@@ -23,6 +23,14 @@ import { useOrderActions, type OrderAction } from '@/features/orders/hooks/useOr
 import { usePickupBroadcastOffers, useAcceptPickupBroadcastMutation } from '@/features/pickups/hooks/usePickups';
 import { useDeliveryBroadcastOffers, useAcceptDeliveryBroadcastMutation } from '@/features/deliveries/hooks/useDeliveries';
 import { useMarkReturnInTransitMutation, useMarkReturnCompleteMutation } from '@/features/returns/hooks/useReturns';
+import {
+  useMarkRepairPickupDeliveredToTailorMutation,
+  useMarkRepairPickupInTransitMutation,
+} from '@/features/repairPickups/hooks/useRepairPickups';
+import {
+  useMarkRepairDeliveryCompleteMutation,
+  useMarkRepairDeliveryInTransitMutation,
+} from '@/features/repairDeliveries/hooks/useRepairDeliveries';
 import { MeasurementManageSheet } from '@/features/orders/components/MeasurementManageSheet';
 import { AddOrderAddonSheet } from '@/features/orders/components/AddOrderAddonSheet';
 import { UpdateProgressSheet } from '@/features/orders/components/UpdateProgressSheet';
@@ -154,20 +162,27 @@ export default function OrderDetailsScreen() {
   const downloadInvoiceMutation = useDownloadInvoiceMutation();
   const markReturnInTransitMutation = useMarkReturnInTransitMutation();
   const markReturnCompleteMutation = useMarkReturnCompleteMutation();
+  const markRepairPickupInTransitMutation = useMarkRepairPickupInTransitMutation();
+  const markRepairPickupDeliveredMutation = useMarkRepairPickupDeliveredToTailorMutation();
+  const markRepairDeliveryInTransitMutation = useMarkRepairDeliveryInTransitMutation();
+  const markRepairDeliveryCompleteMutation = useMarkRepairDeliveryCompleteMutation();
 
-  // Return leg (post-cancellation reverse trip) progression buttons
-  // (Mark In Transit / Mark Complete) below. Two ways in: the employee who
-  // actually accepted the return broadcast progressing their own job, OR
-  // an admin/superadmin stepping in - previously admin had no lever at all
-  // once a return was assigned (same dead end just fixed for assignment
-  // itself, and the same override pattern this screen already uses for
-  // delivery: mark_return_in_transit/mark_return_complete are already
-  // admin/superadmin-permitted server-side via employee.py's
-  // _employee_only role list, despite the name).
+  // Return / repair-pickup / repair-delivery leg progression (Mark In Transit /
+  // Mark Complete). The backend only lets the employee who accepted that leg
+  // progress it (strict equality with the leg's employee id - there is NO admin
+  // bypass; an admin's lever is reassigning the leg), so only that employee is
+  // offered the buttons.
+  const myUserId = String(user?.id ?? '');
   const isMyReturn =
-    !!order?.return_employee_id &&
-    (isAdminRole ||
-      (isEmployeeRole && String(order.return_employee_id) === String(user?.id ?? '')));
+    isEmployeeRole && !!order?.return_employee_id && String(order.return_employee_id) === myUserId;
+  const isMyRepairPickup =
+    isEmployeeRole &&
+    !!order?.repair_pickup_employee_id &&
+    String(order.repair_pickup_employee_id) === myUserId;
+  const isMyRepairDelivery =
+    isEmployeeRole &&
+    !!order?.repair_delivery_employee_id &&
+    String(order.repair_delivery_employee_id) === myUserId;
 
   // Tailor-assignment broadcast tracker - only meaningful to admins who manage
   // tailor search. Hidden from Bridge/employee, whose job is pickup/delivery,
@@ -179,7 +194,7 @@ export default function OrderDetailsScreen() {
     showBroadcastMonitor,
   );
 
-  const { actions } = useOrderActions({ role, order });
+  const { actions } = useOrderActions({ role, userId: user?.id, order });
 
   const tailors = isAdminRole ? adminTailorsData?.tailors ?? adminTailorsData?.items ?? [] : employeeTailorsData ?? [];
 
@@ -530,6 +545,64 @@ export default function OrderDetailsScreen() {
           </View>
         ) : null}
 
+        {isMyRepairPickup &&
+        (order.status === ORDER_STATUS.REPAIR_PICKUP_SCHEDULED || order.status === ORDER_STATUS.REPAIR_PICKUP_IN_TRANSIT) ? (
+          <View className="mb-4 rounded-3xl p-4" style={{ backgroundColor: colors.primaryLight }}>
+            <View className="flex-row items-start">
+              <Ionicons name="construct-outline" size={18} color={colors.primary} style={{ marginTop: 1 }} />
+              <Text className="text-sm font-semibold ml-2.5 flex-1" style={{ color: colors.text }}>
+                {t('repairPickups.acceptedBanner')}
+              </Text>
+            </View>
+            <View className="flex-row mt-3" style={{ gap: 10 }}>
+              {order.status === ORDER_STATUS.REPAIR_PICKUP_SCHEDULED ? (
+                <Button
+                  title={t('repairPickups.markInTransit')}
+                  onPress={() => markRepairPickupInTransitMutation.mutate(order.order_id)}
+                  loading={markRepairPickupInTransitMutation.isPending}
+                  fullWidth
+                />
+              ) : (
+                <Button
+                  title={t('repairPickups.markDeliveredToTailor')}
+                  onPress={() => markRepairPickupDeliveredMutation.mutate(order.order_id)}
+                  loading={markRepairPickupDeliveredMutation.isPending}
+                  fullWidth
+                />
+              )}
+            </View>
+          </View>
+        ) : null}
+
+        {isMyRepairDelivery &&
+        (order.status === ORDER_STATUS.REPAIR_DELIVERY_SCHEDULED || order.status === ORDER_STATUS.REPAIR_DELIVERY_IN_TRANSIT) ? (
+          <View className="mb-4 rounded-3xl p-4" style={{ backgroundColor: colors.primaryLight }}>
+            <View className="flex-row items-start">
+              <Ionicons name="construct-outline" size={18} color={colors.primary} style={{ marginTop: 1 }} />
+              <Text className="text-sm font-semibold ml-2.5 flex-1" style={{ color: colors.text }}>
+                {t('repairDeliveries.acceptedBanner')}
+              </Text>
+            </View>
+            <View className="flex-row mt-3" style={{ gap: 10 }}>
+              {order.status === ORDER_STATUS.REPAIR_DELIVERY_SCHEDULED ? (
+                <Button
+                  title={t('repairDeliveries.markInTransit')}
+                  onPress={() => markRepairDeliveryInTransitMutation.mutate(order.order_id)}
+                  loading={markRepairDeliveryInTransitMutation.isPending}
+                  fullWidth
+                />
+              ) : (
+                <Button
+                  title={t('repairDeliveries.markComplete')}
+                  onPress={() => markRepairDeliveryCompleteMutation.mutate(order.order_id)}
+                  loading={markRepairDeliveryCompleteMutation.isPending}
+                  fullWidth
+                />
+              )}
+            </View>
+          </View>
+        ) : null}
+
         {order.items.length > 1 ? (
           <OrderItemsCard
             order={order}
@@ -582,7 +655,7 @@ export default function OrderDetailsScreen() {
 
         {showBroadcastMonitor ? <BroadcastMonitorCard status={broadcastStatus} isLoading={broadcastStatusLoading} /> : null}
 
-        {isAdminRole ? (
+        {isAdminRole && ['order_placed', 'order_accepted', 'searching_tailor', 'broadcasted', 'tailor_assigned'].includes(order.status) ? (
           <AdminToolsSection onTriggerBroadcast={() => setBroadcastConfirmVisible(true)} triggering={triggerBroadcastMutation.isPending} />
         ) : null}
 
@@ -751,7 +824,13 @@ export default function OrderDetailsScreen() {
         assignedEmployeeId={order.assigned_employee_id}
       />
 
-      <CorrectStatusSheet visible={statusSheetVisible} onClose={() => setStatusSheetVisible(false)} onSelect={handleCorrectStatus} />
+      <CorrectStatusSheet
+        visible={statusSheetVisible}
+        onClose={() => setStatusSheetVisible(false)}
+        onSelect={handleCorrectStatus}
+        currentStatus={order.status}
+        loading={statusMutation.isPending}
+      />
 
       <RejectOrderSheet visible={rejectSheetVisible} onClose={() => setRejectSheetVisible(false)} orderId={order.order_id} />
 

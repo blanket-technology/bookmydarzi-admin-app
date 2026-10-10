@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { ActivityIndicator, Modal, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useCountdown, useCountdownProgress } from '@/features/broadcasts/offerCardHelpers';
+import { hasExpired, useCountdown, useCountdownProgress } from '@/features/broadcasts/offerCardHelpers';
+import { Button } from '@/components/ui/Button';
 import { TailorOfferCard } from '@/features/broadcasts/components/TailorOfferCard';
 import {
   useAcceptBroadcastMutation,
@@ -12,6 +13,7 @@ import {
 } from '@/features/broadcasts/hooks/useBroadcasts';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useBiometricStore } from '@/store/biometricStore';
 import { useTheme } from '@/hooks/useTheme';
 import { useOfferAlertSound } from '@/hooks/useOfferAlertSound';
 import { useIncomingBroadcastStore } from '@/store/incomingBroadcastStore';
@@ -25,20 +27,23 @@ import { useIncomingBroadcastStore } from '@/store/incomingBroadcastStore';
 export const IncomingBroadcastModal = () => {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
+  // Offer popups are mounted outside the lock gate: never show customer addresses over it.
+  const appLocked = useBiometricStore((s) => s.locked);
   const insets = useSafeAreaInsets();
   const { permissions } = usePermissions();
   const tailorEnabled = !!permissions.broadcasts;
 
   const queue = useIncomingBroadcastStore((s) => s.queue);
-  const dequeue = useIncomingBroadcastStore((s) => s.dequeue);
+  const removeOffer = useIncomingBroadcastStore((s) => s.remove);
   const pending = queue[0] ?? null;
 
-  const visible = !!pending && tailorEnabled;
+  const visible = !!pending && tailorEnabled && !appLocked;
 
   // Enabled independent of the tailor's online/offline toggle on the
   // Broadcasts screen - if a WS event enqueued this, the offer already
   // exists server-side regardless of what the toggle shows right now.
-  const { data } = useBroadcastOffers({ limit: 50 }, visible);
+  const offersQuery = useBroadcastOffers({ limit: 50 }, visible);
+  const data = offersQuery.data;
   // order_id comes back as a number from GET /orders/broadcasts
   // (broadcast.py: "order_id": int(order.Id)) while pending.orderId is
   // always a string (see useAppSocket.ts's String(data.order_id ?? '')) -
@@ -52,7 +57,7 @@ export const IncomingBroadcastModal = () => {
   // already has one) - a tailor had no urgency signal and could sit on an
   // offer that had already timed out and moved to the next round/tailor.
   const countdown = useCountdown(offer?.expires_at);
-  const isExpired = countdown === t('pickups.expired');
+  const isExpired = hasExpired(offer?.expires_at);
   const countdownProgress = useCountdownProgress(offer?.notified_at, offer?.expires_at);
 
   const acceptMutation = useAcceptBroadcastMutation();
@@ -62,29 +67,56 @@ export const IncomingBroadcastModal = () => {
   // already timed out server-side by the time the countdown hits zero,
   // nothing left to accept/decline, just clear it and move on.
   useEffect(() => {
-    if (pending && offer && isExpired) dequeue();
-  }, [pending, offer, isExpired, dequeue]);
+    if (pending && offer && isExpired) removeOffer(pending.orderId);
+  }, [pending, offer, isExpired, removeOffer]);
+
+  // Never leave the tailor on a blocking, button-less screen: if a list fetched
+  // after this offer appeared does not contain it (accepted by someone else,
+  // round rotated, event arrived late) or the fetch failed, drop it.
+  const shownAt = useRef<{ id: string; at: number }>({ id: '', at: 0 });
+  if (pending && shownAt.current.id !== pending.orderId) {
+    shownAt.current = { id: pending.orderId, at: Date.now() };
+  }
+  const gone =
+    !!pending &&
+    !offer &&
+    !offersQuery.isFetching &&
+    (offersQuery.isError || (offersQuery.isSuccess && offersQuery.dataUpdatedAt >= shownAt.current.at));
+  useEffect(() => {
+    if (pending && gone) removeOffer(pending.orderId);
+  }, [pending, gone, removeOffer]);
 
   useOfferAlertSound(visible && !isExpired);
 
   if (!pending) return null;
 
   const handleAccept = () => {
+    if (acceptMutation.isPending || declineMutation.isPending) return;
     acceptMutation.mutate(pending.orderId, {
       onSuccess: () => {
-        dequeue();
+        removeOffer(pending.orderId);
         router.push(`/(drawer)/orders/${pending.orderId}` as never);
       },
-      onError: () => dequeue(),
+      onError: () => removeOffer(pending.orderId),
     });
   };
 
   const handleDecline = () => {
-    declineMutation.mutate(pending.orderId, { onSettled: () => dequeue() });
+    if (acceptMutation.isPending || declineMutation.isPending) return;
+    declineMutation.mutate(pending.orderId, { onSettled: () => removeOffer(pending.orderId) });
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" statusBarTranslucent>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      statusBarTranslucent
+      // Android back must never trap the user behind a loading offer.
+      onRequestClose={() => {
+        if (!offer) removeOffer(pending.orderId);
+      }}
+    >
       <View className="flex-1" style={{ backgroundColor: colors.background, paddingTop: insets.top }}>
         <View className="items-center pt-6 pb-2 px-5">
           <View
@@ -97,7 +129,7 @@ export const IncomingBroadcastModal = () => {
             {t('incomingBroadcast.title')}
           </Text>
           <Text className="text-sm mt-0.5" style={{ color: colors.textMuted }}>
-            {offer?.order_code ?? pending.orderCode ?? `Order #${pending.orderId}`}
+            {offer?.order_code ?? pending.orderCode ?? t('pickups.orderHash', { id: pending.orderId })}
           </Text>
           {offer?.expires_at ? (
             <>
@@ -148,8 +180,16 @@ export const IncomingBroadcastModal = () => {
             <View className="flex-1 items-center justify-center">
               <ActivityIndicator size="small" color={colors.primary} />
               <Text className="text-sm mt-3" style={{ color: colors.textMuted }}>
-                Loading order details…
+                {t('incomingBroadcast.loading')}
               </Text>
+              <View className="mt-6 w-full">
+                <Button
+                  title={t('incomingBroadcast.dismiss')}
+                  variant="outline"
+                  onPress={() => removeOffer(pending.orderId)}
+                  fullWidth
+                />
+              </View>
             </View>
           ) : (
             <TailorOfferCard

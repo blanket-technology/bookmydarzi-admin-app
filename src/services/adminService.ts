@@ -4,6 +4,15 @@ import { toast } from '@/store/toastStore';
 import type { DashboardResponse } from '@/types/dashboard';
 import { isDashboardResponseValid, normalizeDashboardResponse } from '@/utils/dashboard';
 
+// The dashboard refetches every 20 s: a persistently odd response must warn once,
+// not raise an error toast every 20 seconds.
+let dashboardProblemShown = false;
+const toastDashboardProblemOnce = (message: string): void => {
+  if (dashboardProblemShown) return;
+  dashboardProblemShown = true;
+  toast.error(message);
+};
+
 export const adminService = {
   getDashboard: async (): Promise<DashboardResponse> => {
     const response = await apiClient.get<unknown>(ENDPOINTS.ADMIN.DASHBOARD);
@@ -13,7 +22,7 @@ export const adminService = {
     }
 
     if (response.data == null) {
-      toast.error('Dashboard data unavailable. Showing default values.');
+      toastDashboardProblemOnce('Dashboard data unavailable. Showing default values.');
       return normalizeDashboardResponse(null);
     }
 
@@ -21,7 +30,7 @@ export const adminService = {
       if (__DEV__) {
         console.warn('[adminService] Unrecognized dashboard response shape — using defaults');
       }
-      toast.error('Dashboard data format unexpected. Showing default values.');
+      toastDashboardProblemOnce('Dashboard data format unexpected. Showing default values.');
     }
 
     return normalizeDashboardResponse(response.data);

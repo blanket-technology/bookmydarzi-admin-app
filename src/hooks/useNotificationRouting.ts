@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { isExpoGo } from '@/utils/expoGo';
 
 // Maps the `action` the backend already sends in every broadcast push's
@@ -26,6 +26,12 @@ function routeForNotificationData(data: Record<string, unknown> | undefined): st
   // Falls back to the order detail screen for any other notification type
   // that carries an order_id but isn't a broadcast action (e.g. a status
   // update) - still better than doing nothing with a tap.
+  // A chat push carries the conversation id (session_uuid) - open the thread,
+  // not the (possibly unrelated) order the chat was started from.
+  const chatSession = data.session_uuid ?? data.session_id;
+  if (chatSession != null && (data.type === 'chat' || data.deep_link === 'support_conversation')) {
+    return `/(drawer)/support/chat/${chatSession}`;
+  }
   const orderId = data.order_id;
   if (orderId != null) return `/(drawer)/orders/${orderId}`;
   return null;
@@ -42,8 +48,12 @@ function routeForNotificationData(data: Record<string, unknown> | undefined): st
  * into a drawer screen before auth/hydration is ready would be a no-op or
  * crash depending on navigator state).
  */
+// Module-level, not per-mount: this hook remounts on every login, and the OS keeps
+// returning the same last tapped notification - without this a stale tap from hours
+// ago was replayed after each logout/login.
+let lastHandledNotificationId: string | null = null;
+
 export function useNotificationRouting(enabled: boolean): void {
-  const handledColdStartRef = useRef(false);
 
   useEffect(() => {
     if (!enabled || isExpoGo) return undefined;
@@ -55,15 +65,18 @@ export function useNotificationRouting(enabled: boolean): void {
         if (cancelled) return;
 
         subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+          lastHandledNotificationId = response.notification.request.identifier;
           const data = response.notification.request.content.data as Record<string, unknown> | undefined;
           const route = routeForNotificationData(data);
           if (route) router.push(route as never);
         });
 
-        if (!handledColdStartRef.current) {
-          handledColdStartRef.current = true;
+        {
           Notifications.getLastNotificationResponseAsync().then((response) => {
             if (cancelled || !response) return;
+            const id = response.notification.request.identifier;
+            if (id === lastHandledNotificationId) return;
+            lastHandledNotificationId = id;
             const data = response.notification.request.content.data as Record<string, unknown> | undefined;
             const route = routeForNotificationData(data);
             if (route) router.push(route as never);

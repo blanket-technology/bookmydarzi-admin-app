@@ -101,6 +101,8 @@ export interface AppPermissions {
    * Bridge employee sees their OWN earnings here, never the admin-only
    * cross-tailor/cross-employee payout list those two flags gate. */
   myEarnings: boolean;
+  /** Moderating customer reviews (/admin/reviews*) is admin/superadmin-only on the backend. */
+  reviews: boolean;
 }
 
 /** Full admin access — all modules visible, except registering other admins
@@ -147,6 +149,7 @@ const ADMIN_PERMISSIONS: AppPermissions = {
   payouts: false,
   bridgePayouts: false,
   myEarnings: false,
+  reviews: true,
 };
 
 /** Superadmin: everything an admin has, plus admin-account management and
@@ -205,6 +208,7 @@ const EMPLOYEE_PERMISSIONS: AppPermissions = {
   payouts: false,
   bridgePayouts: false,
   myEarnings: true,
+  reviews: false,
 };
 
 /** Matches pre-RBAC tailor drawer routes */
@@ -251,6 +255,7 @@ const TAILOR_PERMISSIONS: AppPermissions = {
   payouts: false,
   bridgePayouts: false,
   myEarnings: true,
+  reviews: false,
 };
 
 /** Most restrictive default — used when the role cannot be resolved at all. */
@@ -286,6 +291,7 @@ const NO_PERMISSIONS: AppPermissions = {
   payouts: false,
   bridgePayouts: false,
   myEarnings: false,
+  reviews: false,
 };
 
 const normalizeRole = (role?: string | null): string | undefined => {
@@ -354,7 +360,8 @@ export const resolvePermissions = (
  */
 const RBAC_SCREEN_TO_MODULE: Partial<Record<string, (keyof AppPermissions)[]>> = {
   users: ['users'],
-  tailors: ['tailors'],
+  // The Applications screens use the same backend screen permission as Tailors.
+  tailors: ['tailors', 'applications'],
   employees: ['staff', 'adminManagement'],
   orders: ['orders'],
   cms: ['homepage'],
@@ -399,7 +406,7 @@ export const mergeEffectivePermissions = (
 export const ROUTE_PERMISSION_MAP: Record<string, keyof AppPermissions> = {
   dashboard: 'dashboard',
   orders: 'orders',
-  reviews: 'orders',
+  reviews: 'reviews',
   payments: 'payments',
   customers: 'users',
   tailors: 'tailors',
@@ -439,6 +446,9 @@ export const ROUTE_PERMISSION_MAP: Record<string, keyof AppPermissions> = {
   'bridge-payouts': 'bridgePayouts',
   'my-earnings': 'myEarnings',
   'account-settings': 'profile',
+  // Reachable from Settings for every signed-in role (it was unmapped, so the
+  // guard failed closed and the screen showed "no access").
+  'privacy-policy': 'profile',
 };
 
 export const getDefaultRouteForRole = (

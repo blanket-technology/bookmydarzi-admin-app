@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import { BottomSheet, Button, Input } from '@/components/ui';
 import { useMarkPayoutPaidMutation } from '@/features/payouts/hooks/usePayouts';
 import { useTheme } from '@/hooks/useTheme';
 import type { Payout } from '@/types/payouts';
-import { formatCurrency } from '@/utils/errors';
+import { formatMoney, getUserFacingMessage } from '@/utils/errors';
 
 export function MarkPaidSheet({ payout, onClose }: { payout: Payout; onClose: () => void }) {
   const { colors } = useTheme();
@@ -14,17 +14,33 @@ export function MarkPaidSheet({ payout, onClose }: { payout: Payout; onClose: ()
   const mutation = useMarkPayoutPaidMutation();
 
   const handleSubmit = () => {
+    if (mutation.isPending) return;
     if (!payoutReference.trim()) {
       setValidationError('A payout reference (bank UTR / transaction ref) is required.');
       return;
     }
     setValidationError('');
-    mutation.mutate(
-      {
-        payoutId: String(payout.id),
-        payload: { payout_reference: payoutReference.trim(), notes: notes.trim() || undefined },
-      },
-      { onSuccess: onClose },
+    // Recording a payout as paid is a ledger entry about real money: confirm
+    // exactly how much and to whom before it is written.
+    Alert.alert(
+      'Mark payout as paid?',
+      `Confirm you have already transferred ${formatMoney(Number(payout.payout_amount))} (ref ${payoutReference.trim()}).`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Mark Paid',
+          onPress: () => {
+            mutation.reset();
+            mutation.mutate(
+              {
+                payoutId: String(payout.id),
+                payload: { payout_reference: payoutReference.trim(), notes: notes.trim() || undefined },
+              },
+              { onSuccess: onClose },
+            );
+          },
+        },
+      ],
     );
   };
 
@@ -47,7 +63,7 @@ export function MarkPaidSheet({ payout, onClose }: { payout: Payout; onClose: ()
         <View className="flex-row justify-between mb-1.5">
           <Text className="text-sm" style={{ color: colors.textSecondary }}>Order amount</Text>
           <Text className="text-sm font-semibold" style={{ color: colors.text }}>
-            {formatCurrency(Number(payout.order_amount))}
+            {formatMoney(Number(payout.order_amount))}
           </Text>
         </View>
         <View className="flex-row justify-between mb-1.5">
@@ -62,7 +78,7 @@ export function MarkPaidSheet({ payout, onClose }: { payout: Payout; onClose: ()
         >
           <Text className="text-sm font-semibold" style={{ color: colors.text }}>Payout amount</Text>
           <Text className="text-sm font-bold" style={{ color: '#10b981' }}>
-            {formatCurrency(Number(payout.payout_amount))}
+            {formatMoney(Number(payout.payout_amount))}
           </Text>
         </View>
       </View>
@@ -83,7 +99,7 @@ export function MarkPaidSheet({ payout, onClose }: { payout: Payout; onClose: ()
       />
       {mutation.isError ? (
         <Text className="text-xs mt-1" style={{ color: colors.error }}>
-          Failed to mark payout as paid.
+          {getUserFacingMessage(mutation.error)}
         </Text>
       ) : null}
     </BottomSheet>

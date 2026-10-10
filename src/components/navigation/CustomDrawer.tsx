@@ -30,7 +30,7 @@ const MENU_ITEMS: {
 }[] = [
   { label: 'Dashboard', icon: 'grid-outline', route: '/(drawer)/dashboard', permission: 'dashboard' },
   { label: 'Orders', icon: 'receipt-outline', route: '/(drawer)/orders', permission: 'orders' },
-  { label: 'Reviews', icon: 'star-outline', route: '/(drawer)/reviews', permission: 'orders' },
+  { label: 'Reviews', icon: 'star-outline', route: '/(drawer)/reviews', permission: 'reviews' },
   { label: 'Payments', icon: 'wallet-outline', route: '/(drawer)/payments', permission: 'payments' },
   { label: 'Broadcasts', icon: 'radio-outline', route: '/(drawer)/broadcasts', permission: 'broadcasts' },
   { label: 'Pickups', icon: 'cube-outline', route: '/(drawer)/pickups', permission: 'deliveries' },
@@ -186,7 +186,7 @@ export const CustomDrawer = (props: DrawerContentComponentProps) => {
             key={item.route}
             label={item.label}
             icon={item.icon}
-            active={pathname.includes(item.route.split('/').pop() ?? '')}
+            active={pathname.split('/').filter(Boolean)[0] === (item.route.split('/').pop() ?? '')}
             onPress={() => navigate(item.route)}
             badgeCount={
               item.permission === 'notifications'

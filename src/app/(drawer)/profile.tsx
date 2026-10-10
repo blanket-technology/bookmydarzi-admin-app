@@ -5,7 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Switch, Text, View } from 'react-native';
+import { Alert, Switch, Text, View } from 'react-native';
 import { z } from 'zod';
 import {
   Avatar,
@@ -191,7 +191,18 @@ function KycStatusCard({ role }: { role: 'tailor' | 'employee' }) {
             {isBusy ? (
               <Ionicons name="hourglass-outline" size={18} color={colors.textMuted} />
             ) : url ? (
-              <Pressable onPress={() => removeDoc(doc.type)} hitSlop={8} className="mr-2">
+              <Pressable
+                onPress={() =>
+                  Alert.alert(t('profile.removeDocTitle'), t('profile.removeDocBody'), [
+                    { text: t('common.cancel'), style: 'cancel' },
+                    { text: t('profile.removeDoc'), style: 'destructive', onPress: () => removeDoc(doc.type) },
+                  ])
+                }
+                accessibilityRole="button"
+                accessibilityLabel={t('profile.removeDoc')}
+                hitSlop={12}
+                className="mr-2"
+              >
                 <Ionicons name="trash-outline" size={18} color={colors.error} />
               </Pressable>
             ) : null}
@@ -332,6 +343,7 @@ function TailorProfileSection() {
 // this screen accumulating multiple URLs into one array instead of setting
 // a single field).
 const MAX_PORTFOLIO_IMAGES = 12;
+const PORTFOLIO_UPLOAD_PAUSED = true;
 
 function PortfolioSection({ images }: { images: string[] }) {
   const { colors } = useTheme();
@@ -343,6 +355,14 @@ function PortfolioSection({ images }: { images: string[] }) {
   const atLimit = images.length >= MAX_PORTFOLIO_IMAGES;
 
   const pickAndAdd = async () => {
+    // Uploading through the profile-photo endpoint REPLACES the account's avatar and
+    // deletes the previously stored file, so every new portfolio photo wiped the one
+    // before it (leaving broken links) and overwrote the profile picture. Adding is
+    // paused until the backend has a dedicated portfolio upload endpoint.
+    if (PORTFOLIO_UPLOAD_PAUSED) {
+      toast.info(t('profile.portfolioUploadPaused'));
+      return;
+    }
     if (atLimit) {
       toast.error(t('profile.portfolioLimit', { count: MAX_PORTFOLIO_IMAGES }));
       return;

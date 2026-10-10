@@ -26,6 +26,8 @@ interface IncomingBroadcastState {
   queue: IncomingBroadcast[];
   enqueue: (offer: IncomingBroadcast) => void;
   dequeue: () => void;
+  remove: (orderId: string) => void;
+  clear: () => void;
 }
 
 export const useIncomingBroadcastStore = create<IncomingBroadcastState>((set, get) => ({
@@ -42,9 +44,13 @@ export const useIncomingBroadcastStore = create<IncomingBroadcastState>((set, ge
     set({ queue: [...queue, offer] });
   },
   dequeue: () => set((state) => ({ queue: state.queue.slice(1) })),
+  remove: (orderId) => set((state) => ({ queue: state.queue.filter((o) => o.orderId !== orderId) })),
+  clear: () => set({ queue: [] }),
 }));
 
 export const incomingBroadcastQueue = {
   enqueue: (offer: IncomingBroadcast) => useIncomingBroadcastStore.getState().enqueue(offer),
   dequeue: () => useIncomingBroadcastStore.getState().dequeue(),
+  remove: (orderId: string) => useIncomingBroadcastStore.getState().remove(orderId),
+  clear: () => useIncomingBroadcastStore.getState().clear(),
 };

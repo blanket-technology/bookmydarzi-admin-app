@@ -18,6 +18,12 @@ interface AuditActionMeta {
 }
 
 const ACTION_META: Record<string, AuditActionMeta> = {
+  // Money-critical backend events: must stand out in the trail.
+  REFUND_MANUALLY_COMPLETED: { label: 'Refund marked as paid manually', icon: 'cash-outline', tone: 'warning' },
+  STUCK_REFUND_NEEDS_REVIEW: { label: 'Stuck refund needs review', icon: 'alert-circle-outline', tone: 'error' },
+  LATE_PAYMENT_SUCCESS_NEEDS_REVIEW: { label: 'Late payment needs review', icon: 'alert-circle-outline', tone: 'error' },
+  ORDER_FORCE_DELIVERED: { label: 'Order force-delivered by admin', icon: 'warning-outline', tone: 'warning' },
+  ORDER_FORCE_COMPLETED: { label: 'Order force-completed by admin', icon: 'warning-outline', tone: 'warning' },
   TAILOR_APPLICATION_SUBMITTED: { label: 'Tailor application submitted', icon: 'document-text-outline', tone: 'info' },
   TAILOR_APPROVED: { label: 'Tailor approved', icon: 'checkmark-circle-outline', tone: 'success' },
   TAILOR_REJECTED: { label: 'Tailor rejected', icon: 'close-circle-outline', tone: 'error' },

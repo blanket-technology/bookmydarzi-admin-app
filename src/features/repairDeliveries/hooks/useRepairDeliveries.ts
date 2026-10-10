@@ -16,9 +16,11 @@ export const useAcceptRepairDeliveryBroadcastMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (orderId: string) => repairDeliveryService.accept(orderId),
-    onSuccess: () => {
+    onSuccess: (_data, orderId) => {
       queryClient.invalidateQueries({ queryKey: ['repair-delivery-broadcasts'] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(String(orderId)) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
       toast.success('Repair delivery accepted');
     },
     onError: (error) => toast.error(getMutationError(error)),
