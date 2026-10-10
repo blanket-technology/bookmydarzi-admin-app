@@ -525,9 +525,29 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
         },
       });
 
-      // No terminal-status check needed here - the whole hook already
-      // returns [] up front for completed/cancelled/rejected orders.
-      list.push({
+      // Mirrors the backend's cancel block-list (cancellation_service.py
+      // _cancel_order_core): delivered / inspection / repair stages cannot be
+      // cancelled, and delivery-refused / return orders already carry a
+      // cancellation record. Offering the action there only ends in an error.
+      const cancelBlocked = new Set<string>([
+        ORDER_STATUS.DELIVERED,
+        ORDER_STATUS.INSPECTION_WINDOW,
+        ORDER_STATUS.IN_REPAIR,
+        ORDER_STATUS.REPAIR_PICKUP_PENDING,
+        ORDER_STATUS.REPAIR_PICKUP_SCHEDULED,
+        ORDER_STATUS.REPAIR_PICKUP_IN_TRANSIT,
+        ORDER_STATUS.AT_TAILOR_FOR_REPAIR,
+        ORDER_STATUS.REPAIR_COMPLETED,
+        ORDER_STATUS.REPAIR_DELIVERY_PENDING,
+        ORDER_STATUS.REPAIR_DELIVERY_SCHEDULED,
+        ORDER_STATUS.REPAIR_DELIVERY_IN_TRANSIT,
+        ORDER_STATUS.DELIVERY_REFUSED,
+        ORDER_STATUS.RETURN_PENDING,
+        ORDER_STATUS.RETURN_SCHEDULED,
+        ORDER_STATUS.RETURN_IN_TRANSIT,
+        ORDER_STATUS.RETURNED,
+      ]);
+      if (!cancelBlocked.has(status)) list.push({
         id: 'cancel',
         label: 'Cancel Order',
         tone: 'destructive',

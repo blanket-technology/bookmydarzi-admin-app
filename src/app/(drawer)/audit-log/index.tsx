@@ -51,7 +51,7 @@ export default function AuditLogScreen() {
     performed_by: actorFilter ? Number(actorFilter) : undefined,
     action: actionFilter || undefined,
     date_from: dateFrom ?? undefined,
-    date_to: dateTo ?? undefined,
+    date_to: dateTo ? `${dateTo}T23:59:59` : undefined,
   });
 
   const items = data?.items ?? [];

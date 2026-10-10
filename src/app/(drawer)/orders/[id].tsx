@@ -655,7 +655,7 @@ export default function OrderDetailsScreen() {
 
         {showBroadcastMonitor ? <BroadcastMonitorCard status={broadcastStatus} isLoading={broadcastStatusLoading} /> : null}
 
-        {isAdminRole ? (
+        {isAdminRole && ['order_placed', 'order_accepted', 'searching_tailor', 'broadcasted', 'tailor_assigned'].includes(order.status) ? (
           <AdminToolsSection onTriggerBroadcast={() => setBroadcastConfirmVisible(true)} triggering={triggerBroadcastMutation.isPending} />
         ) : null}
 
@@ -824,7 +824,13 @@ export default function OrderDetailsScreen() {
         assignedEmployeeId={order.assigned_employee_id}
       />
 
-      <CorrectStatusSheet visible={statusSheetVisible} onClose={() => setStatusSheetVisible(false)} onSelect={handleCorrectStatus} />
+      <CorrectStatusSheet
+        visible={statusSheetVisible}
+        onClose={() => setStatusSheetVisible(false)}
+        onSelect={handleCorrectStatus}
+        currentStatus={order.status}
+        loading={statusMutation.isPending}
+      />
 
       <RejectOrderSheet visible={rejectSheetVisible} onClose={() => setRejectSheetVisible(false)} orderId={order.order_id} />
 

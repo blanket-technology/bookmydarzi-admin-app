@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { API_CONFIG } from '@/config/api';
 import { ENDPOINTS } from '@/services/endpoints';
 import { QUERY_KEYS } from '@/constants/queryKeys';
+import { refreshAccessToken } from '@/services/refreshCoordinator';
 import { useAuthStore } from '@/store/authStore';
 import { incomingBroadcastQueue } from '@/store/incomingBroadcastStore';
 import { incomingOfferQueue, type IncomingOfferLocation } from '@/store/incomingOfferStore';
@@ -19,6 +20,18 @@ import type { NotificationItem, NotificationListResponse } from '@/types/notific
 // connection to its own "user:{id}" room automatically.
 const RECONNECT_BASE_DELAY_MS = 2000;
 const RECONNECT_MAX_DELAY_MS = 30_000;
+
+// True when the JWT's own `exp` is within `skewSeconds` (or unreadable).
+function tokenExpiresSoon(token: string, skewSeconds = 30): boolean {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return false;
+    const json = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof json.exp === 'number' && json.exp * 1000 - Date.now() < skewSeconds * 1000;
+  } catch {
+    return false;
+  }
+}
 
 function wsUrl(): string {
   const httpBase = API_CONFIG.BASE_URL;
@@ -98,7 +111,9 @@ export function useAppSocket() {
       const attempt = reconnectAttemptRef.current;
       const delay = Math.min(RECONNECT_BASE_DELAY_MS * 2 ** attempt, RECONNECT_MAX_DELAY_MS);
       reconnectAttemptRef.current = attempt + 1;
-      reconnectTimerRef.current = setTimeout(connect, delay);
+      reconnectTimerRef.current = setTimeout(() => {
+        void connect();
+      }, delay);
     };
 
     const handleNotification = (notification: NotificationItem) => {
@@ -287,10 +302,34 @@ export function useAppSocket() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOMEPAGE_OFFERS });
     };
 
-    const connect = () => {
+    let stableTimer: ReturnType<typeof setTimeout> | null = null;
+
+    // The socket handshake happens AFTER accept, so a dead token gets the
+    // socket closed by the server straight away. Use a fresh token (refreshing
+    // through the shared coordinator if the current one is about to expire).
+    const currentToken = async (): Promise<string | null> => {
+      const { accessToken, refreshToken } = useAuthStore.getState();
+      if (!accessToken) return null;
+      if (!refreshToken || !tokenExpiresSoon(accessToken)) return accessToken;
+      try {
+        const tokens = await refreshAccessToken(refreshToken);
+        return tokens.access_token ?? accessToken;
+      } catch {
+        return accessToken;
+      }
+    };
+
+    const connect = async () => {
       if (!shouldConnectRef.current) return;
-      const token = useAuthStore.getState().accessToken;
-      if (!token) return;
+      // Never open a second socket while one is open/connecting (a pending
+      // reconnect timer plus a foreground reconnect used to leak a duplicate,
+      // doubling every event and toast).
+      clearReconnectTimer();
+      if (wsRef.current && wsRef.current.readyState <= WebSocket.OPEN) return;
+
+      const token = await currentToken();
+      if (!token || !shouldConnectRef.current || !mountedRef.current) return;
+      if (wsRef.current && wsRef.current.readyState <= WebSocket.OPEN) return;
 
       wsStatus.setConnecting();
       const socket = new WebSocket(wsUrl());
@@ -302,8 +341,14 @@ export function useAppSocket() {
         } catch {
           // socket will surface the failure via onerror/onclose
         }
-        reconnectAttemptRef.current = 0;
         wsStatus.setConnected();
+        // Only forget the backoff once the connection has proven stable - a
+        // rejected token is closed by the server right after open, and
+        // resetting immediately made that a tight reconnect loop.
+        if (stableTimer) clearTimeout(stableTimer);
+        stableTimer = setTimeout(() => {
+          reconnectAttemptRef.current = 0;
+        }, 5000);
       };
 
       socket.onmessage = (event) => {
@@ -327,7 +372,14 @@ export function useAppSocket() {
       };
 
       socket.onclose = () => {
-        if (wsRef.current === socket) wsRef.current = null;
+        if (stableTimer) {
+          clearTimeout(stableTimer);
+          stableTimer = null;
+        }
+        // A newer socket already replaced this one (e.g. logout -> login): this
+        // close must not flip the banner or schedule another reconnect.
+        if (wsRef.current !== socket) return;
+        wsRef.current = null;
         if (shouldConnectRef.current) wsStatus.setDisconnected();
         scheduleReconnect();
       };
@@ -337,7 +389,7 @@ export function useAppSocket() {
       };
     };
 
-    if (shouldConnectRef.current) connect();
+    if (shouldConnectRef.current) void connect();
 
     // Reconnect immediately on foreground - a socket silently dies while the
     // app is backgrounded on both iOS and Android, so returning to the app
@@ -345,7 +397,7 @@ export function useAppSocket() {
     const appStateSub = AppState.addEventListener('change', (state: AppStateStatus) => {
       if (state === 'active' && shouldConnectRef.current && !wsRef.current) {
         reconnectAttemptRef.current = 0;
-        connect();
+        void connect();
       }
     });
 
@@ -354,8 +406,10 @@ export function useAppSocket() {
       shouldConnectRef.current = false;
       clearReconnectTimer();
       appStateSub.remove();
-      wsRef.current?.close();
+      if (stableTimer) clearTimeout(stableTimer);
+      const closing = wsRef.current;
       wsRef.current = null;
+      closing?.close();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);

@@ -19,9 +19,11 @@ export const useAcceptRepairPickupBroadcastMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (orderId: string) => repairPickupService.accept(orderId),
-    onSuccess: () => {
+    onSuccess: (_data, orderId) => {
       queryClient.invalidateQueries({ queryKey: ['repair-pickup-broadcasts'] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(String(orderId)) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
       toast.success('Repair pickup accepted');
     },
     onError: (error) => toast.error(getMutationError(error)),
