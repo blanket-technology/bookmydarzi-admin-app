@@ -73,6 +73,8 @@ export const useOrders = (params?: OrdersQueryParams, enabled = true) => {
       };
     },
     enabled,
+    // Keep showing the previous list while the next search/page loads (no skeleton flash).
+    placeholderData: (previous) => previous,
   });
 };
 
