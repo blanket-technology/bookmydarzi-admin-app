@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Linking, Text, View } from 'react-native';
 import { Button, Card, ConfirmModal, DocumentPreviewModal, EmptyState, Header, Input, Loader, Pressable, ScreenContent, Tabs, type TabItem } from '@/components/ui';
 import { useOrders } from '@/features/orders/hooks/useOrders';
@@ -99,17 +99,33 @@ export default function StaffDetailsScreen() {
 
   const isEmployee = staff?.role === 'employee';
 
-  const {
-    data: ordersData,
-    isLoading: ordersLoading,
-    isError: ordersIsError,
-    refetch: refetchOrders,
-  } = useOrders(
+  // A Bridge employee's jobs span two legs: pickup (employee_id) and delivery
+  // (delivery_employee_id). Querying only the pickup leg made a delivery-focused
+  // employee look idle, contradicting the KPIs above.
+  const pickupOrdersQuery = useOrders(
     { employee_id: id, page: ordersPage, limit: ORDERS_LIMIT, status: ordersStatus || undefined },
     !!id && isEmployee,
   );
-  const orders = ordersData?.orders ?? [];
-  const ordersTotal = ordersData?.total ?? 0;
+  const deliveryOrdersQuery = useOrders(
+    { delivery_employee_id: id, page: ordersPage, limit: ORDERS_LIMIT, status: ordersStatus || undefined },
+    !!id && isEmployee,
+  );
+  const ordersLoading = pickupOrdersQuery.isLoading || deliveryOrdersQuery.isLoading;
+  const ordersIsError = pickupOrdersQuery.isError || deliveryOrdersQuery.isError;
+  const refetchOrders = () => {
+    pickupOrdersQuery.refetch();
+    deliveryOrdersQuery.refetch();
+  };
+  const orders = useMemo(() => {
+    const byId = new Map<string, NonNullable<typeof pickupOrdersQuery.data>['orders'][number]>();
+    [...(pickupOrdersQuery.data?.orders ?? []), ...(deliveryOrdersQuery.data?.orders ?? [])].forEach((o) =>
+      byId.set(String(o.order_id), o),
+    );
+    return [...byId.values()].sort(
+      (a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime(),
+    );
+  }, [pickupOrdersQuery.data, deliveryOrdersQuery.data]);
+  const ordersTotal = Math.max(pickupOrdersQuery.data?.total ?? 0, deliveryOrdersQuery.data?.total ?? 0, orders.length);
   const ordersTotalPages = Math.max(1, Math.ceil(ordersTotal / ORDERS_LIMIT));
 
   const startEdit = () => {
