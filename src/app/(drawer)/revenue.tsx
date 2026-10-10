@@ -181,6 +181,9 @@ export default function RevenueScreen() {
 
   const dash = useMemo(() => normalizeDashboardResponse(data), [data]);
 
+  // The backend omits `revenue` entirely for non-superadmin callers; showing zeros
+  // there would be misleading financial data, so those sections are hidden instead.
+  const hasRevenue = (data as { revenue?: unknown } | undefined)?.revenue != null;
   const revenue = dash.revenue ?? {};
   const orders = dash.orders ?? {};
   const payments = dash.payments ?? {};
@@ -261,14 +264,24 @@ export default function RevenueScreen() {
           }
         >
           {/* Revenue KPI grid */}
+          {!hasRevenue ? (
+            <Card className="mb-4 mt-1">
+              <Text className="text-sm" style={{ color: colors.textSecondary }}>
+                Revenue figures are visible to superadmins only.
+              </Text>
+            </Card>
+          ) : null}
+          {hasRevenue ? (
           <View className="flex-row flex-wrap mt-1" style={{ gap: 12 }}>
-            <StatCard title="Total Revenue" value={formatCurrency(total)} icon="wallet-outline" color="#10b981" />
+            <StatCard title="Gross Revenue" value={formatCurrency(total)} icon="wallet-outline" color="#10b981" />
             <StatCard title="Today" value={formatCurrency(revenue.today)} icon="today-outline" color="#3b82f6" />
             <StatCard title="This Week" value={formatCurrency(revenue.this_week)} icon="calendar-outline" color="#8b5cf6" />
             <StatCard title="This Month" value={formatCurrency(revenue.this_month)} icon="trending-up-outline" color="#f59e0b" />
           </View>
+          ) : null}
 
           {/* Payment mix — online vs COD */}
+          {hasRevenue ? (
           <Card className="mb-4">
             <SectionHeader title="Payment Mix" icon="pie-chart-outline" />
             <SplitBar
@@ -278,12 +291,13 @@ export default function RevenueScreen() {
               ]}
             />
           </Card>
+          ) : null}
 
           {/* Key metrics */}
           <Card className="mb-4">
             <SectionHeader title="Key Metrics" icon="stats-chart-outline" />
             <InfoRow label="Successful Payments" value={String(successfulPayments)} />
-            <InfoRow label="Average Order Value" value={formatCurrency(aov)} />
+            {hasRevenue ? <InfoRow label="Average Payment Value" value={formatCurrency(aov)} /> : null}
             <InfoRow label="Total Orders" value={String(orders.total ?? 0)} />
             <InfoRow
               label="Delivery Success Rate"

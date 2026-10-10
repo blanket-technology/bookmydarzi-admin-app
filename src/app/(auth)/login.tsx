@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -131,21 +131,34 @@ export default function LoginScreen() {
     });
   };
 
+  const submittingRef = useRef(false);
+
   const onSubmit = async (data: LoginFormData) => {
-    // Persist the choice so app boot knows whether to keep the session.
-    // Checked: remember email + keep session across restarts.
-    // Unchecked: single session - cleared on next launch (authContext).
-    await secureStorage.setItem(STORAGE_KEYS.REMEMBER_ME, rememberMe ? 'true' : 'false');
-    if (rememberMe) {
-      await secureStorage.setItem(STORAGE_KEYS.REMEMBER_EMAIL, data.email);
-    } else {
-      await secureStorage.removeItem(STORAGE_KEYS.REMEMBER_EMAIL);
+    // Two quick taps used to send two login requests (two OTP emails, burning the
+    // 5/min limit): the button only disabled once the mutation had started.
+    if (submittingRef.current || loginMutation.isPending) return;
+    submittingRef.current = true;
+    try {
+      // Persist the choice so app boot knows whether to keep the session.
+      // Checked: remember email + keep session across restarts.
+      // Unchecked: single session - cleared on next launch (authContext).
+      await secureStorage.setItem(STORAGE_KEYS.REMEMBER_ME, rememberMe ? 'true' : 'false');
+      if (rememberMe) {
+        await secureStorage.setItem(STORAGE_KEYS.REMEMBER_EMAIL, data.email);
+      } else {
+        await secureStorage.removeItem(STORAGE_KEYS.REMEMBER_EMAIL);
+      }
+    } catch {
+      // A storage hiccup must never block signing in.
     }
 
     loginMutation.mutate(
       { email: data.email, password: data.password },
       {
         onError: (error) => toast.error(getMutationError(error)),
+        onSettled: () => {
+          submittingRef.current = false;
+        },
       },
     );
   };
