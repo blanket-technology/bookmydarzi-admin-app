@@ -7,7 +7,8 @@ import { Badge, EmptyState, FilterChips, Header, Pagination, Pressable, SearchBa
 import { ORDER_STATUS_COLORS, orderStatusLabel } from '@/constants/orderStatus';
 import { useOrders } from '@/features/orders/hooks/useOrders';
 import { OrdersFilterSheet, type OrdersFilters } from '@/features/orders/components/OrdersFilterSheet';
-import { TAILOR_BUCKETS, orderNextStepHint, tailorBucket, type TailorBucket } from '@/features/orders/workflow';
+import { TAILOR_BUCKETS, tailorBucket, type TailorBucket } from '@/features/orders/workflow';
+import { orderNextStepHint } from '@/features/orders/workflowHints';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';

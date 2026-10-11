@@ -17,6 +17,7 @@ import { usePendingChatCount } from '@/features/chat/hooks/useChat';
 import { useSupportTickets } from '@/features/support/hooks/useSupportTickets';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -102,14 +103,14 @@ const DRAWER_SECTIONS: { key: string; title: string; routes: string[] }[] = [
   { key: 'overview', title: '', routes: ['dashboard'] },
   {
     key: 'operations',
-    title: 'Operations',
+    title: 'operations',
     routes: ['orders', 'broadcasts', 'pickups', 'deliveries', 'returns', 'repair-pickups', 'repair-deliveries', 'cancellations', 'applications', 'support', 'reviews'],
   },
-  { key: 'people', title: 'People', routes: ['customers', 'tailors', 'employees', 'admins', 'leave'] },
-  { key: 'catalog', title: 'Catalog & content', routes: ['catalog', 'inventory', 'lookbook', 'homepage', 'offers', 'service-areas', 'faqs'] },
-  { key: 'finance', title: 'Money', routes: ['payments', 'revenue', 'billing', 'payouts', 'bridge-payouts', 'my-earnings'] },
-  { key: 'system', title: 'System', routes: ['audit-log', 'roles-permissions'] },
-  { key: 'account', title: 'Account', routes: ['notifications', 'settings', 'profile'] },
+  { key: 'people', title: 'people', routes: ['customers', 'tailors', 'employees', 'admins', 'leave'] },
+  { key: 'catalog', title: 'catalog', routes: ['catalog', 'inventory', 'lookbook', 'homepage', 'offers', 'service-areas', 'faqs'] },
+  { key: 'finance', title: 'finance', routes: ['payments', 'revenue', 'billing', 'payouts', 'bridge-payouts', 'my-earnings'] },
+  { key: 'system', title: 'system', routes: ['audit-log', 'roles-permissions'] },
+  { key: 'account', title: 'account', routes: ['notifications', 'settings', 'profile'] },
 ];
 
 const routeKey = (route: string) => route.split('/').pop() ?? '';
@@ -119,6 +120,8 @@ export const CustomDrawer = (props: DrawerContentComponentProps) => {
   const pathname = usePathname();
   const { colors } = useTheme();
   const { isTablet } = useResponsive();
+  // Subscribes the drawer to language changes (section titles use translate()).
+  const { t: translate } = useAppLanguage();
   const { user, isAuthenticated } = useAuth();
   const { permissions } = usePermissions();
   const logoutMutation = useLogoutMutation();
@@ -240,7 +243,7 @@ export const CustomDrawer = (props: DrawerContentComponentProps) => {
                   style={{ color: colors.textMuted }}
                   accessibilityRole="header"
                 >
-                  {section.title}
+                  {translate(`workflow.sections.${section.title}`)}
                 </Text>
               ) : null}
               {items.map(renderItem)}

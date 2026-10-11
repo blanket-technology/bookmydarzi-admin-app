@@ -104,7 +104,8 @@
     "assigned": "असाइन किया गया",
     "stitching": "सिलाई हो रही है",
     "ready": "तैयार",
-    "completed": "पूरा हुआ"
+    "completed": "पूरा हुआ",
+    "goOnline": "ऑनलाइन हों"
   },
   "profile": {
     "title": "प्रोफ़ाइल",
@@ -815,6 +816,40 @@
       "ctaContinue": "प्रगति अपडेट करें",
       "ctaFinish": "तैयार करें",
       "ctaView": "ऑर्डर देखें"
+    }
+  },
+  "workflow": {
+    "phase": {
+      "placed": "ऑर्डर",
+      "tailor": "दर्ज़ी",
+      "pickup": "पिकअप",
+      "stitching": "सिलाई",
+      "delivery": "डिलीवरी",
+      "done": "पूर्ण"
+    },
+    "hint": {
+      "tailor": {
+        "waitingPickup": "ब्रिज के कपड़ा लेने का इंतज़ार",
+        "clothComing": "कपड़ा आपके पास आ रहा है",
+        "start": "सिलाई शुरू करें",
+        "inProgress": "काम के साथ प्रगति अपडेट करें",
+        "finalCheck": "फ़ाइनल चेक पूरा करके तैयार करें",
+        "waitingDispatch": "ब्रिज के डिलीवरी करने का इंतज़ार"
+      },
+      "employee": {
+        "pickup": "ग्राहक से कपड़ा लें",
+        "handover": "कपड़ा दर्ज़ी को सौंपें",
+        "collect": "दर्ज़ी से लेकर डिलीवर करें",
+        "deliver": "डिलीवर करें और बकाया राशि लें"
+      }
+    },
+    "sections": {
+      "operations": "संचालन",
+      "people": "लोग",
+      "catalog": "कैटलॉग और कंटेंट",
+      "finance": "पैसा",
+      "system": "सिस्टम",
+      "account": "खाता"
     }
   }
 }

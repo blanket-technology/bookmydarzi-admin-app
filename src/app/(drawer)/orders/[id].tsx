@@ -39,7 +39,7 @@ import { PendingOfferCard } from '@/features/orders/components/PendingOfferCard'
 import { OrderStepper } from '@/features/orders/components/OrderStepper';
 import { OrderSummaryCard } from '@/features/orders/components/OrderSummaryCard';
 import { StickyActionBar } from '@/features/orders/components/StickyActionBar';
-import { orderNextStepHint } from '@/features/orders/workflow';
+import { orderNextStepHint } from '@/features/orders/workflowHints';
 import { OrderAddressCard } from '@/features/orders/components/OrderAddressCard';
 import { OrderNotesCard } from '@/features/orders/components/OrderNotesCard';
 import { RepairRequestCard } from '@/features/orders/components/RepairRequestCard';

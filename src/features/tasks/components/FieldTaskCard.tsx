@@ -68,6 +68,7 @@ export const FieldTaskCard = ({
                 </Text>
               ) : null}
             </View>
+            {muted && !badge ? <Ionicons name="chevron-forward" size={18} color={colors.textMuted} /> : null}
             {badge ? (
               <View className="px-2.5 py-1 rounded-full" style={{ backgroundColor: `${badgeColor}1A` }}>
                 <Text className="text-xs font-bold" style={{ color: badgeColor }}>
@@ -79,20 +80,17 @@ export const FieldTaskCard = ({
           {children ? <View className="mt-2">{children}</View> : null}
         </View>
       </View>
-      <View
-        className="flex-row items-center justify-center mt-3 rounded-2xl py-2.5"
-        style={{ backgroundColor: muted ? colors.surface : colors.primary }}
-      >
-        <Text className="text-sm font-bold" style={{ color: muted ? colors.textSecondary : colors.onPrimary }}>
-          {ctaLabel}
-        </Text>
-        <Ionicons
-          name="arrow-forward"
-          size={16}
-          color={muted ? colors.textSecondary : colors.onPrimary}
-          style={{ marginLeft: 6 }}
-        />
-      </View>
+      {muted ? null : (
+        <View
+          className="flex-row items-center justify-center mt-3 rounded-2xl py-2.5"
+          style={{ backgroundColor: colors.primary }}
+        >
+          <Text className="text-sm font-bold" style={{ color: colors.onPrimary }}>
+            {ctaLabel}
+          </Text>
+          <Ionicons name="arrow-forward" size={16} color={colors.onPrimary} style={{ marginLeft: 6 }} />
+        </View>
+      )}
     </Pressable>
   );
 };

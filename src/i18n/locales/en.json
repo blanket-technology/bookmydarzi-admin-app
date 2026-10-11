@@ -104,7 +104,8 @@
     "assigned": "Assigned",
     "stitching": "Stitching",
     "ready": "Ready",
-    "completed": "Completed"
+    "completed": "Completed",
+    "goOnline": "Go online"
   },
   "profile": {
     "title": "Profile",
@@ -815,6 +816,40 @@
       "ctaContinue": "Update progress",
       "ctaFinish": "Mark ready",
       "ctaView": "View order"
+    }
+  },
+  "workflow": {
+    "phase": {
+      "placed": "Placed",
+      "tailor": "Tailor",
+      "pickup": "Pickup",
+      "stitching": "Stitching",
+      "delivery": "Delivery",
+      "done": "Done"
+    },
+    "hint": {
+      "tailor": {
+        "waitingPickup": "Waiting for the bridge to collect the cloth",
+        "clothComing": "Cloth is on its way to you",
+        "start": "Start stitching",
+        "inProgress": "Update progress as you go",
+        "finalCheck": "Finish the final check, then mark ready",
+        "waitingDispatch": "Waiting for the bridge to deliver"
+      },
+      "employee": {
+        "pickup": "Pick up the cloth from the customer",
+        "handover": "Hand the cloth to the tailor",
+        "collect": "Collect from the tailor and deliver",
+        "deliver": "Deliver and collect any balance"
+      }
+    },
+    "sections": {
+      "operations": "Operations",
+      "people": "People",
+      "catalog": "Catalog & content",
+      "finance": "Money",
+      "system": "System",
+      "account": "Account"
     }
   }
 }
