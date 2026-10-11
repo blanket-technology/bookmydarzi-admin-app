@@ -57,9 +57,10 @@ export const workflowPhaseIndex = (status: OrderStatus | string | undefined | nu
   return WORKFLOW_PHASES.findIndex((phase) => phase.statuses.includes(String(status)));
 };
 
-export type TailorBucket = 'todo' | 'stitching' | 'ready' | 'done';
+/** 'closed' (cancelled / rejected / returned) is never a tab; those orders only appear under All. */
+export type TailorBucket = 'todo' | 'stitching' | 'ready' | 'done' | 'closed';
 
-export const TAILOR_BUCKETS: { key: TailorBucket; label: string }[] = [
+export const TAILOR_BUCKETS: { key: Exclude<TailorBucket, 'closed'>; label: string }[] = [
   { key: 'todo', label: 'To start' },
   { key: 'stitching', label: 'Stitching' },
   { key: 'ready', label: 'Ready' },
@@ -71,21 +72,9 @@ export const tailorBucket = (status: OrderStatus | string | undefined | null): T
   const s = String(status ?? '');
   if (['stitching_started', 'in_progress', 'final_check'].includes(s)) return 'stitching';
   if (['ready_for_dispatch', 'out_for_delivery'].includes(s)) return 'ready';
-  if (
-    [
-      'delivered',
-      'completed',
-      'cancelled',
-      'order_rejected',
-      'returned',
-      'return_pending',
-      'return_scheduled',
-      'return_in_transit',
-      'inspection_window',
-      'in_repair',
-    ].includes(s)
-  ) {
-    return 'done';
+  if (['delivered', 'completed', 'inspection_window', 'in_repair'].includes(s)) return 'done';
+  if (['cancelled', 'order_rejected', 'returned', 'return_pending', 'return_scheduled', 'return_in_transit'].includes(s)) {
+    return 'closed';
   }
   return 'todo';
 };

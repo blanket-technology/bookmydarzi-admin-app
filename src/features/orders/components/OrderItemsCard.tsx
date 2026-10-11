@@ -86,7 +86,7 @@ export const OrderItemsCard = ({
                 begins - matches this component's own gate so the button
                 doesn't show up as a dead end that 422s once the order has
                 moved past pickup (e.g. already out for delivery). */}
-            {canAddAddon && ['pickup_scheduled', 'pickup_pending', 'picked_up', 'cloth_received_by_tailor'].includes(order.status) ? (
+            {canAddAddon ? (
               <Pressable
                 onPress={() =>
                   onAddAddon?.({
@@ -103,7 +103,7 @@ export const OrderItemsCard = ({
                 </Text>
               </Pressable>
             ) : null}
-            {canManageMeasurements && !['delivered', 'cancelled', 'order_rejected'].includes(order.status) ? (
+            {canManageMeasurements ? (
               <Pressable
                 onPress={() =>
                   onManageMeasurement({

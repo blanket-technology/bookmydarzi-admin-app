@@ -105,7 +105,9 @@
     "stitching": "सिलाई हो रही है",
     "ready": "तैयार",
     "completed": "पूरा हुआ",
-    "goOnline": "ऑनलाइन हों"
+    "goOnline": "ऑनलाइन हों",
+    "myPickups": "मेरे पिकअप",
+    "myDeliveries": "मेरी डिलीवरी"
   },
   "profile": {
     "title": "प्रोफ़ाइल",
@@ -202,7 +204,11 @@
       "stitching": "सिलाई",
       "ready": "तैयार",
       "done": "पूर्ण"
-    }
+    },
+    "bucketEmptyTitle": "\"{{tab}}\" में कुछ नहीं",
+    "bucketEmptyHint": "ऑर्डर आगे बढ़ने पर यहाँ आएँगे।",
+    "bridgeMine": "मेरे ऑर्डर",
+    "bridgeOpen": "खुले"
   },
   "orderSummary": {
     "mobile": "मोबाइल",
@@ -248,7 +254,8 @@
     "confirmActionMessage": "क्या आप वाकई {{action}} करना चाहते हैं?",
     "forceRestartBroadcast": "ब्रॉडकास्ट फिर से शुरू करें",
     "forceRestartBroadcastMessage": "यह इस ऑर्डर की मौजूदा स्थिति की परवाह किए बिना दर्जी ब्रॉडकास्ट फिर से शुरू करता है। किसी अटके ऑर्डर को ठीक करने के लिए इसका उपयोग करें।",
-    "triggerBroadcast": "ब्रॉडकास्ट शुरू करें"
+    "triggerBroadcast": "ब्रॉडकास्ट शुरू करें",
+    "confirmDeliveredMessage": "पुष्टि करें कि आपने कपड़ा ग्राहक को सौंप दिया है। इसे वापस नहीं किया जा सकता।"
   },
   "measurement": {
     "title": "माप",
@@ -405,7 +412,8 @@
     "alreadyPaid": "ग्राहक पहले ही भुगतान कर चुका है। नकद देय नहीं है।",
     "noBalance": "इस ऑर्डर पर कोई बकाया राशि नहीं है।",
     "notOnline": "ऑनलाइन QR भुगतान अभी उपलब्ध नहीं है। कृपया नकद लें।",
-    "close": "बंद करें"
+    "close": "बंद करें",
+    "deliverHint": "भुगतान मिल गया। कपड़ा सौंपें, फिर डिलीवरी की पुष्टि करें।"
   },
   "correctStatus": {
     "title": "स्थिति सुधारें",
@@ -649,7 +657,9 @@
     "sendFinalCheck": "अंतिम जाँच के लिए भेजें",
     "readyForDispatch": "डिस्पैच के लिए तैयार",
     "needBridge": "पहले पिकअप के लिए ब्रिज कर्मचारी असाइन करें",
-    "needTailor": "पहले दर्ज़ी असाइन करें"
+    "needTailor": "पहले दर्ज़ी असाइन करें",
+    "markDelivered": "डिलीवर हुआ चिह्नित करें",
+    "collectAndDeliver": "भुगतान लें और डिलीवर करें"
   },
   "toastMessages": {
     "a_new_code_has_been_sent": "नया कोड भेज दिया गया है",
@@ -778,7 +788,8 @@
     "add_on_added_to_order": "ऑर्डर में ऐड-ऑन जोड़ा गया",
     "you_re_online": "आप ऑनलाइन हैं",
     "you_re_offline": "आप ऑफ़लाइन हैं",
-    "payment_received": "भुगतान प्राप्त हुआ"
+    "payment_received": "भुगतान प्राप्त हुआ",
+    "delivery_confirmed": "डिलीवरी की पुष्टि हो गई"
   },
   "tasks": {
     "call": "कॉल",
@@ -840,7 +851,8 @@
         "pickup": "ग्राहक से कपड़ा लें",
         "handover": "कपड़ा दर्ज़ी को सौंपें",
         "collect": "दर्ज़ी से लेकर डिलीवर करें",
-        "deliver": "डिलीवर करें और बकाया राशि लें"
+        "deliver": "डिलीवर करें और बकाया राशि लें",
+        "withOtherRider": "दूसरे राइडर के साथ डिलीवरी पर"
       }
     },
     "sections": {
@@ -851,5 +863,12 @@
       "system": "सिस्टम",
       "account": "खाता"
     }
+  },
+  "due": {
+    "overdue": "{{count}} दिन की देरी",
+    "today": "आज देय",
+    "tomorrow": "कल देय",
+    "inDays": "{{count}} दिन में देय",
+    "notSet": "तय नहीं"
   }
 }

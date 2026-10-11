@@ -463,7 +463,7 @@ export const useHandToTailorMutation = () =>
 export const useCompleteOrderMutation = () =>
   useEmployeeActionMutation<void>(
     (orderId) => orderService.completeOrder(orderId),
-    'Order completed',
+    'Delivery confirmed',
   );
 
 // Customer declined to accept the finished garment at the door. Backend
