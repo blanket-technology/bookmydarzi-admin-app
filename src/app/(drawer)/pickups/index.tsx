@@ -1,8 +1,9 @@
 import { setManuallyOffline } from '@/hooks/useAutoOnline';
+import { useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, RefreshControl, Switch, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Switch, Text, View } from 'react-native';
 import { Card, ConfirmModal, EmptyState, Header, Pressable, SkeletonList } from '@/components/ui';
 import {
   useAcceptPickupBroadcastMutation,
@@ -20,6 +21,7 @@ import { useResponsive } from '@/hooks/useResponsive';
 import type { PickupBroadcastOffer } from '@/types/pickups';
 import { formatApiErrorDetail, formatDate } from '@/utils/errors';
 import { formatDistanceKm, haversineDistanceKm } from '@/utils/geo';
+import { BridgeTaskList } from '@/features/tasks/components/TaskLists';
 import { callNumber, itemsLabel, openMap, useCountdown } from '@/features/broadcasts/offerCardHelpers';
 
 const OfferCard = ({
@@ -198,6 +200,7 @@ export default function PickupsScreen() {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
   const { contentMaxWidth } = useResponsive();
+  const queryClient = useQueryClient();
   const location = useLocation();
   const setOnlineStatus = useSetPickupOnlineStatusMutation();
   // Local UI toggle, but SEEDED from real server state below - previously
@@ -298,7 +301,22 @@ export default function PickupsScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Header title={t('pickups.title')} subtitle={isOnline ? t('pickups.pendingOffers', { count: offers.length }) : t('pickups.youAreOffline')} />
-      <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ alignItems: 'center', paddingBottom: 24 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => {
+              refetch();
+              queryClient.invalidateQueries({ queryKey: ['orders'] });
+            }}
+            tintColor={colors.primary}
+          />
+        }
+      >
+      <View className="px-5 w-full" style={{ maxWidth: contentMaxWidth }}>
         <Card className="mb-4 flex-row items-center justify-between">
           <View className="flex-1 mr-3">
             <View className="flex-row items-center">
@@ -329,6 +347,14 @@ export default function PickupsScreen() {
           />
         </Card>
 
+        {/* Jobs already claimed by this person are shown regardless of online
+            state: going offline stops NEW offers, it must not hide work in hand. */}
+        <BridgeTaskList kinds={['pickup', 'handover']} title={t('tasks.myPickups')} hideEmpty />
+
+        <Text className="text-base font-bold mb-3 mt-1" style={{ color: colors.text }}>
+          {t('tasks.offers')}
+        </Text>
+
         {!isOnline ? (
           <EmptyState
             icon="cube-outline"
@@ -345,33 +371,32 @@ export default function PickupsScreen() {
             onAction={() => refetch()}
           />
         ) : (
-          <FlatList
-            data={offers}
-            keyExtractor={(item) => item.broadcast_id}
-            renderItem={({ item }) => (
-              <OfferCard
-                offer={item}
-                onAccept={() => handleAccept(item)}
-                onDeclinePress={() => setDeclineTarget(item)}
-                onPress={() => router.push(`/(drawer)/orders/${item.order_id}`)}
-                accepting={acceptMutation.isPending && actingOrderId === item.order_id}
-                declining={declineMutation.isPending && actingOrderId === item.order_id}
-                myCoords={location.coords}
-              />
-            )}
-            refreshControl={
-              <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
-            }
-            ListEmptyComponent={
-              <EmptyState
-                icon="cube-outline"
-                title={t('pickups.noPendingOffers')}
-                description={t('pickups.newOffersWillAppear')}
-              />
-            }
-          />
+          offers.length === 0 ? (
+<EmptyState
+                            icon="cube-outline"
+                            title={t('pickups.noPendingOffers')}
+                            description={t('pickups.newOffersWillAppear')}
+                          />
+          ) : (
+            <View>
+              {offers.map((item) => (
+                <View key={item.broadcast_id}>
+<OfferCard
+                                offer={item}
+                                onAccept={() => handleAccept(item)}
+                                onDeclinePress={() => setDeclineTarget(item)}
+                                onPress={() => router.push(`/(drawer)/orders/${item.order_id}`)}
+                                accepting={acceptMutation.isPending && actingOrderId === item.order_id}
+                                declining={declineMutation.isPending && actingOrderId === item.order_id}
+                                myCoords={location.coords}
+                              />
+                </View>
+              ))}
+            </View>
+          )
         )}
       </View>
+      </ScrollView>
 
       <ConfirmModal
         visible={!!declineTarget}

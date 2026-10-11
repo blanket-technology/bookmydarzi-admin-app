@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { isExpoGo } from '@/utils/expoGo';
@@ -56,7 +57,8 @@ let lastHandledNotificationId: string | null = null;
 export function useNotificationRouting(enabled: boolean): void {
 
   useEffect(() => {
-    if (!enabled || isExpoGo) return undefined;
+    // Push routing is native-only: expo-notifications' last-response API throws on web.
+    if (!enabled || isExpoGo || Platform.OS === 'web') return undefined;
     let cancelled = false;
     let subscription: { remove: () => void } | undefined;
 

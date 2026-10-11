@@ -7,6 +7,7 @@ import {
   Pressable as RNPressable,
   ScrollView,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -47,6 +48,9 @@ export const BottomSheet = ({
 }: BottomSheetProps) => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  // A definite pixel cap: a percentage maxHeight resolves against an auto-height
+  // parent and (on web) let the body shrink below its content, clipping text.
+  const { height: windowHeight } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
   const incrementOpenSheets = useOpenSheetStore((s) => s.increment);
   const decrementOpenSheets = useOpenSheetStore((s) => s.decrement);
@@ -115,7 +119,7 @@ export const BottomSheet = ({
             style={{
               backgroundColor: colors.surface,
               maxWidth: 640,
-              maxHeight: '88%',
+              maxHeight: Math.round(windowHeight * 0.88),
               paddingBottom: Math.max(insets.bottom, 20),
             }}
             onPress={(event) => event.stopPropagation()}

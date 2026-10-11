@@ -32,7 +32,7 @@ export const DrawerItem = ({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected: active }}
-      className="flex-row items-center px-4 py-3.5 mx-3 rounded-2xl mb-1"
+      className="flex-row items-center px-4 py-2.5 mx-3 rounded-2xl mb-0.5"
       style={{
         backgroundColor: active ? colors.primaryLight : 'transparent',
       }}

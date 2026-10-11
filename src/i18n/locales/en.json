@@ -193,7 +193,15 @@
     "adjustFilters": "Try adjusting your search or filters",
     "noTailorFoundTitle": "No tailor found",
     "noTailorFoundBody": "No tailor accepted after every broadcast round, including the all-tailor fallback. Assign a tailor manually below.",
-    "exhausted": "Exhausted {{date}}"
+    "exhausted": "Exhausted {{date}}",
+    "dueOn": "Due {{date}}",
+    "tabAll": "All",
+    "bucket": {
+      "todo": "To start",
+      "stitching": "Stitching",
+      "ready": "Ready",
+      "done": "Done"
+    }
   },
   "orderSummary": {
     "mobile": "Mobile",
@@ -770,5 +778,43 @@
     "you_re_online": "You're online",
     "you_re_offline": "You're offline",
     "payment_received": "Payment received"
+  },
+  "tasks": {
+    "call": "Call",
+    "navigate": "Navigate",
+    "pickupTitle": "Pick up from {{name}}",
+    "handoverTitle": "Hand cloth to {{name}}",
+    "collectTitle": "Collect from {{name}}",
+    "deliverTitle": "Deliver to {{name}}",
+    "ctaPickup": "Start pickup",
+    "ctaHandover": "Hand over cloth",
+    "ctaCollect": "Open order",
+    "ctaDeliver": "Deliver",
+    "ctaDeliverCash": "Deliver & collect",
+    "collect": "Collect {{amount}}",
+    "prepaid": "Paid",
+    "scheduledFor": "{{when}}",
+    "yourTasks": "Your tasks",
+    "myPickups": "My pickups",
+    "myDeliveries": "My deliveries",
+    "offers": "New offers",
+    "seeAll": "See all",
+    "noTasks": "No active tasks",
+    "noTasksHint": "Jobs you accept will show up here.",
+    "loadFailed": "Couldn't load your tasks",
+    "noTailorTasks": "Nothing to stitch right now",
+    "noTailorTasksHint": "New orders appear here once the cloth reaches you.",
+    "upNext": "Up next",
+    "tailor": {
+      "start": "Start stitching",
+      "continue": "Continue stitching",
+      "finish": "Finish final check",
+      "waitingPickup": "Waiting for cloth",
+      "waitingDispatch": "Ready · waiting for delivery",
+      "ctaStart": "Start stitching",
+      "ctaContinue": "Update progress",
+      "ctaFinish": "Mark ready",
+      "ctaView": "View order"
+    }
   }
 }

@@ -95,6 +95,25 @@ const MENU_ITEMS: {
   { label: 'Profile', icon: 'person-outline', route: '/(drawer)/profile', permission: 'profile' },
 ];
 
+// Drawer sections. A flat list of 30+ entries is hard to scan, so entries are
+// grouped by job-to-be-done; a section header is only rendered when at least one
+// of its items is visible to the signed-in role (tailors/bridge see few sections).
+const DRAWER_SECTIONS: { key: string; title: string; routes: string[] }[] = [
+  { key: 'overview', title: '', routes: ['dashboard'] },
+  {
+    key: 'operations',
+    title: 'Operations',
+    routes: ['orders', 'broadcasts', 'pickups', 'deliveries', 'returns', 'repair-pickups', 'repair-deliveries', 'cancellations', 'applications', 'support', 'reviews'],
+  },
+  { key: 'people', title: 'People', routes: ['customers', 'tailors', 'employees', 'admins', 'leave'] },
+  { key: 'catalog', title: 'Catalog & content', routes: ['catalog', 'inventory', 'lookbook', 'homepage', 'offers', 'service-areas', 'faqs'] },
+  { key: 'finance', title: 'Money', routes: ['payments', 'revenue', 'billing', 'payouts', 'bridge-payouts', 'my-earnings'] },
+  { key: 'system', title: 'System', routes: ['audit-log', 'roles-permissions'] },
+  { key: 'account', title: 'Account', routes: ['notifications', 'settings', 'profile'] },
+];
+
+const routeKey = (route: string) => route.split('/').pop() ?? '';
+
 export const CustomDrawer = (props: DrawerContentComponentProps) => {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
@@ -155,6 +174,35 @@ export const CustomDrawer = (props: DrawerContentComponentProps) => {
     router.push(route as never);
   };
 
+  const renderItem = (item: (typeof MENU_ITEMS)[number]) => (
+            <DrawerItem
+              key={item.route}
+              label={item.label}
+              icon={item.icon}
+              active={pathname.split('/').filter(Boolean)[0] === (item.route.split('/').pop() ?? '')}
+              onPress={() => navigate(item.route)}
+              badgeCount={
+                item.permission === 'notifications'
+                  ? unreadCount
+                  : item.permission === 'supportTickets'
+                    ? (supportBadgeCount || undefined)
+                    : item.permission === 'broadcasts'
+                      ? broadcastsData?.total
+                      : item.route === '/(drawer)/pickups'
+                        ? pickupBroadcastsData?.total
+                        : item.route === '/(drawer)/deliveries'
+                          ? deliveryBroadcastsData?.total
+                          : item.route === '/(drawer)/returns'
+                            ? returnBroadcastsData?.total
+                            : item.route === '/(drawer)/repair-pickups'
+                              ? repairPickupBroadcastsData?.total
+                              : item.route === '/(drawer)/repair-deliveries'
+                                ? repairDeliveryBroadcastsData?.total
+                                : undefined
+              }
+            />
+          );
+
   return (
     <View style={{ flex: 1, paddingTop: insets.top, backgroundColor: colors.drawer }}>
       <View className="px-5 py-6 border-b" style={{ borderColor: colors.border }}>
@@ -180,35 +228,25 @@ export const CustomDrawer = (props: DrawerContentComponentProps) => {
         </View>
       </View>
 
-      <ScrollView className="flex-1 py-3" showsVerticalScrollIndicator={false}>
-        {visibleItems.map((item) => (
-          <DrawerItem
-            key={item.route}
-            label={item.label}
-            icon={item.icon}
-            active={pathname.split('/').filter(Boolean)[0] === (item.route.split('/').pop() ?? '')}
-            onPress={() => navigate(item.route)}
-            badgeCount={
-              item.permission === 'notifications'
-                ? unreadCount
-                : item.permission === 'supportTickets'
-                  ? (supportBadgeCount || undefined)
-                  : item.permission === 'broadcasts'
-                    ? broadcastsData?.total
-                    : item.route === '/(drawer)/pickups'
-                      ? pickupBroadcastsData?.total
-                      : item.route === '/(drawer)/deliveries'
-                        ? deliveryBroadcastsData?.total
-                        : item.route === '/(drawer)/returns'
-                          ? returnBroadcastsData?.total
-                          : item.route === '/(drawer)/repair-pickups'
-                            ? repairPickupBroadcastsData?.total
-                            : item.route === '/(drawer)/repair-deliveries'
-                              ? repairDeliveryBroadcastsData?.total
-                              : undefined
-            }
-          />
-        ))}
+      <ScrollView className="flex-1 pb-3" showsVerticalScrollIndicator={false}>
+        {DRAWER_SECTIONS.map((section) => {
+          const items = visibleItems.filter((item) => section.routes.includes(routeKey(item.route)));
+          if (items.length === 0) return null;
+          return (
+            <View key={section.key} className="mb-1">
+              {section.title ? (
+                <Text
+                  className="px-6 pt-3 pb-1.5 text-[11px] font-bold uppercase tracking-wider"
+                  style={{ color: colors.textMuted }}
+                  accessibilityRole="header"
+                >
+                  {section.title}
+                </Text>
+              ) : null}
+              {items.map(renderItem)}
+            </View>
+          );
+        })}
       </ScrollView>
 
       <View
