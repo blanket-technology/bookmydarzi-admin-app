@@ -168,6 +168,12 @@ const OnlineStatusPill = ({ isOnline }: { isOnline: boolean }) => {
       <Text className="text-xs font-semibold" style={{ color: colors.drawerText }}>
         {isOnline ? t('dashboard.online') : t('dashboard.offline')}
       </Text>
+      {!isOnline ? (
+        <Text className="text-xs ml-1" style={{ color: colors.drawerText, opacity: 0.75 }}>
+          {'\u00B7 '}
+          {t('dashboard.goOnline')}
+        </Text>
+      ) : null}
     </View>
   );
 };

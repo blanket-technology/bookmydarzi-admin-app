@@ -1,5 +1,6 @@
 import 'react-native-gesture-handler';
 import '../../global.css';
+import '@/utils/webStyleInterop';
 import {
   Inter_400Regular,
   Inter_500Medium,

@@ -29,9 +29,11 @@ export interface PressableProps extends Omit<RNPressableProps, 'style'> {
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(RNPressable);
-// Without this, `className` on <Pressable> (w-11, grow, basis-*, rounded-*, ...) is
-// dropped on web because the animated wrapper isn't a NativeWind-aware component.
-cssInterop(AnimatedPressable, { className: 'style' });
+// Web only: without this, `className` on <Pressable> (w-11, grow, basis-*, rounded-*,
+// ...) is dropped because the animated wrapper isn't a NativeWind-aware component.
+if (Platform.OS === 'web') {
+  cssInterop(AnimatedPressable, { className: 'style' });
+}
 
 const fireHaptic = (style: HapticStyle) => {
   if (style === 'none' || Platform.OS === 'web') return;

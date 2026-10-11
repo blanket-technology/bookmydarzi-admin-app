@@ -34,7 +34,7 @@ export const StickyActionBar = ({ label, onPress, loading, disabledReason, hint 
         paddingBottom: Math.max(insets.bottom, 12),
       }}
     >
-      <View className="w-full" style={{ maxWidth: contentMaxWidth }}>
+      <View className="w-full" style={{ maxWidth: Math.min(contentMaxWidth, 600) }}>
         {hint ? (
           <Text className="text-xs mb-2 text-center" style={{ color: colors.textSecondary }}>
             {hint}

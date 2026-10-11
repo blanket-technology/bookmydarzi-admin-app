@@ -210,6 +210,7 @@ export const TailorTaskList = ({ limit }: { limit?: number }) => {
     );
   }
   let tasks = buildTailorTasks(data?.orders ?? []);
+  // Waiting-on-someone-else orders only fill the remaining slots, never push actionable ones out.
   if (limit) tasks = tasks.slice(0, limit);
   if (tasks.length === 0) {
     return <EmptyState icon="cut-outline" title={t('tasks.noTailorTasks')} description={t('tasks.noTailorTasksHint')} />;

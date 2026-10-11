@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
+import { t } from '@/i18n';
 import { OFF_PATH_STATUSES, WORKFLOW_PHASES, workflowPhaseIndex } from '@/features/orders/workflow';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -25,7 +26,7 @@ export const OrderStepper = ({ status }: OrderStepperProps) => {
       className="flex-row items-start"
       accessible
       accessibilityRole="progressbar"
-      accessibilityLabel={`Order progress: ${WORKFLOW_PHASES[current]?.label ?? ''}, step ${current + 1} of ${WORKFLOW_PHASES.length}`}
+      accessibilityLabel={`${t(`workflow.phase.${WORKFLOW_PHASES[current]?.key}`)}, ${current + 1}/${WORKFLOW_PHASES.length}`}
     >
       {WORKFLOW_PHASES.map((phase, index) => {
         const done = index < current || (allDone && index === current);
@@ -68,7 +69,7 @@ export const OrderStepper = ({ status }: OrderStepperProps) => {
               }}
               numberOfLines={1}
             >
-              {phase.label}
+              {t(`workflow.phase.${phase.key}`)}
             </Text>
           </View>
         );
