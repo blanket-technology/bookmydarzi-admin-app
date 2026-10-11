@@ -149,7 +149,7 @@ export default function OrderDetailsScreen() {
   // own picker lives inside SchedulePickupSheet now (its own
   // useBridgeEmployees call).
   const { data: bridgeEmployeesData } = useBridgeEmployees(
-    isStaffRole &&
+    isAdminRole &&
       (assignDeliverySheetVisible ||
         assignReturnSheetVisible ||
         assignRepairPickupSheetVisible ||
@@ -197,7 +197,7 @@ export default function OrderDetailsScreen() {
     showBroadcastMonitor,
   );
 
-  const { actions } = useOrderActions({ role, userId: user?.id, order });
+  const { actions, canEditMeasurements, canAddAddons } = useOrderActions({ role, userId: user?.id, order });
   // Field roles (tailor / bridge) get their next step pinned to the bottom of the
   // screen; admins keep the full inline action list.
   const pinnedAction =
@@ -325,7 +325,7 @@ export default function OrderDetailsScreen() {
   // first is ambiguous, so Bridge uses the Items & Measurements card instead.
   const promptedPickupMeasurementFor = useRef<string | null>(null);
   useEffect(() => {
-    if (!isEmployeeRole || !order) return;
+    if (!isEmployeeRole || !order || !canEditMeasurements) return;
     if (order.status !== ORDER_STATUS.PICKED_UP) return;
     if (order.items.length !== 1) return;
     if (order.items[0].has_measurement) return; // already has one on file
@@ -334,7 +334,24 @@ export default function OrderDetailsScreen() {
     setMeasurementManageSheetIsAdmin(false);
     setMeasurementTargetItem({ id: order.items[0].order_item_id ?? undefined });
     setMeasurementManageSheetVisible(true);
-  }, [isEmployeeRole, order]);
+  }, [isEmployeeRole, order, canEditMeasurements]);
+
+  // Once the delivery is confirmed the order leaves the bridge's queue (it is in the
+  // customer's inspection window), so return to their task list instead of leaving
+  // them on a screen with nothing left to do.
+  const previousStatus = useRef<string | null>(null);
+  useEffect(() => {
+    const current = order?.status ?? null;
+    const was = previousStatus.current;
+    previousStatus.current = current;
+    if (
+      isEmployeeRole &&
+      was === ORDER_STATUS.OUT_FOR_DELIVERY &&
+      (current === ORDER_STATUS.DELIVERED || current === ORDER_STATUS.INSPECTION_WINDOW || current === ORDER_STATUS.COMPLETED)
+    ) {
+      router.replace('/(drawer)/dashboard');
+    }
+  }, [isEmployeeRole, order?.status]);
 
   if (isLoading) return <Loader fullScreen message={t('orderDetail.loadingOrder')} />;
   if (isError || !order) {
@@ -620,13 +637,13 @@ export default function OrderDetailsScreen() {
         {order.items.length > 1 ? (
           <OrderItemsCard
             order={order}
-            canManageMeasurements={isEmployeeRole || isAdminRole}
+            canManageMeasurements={canEditMeasurements}
             onManageMeasurement={(item) => {
               setMeasurementManageSheetIsAdmin(isAdminRole);
               setMeasurementTargetItem(item);
               setMeasurementManageSheetVisible(true);
             }}
-            canAddAddon={isEmployeeRole}
+            canAddAddon={canAddAddons}
             onAddAddon={(item) => {
               setAddAddonTargetItem(item);
               setAddAddonSheetVisible(true);
@@ -685,7 +702,7 @@ export default function OrderDetailsScreen() {
             and needs reassigning). Previously only the unclaimed case had
             any lever at all - once accepted, admin had no recovery path
             short of a direct DB fix if that employee stopped responding. */}
-        {isStaffRole &&
+        {isAdminRole &&
         order.status === ORDER_STATUS.READY_FOR_DISPATCH &&
         !order.delivery_employee_id ? (
           <View className="mb-3">
@@ -697,7 +714,7 @@ export default function OrderDetailsScreen() {
             />
           </View>
         ) : null}
-        {isStaffRole &&
+        {isAdminRole &&
         order.status === ORDER_STATUS.OUT_FOR_DELIVERY &&
         !!order.delivery_employee_id ? (
           <View className="mb-3">
@@ -717,7 +734,7 @@ export default function OrderDetailsScreen() {
             the web admin panel's OrderFullDetailsPage.jsx. Reassignment
             (already-claimed case) is also available now, for the same
             unresponsive-employee reason as delivery above. */}
-        {isStaffRole &&
+        {isAdminRole &&
         order.status === ORDER_STATUS.RETURN_PENDING &&
         !order.return_employee_id ? (
           <View className="mb-3">
@@ -729,7 +746,7 @@ export default function OrderDetailsScreen() {
             />
           </View>
         ) : null}
-        {isStaffRole &&
+        {isAdminRole &&
         (order.status === ORDER_STATUS.RETURN_SCHEDULED || order.status === ORDER_STATUS.RETURN_IN_TRANSIT) &&
         !!order.return_employee_id ? (
           <View className="mb-3">
@@ -746,7 +763,7 @@ export default function OrderDetailsScreen() {
             for a reported post-delivery issue) previously had NO admin
             assignment lever at all, unlike every other Bridge leg - only
             the broadcast-accept paths ever wrote these columns. */}
-        {isStaffRole &&
+        {isAdminRole &&
         order.status === ORDER_STATUS.REPAIR_PICKUP_PENDING &&
         !order.repair_pickup_employee_id ? (
           <View className="mb-3">
@@ -758,7 +775,7 @@ export default function OrderDetailsScreen() {
             />
           </View>
         ) : null}
-        {isStaffRole &&
+        {isAdminRole &&
         (order.status === ORDER_STATUS.REPAIR_PICKUP_SCHEDULED ||
           order.status === ORDER_STATUS.REPAIR_PICKUP_IN_TRANSIT) &&
         !!order.repair_pickup_employee_id ? (
@@ -771,7 +788,7 @@ export default function OrderDetailsScreen() {
             />
           </View>
         ) : null}
-        {isStaffRole &&
+        {isAdminRole &&
         order.status === ORDER_STATUS.REPAIR_DELIVERY_PENDING &&
         !order.repair_delivery_employee_id ? (
           <View className="mb-3">
@@ -783,7 +800,7 @@ export default function OrderDetailsScreen() {
             />
           </View>
         ) : null}
-        {isStaffRole &&
+        {isAdminRole &&
         (order.status === ORDER_STATUS.REPAIR_DELIVERY_SCHEDULED ||
           order.status === ORDER_STATUS.REPAIR_DELIVERY_IN_TRANSIT) &&
         !!order.repair_delivery_employee_id ? (
@@ -805,7 +822,12 @@ export default function OrderDetailsScreen() {
           onPress={() => handleActionPress(pinnedAction)}
           loading={pinnedAction.isLoading}
           disabledReason={pinnedAction.disabledReason}
-          hint={orderNextStepHint(normalizedRole, order.status) ?? undefined}
+          hint={
+            orderNextStepHint(normalizedRole, order.status, {
+              myPickup: !!order.assigned_employee_id && String(order.assigned_employee_id) === String(user?.id),
+              myDelivery: !!order.delivery_employee_id && String(order.delivery_employee_id) === String(user?.id),
+            }) ?? undefined
+          }
         />
       ) : null}
 
@@ -885,7 +907,11 @@ export default function OrderDetailsScreen() {
       <ConfirmModal
         visible={!!confirmAction}
         title={confirmAction?.label ?? ''}
-        message={t('orderDetail.confirmActionMessage', { action: confirmAction?.label.toLowerCase() ?? '' })}
+        message={
+          confirmAction?.id === 'complete'
+            ? t('orderDetail.confirmDeliveredMessage')
+            : t('orderDetail.confirmActionMessage', { action: confirmAction?.label.toLowerCase() ?? '' })
+        }
         confirmLabel={confirmAction?.label}
         loading={confirmAction?.isLoading}
         onConfirm={() => {

@@ -6,6 +6,7 @@ export { Card } from './Card';
 export { DateField } from './DateField';
 export { ChartCard } from './ChartCard';
 export { DrawerItem } from './DrawerItem';
+export { DueChip, useDueLabel } from './DueChip';
 export { EmptyState } from './EmptyState';
 export { FilterChips, type FilterChip } from './FilterChips';
 export { FilterSheet } from './FilterSheet';

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
-import { EmptyState, Pressable, SkeletonList } from '@/components/ui';
+import { DueChip, EmptyState, Pressable, SkeletonList } from '@/components/ui';
 import { callNumber, openMap } from '@/features/broadcasts/offerCardHelpers';
 import { useOrders } from '@/features/orders/hooks/useOrders';
 import { buildBridgeTasks, buildTailorTasks, type BridgeTask, type BridgeTaskKind } from '@/features/tasks/fieldTasks';
@@ -34,6 +34,11 @@ const ContactBlock = ({ order }: { order: AdminOrderItem }) => {
   const lng = order.address?.longitude;
   return (
     <View>
+      {order.expected_delivery_date ? (
+        <View className="mb-2">
+          <DueChip value={order.expected_delivery_date} />
+        </View>
+      ) : null}
       {line ? (
         <View className="flex-row items-start">
           <Ionicons name="location-outline" size={14} color={colors.textSecondary} style={{ marginTop: 2 }} />
@@ -110,7 +115,9 @@ const BridgeTaskCard = ({ task }: { task: BridgeTask }) => {
         eyebrow={eyebrow}
         ctaLabel={t('tasks.ctaHandover')}
         onPress={() => openOrder(order.order_id)}
-      />
+      >
+        <DueChip value={order.expected_delivery_date} />
+      </FieldTaskCard>
     );
   }
   if (kind === 'collect') {
@@ -219,17 +226,20 @@ export const TailorTaskList = ({ limit }: { limit?: number }) => {
     <View>
       {tasks.map(({ order, stage }) => {
         const items = (order.items ?? []).map((i) => `${i.quantity}× ${i.service_name ?? ''}`.trim()).join(', ');
-        const due = order.expected_delivery_date ? t('orders.dueOn', { date: formatDate(order.expected_delivery_date) }) : undefined;
         const common = {
           eyebrow: order.order_code ?? order.order_id,
           onPress: () => openOrder(order.order_id),
-          badge: due ? { label: due, tone: 'neutral' as const } : undefined,
         };
-        const detail = items ? (
-          <Text className="text-sm" style={{ color: colors.text }} numberOfLines={2}>
-            {items}
-          </Text>
-        ) : null;
+        const detail = (
+          <View style={{ gap: 6 }}>
+            {items ? (
+              <Text className="text-sm" style={{ color: colors.text }} numberOfLines={2}>
+                {items}
+              </Text>
+            ) : null}
+            <DueChip value={order.expected_delivery_date} />
+          </View>
+        );
         switch (stage) {
           case 'start':
             return (

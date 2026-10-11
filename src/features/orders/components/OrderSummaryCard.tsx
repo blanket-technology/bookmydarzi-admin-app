@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
-import { Badge, Card } from '@/components/ui';
+import { Badge, Card, useDueLabel } from '@/components/ui';
 import { ORDER_STATUS_COLORS, orderStatusLabel } from '@/constants/orderStatus';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import type { AdminOrderItem } from '@/types/orders';
+import { isDueRelevant } from '@/utils/dueDate';
 import { capitalize, formatCurrency, formatDate } from '@/utils/errors';
 import { DetailRow } from './DetailRow';
 
@@ -20,6 +21,7 @@ import { DetailRow } from './DetailRow';
 export const OrderSummaryCard = ({ order, isTailorRole = false }: { order: AdminOrderItem; isTailorRole?: boolean }) => {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
+  const due = useDueLabel()(order.expected_delivery_date);
   const statusColor = ORDER_STATUS_COLORS[order.status] ?? colors.primary;
 
   return (
@@ -93,7 +95,26 @@ export const OrderSummaryCard = ({ order, isTailorRole = false }: { order: Admin
       ) : null}
       <DetailRow label={t('orderSummary.urgency')} value={capitalize(order.urgency_level ?? '—')} colors={colors} />
       <DetailRow label={t('orderSummary.created')} value={formatDate(order.created_at)} colors={colors} />
-      <DetailRow label={t('orderSummary.expectedDelivery')} value={formatDate(order.expected_delivery_date)} colors={colors} />
+      <DetailRow
+        label={t('orderSummary.expectedDelivery')}
+        value={
+          due
+            ? isDueRelevant(order.status)
+              ? `${formatDate(order.expected_delivery_date)} · ${due.text}`
+              : formatDate(order.expected_delivery_date)
+            : t('due.notSet')
+        }
+        valueColor={
+          due && isDueRelevant(order.status)
+            ? due.tone === 'overdue' || due.tone === 'today'
+              ? colors.error
+              : due.tone === 'soon'
+                ? colors.warning
+                : undefined
+            : undefined
+        }
+        colors={colors}
+      />
     </Card>
   );
 };

@@ -1,3 +1,4 @@
+import { buildBridgeTasks } from '@/features/tasks/fieldTasks';
 import { BridgeTaskList, TailorTaskList } from '@/features/tasks/components/TaskLists';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -363,9 +364,20 @@ export default function DashboardScreen() {
     refetch: refetchEmployeeOrders,
     isRefetching: isEmployeeOrdersRefetching,
   } = useOrders({ page: 1, limit: 50 }, isEmployeeRole);
+  // Same source as the "Your tasks" list below it, so every number here matches the work
+  // the rider can actually act on (their own claimed pickups/deliveries), not the whole pool.
+  const bridgeTasks = useMemo(
+    () => buildBridgeTasks(employeeOrdersData?.orders ?? [], user?.id),
+    [employeeOrdersData, user?.id],
+  );
   const employeeStats = useMemo(
-    () => computeEmployeeDashboardStats(employeeOrdersData?.orders ?? []),
-    [employeeOrdersData],
+    () => ({
+      todaysTasks: bridgeTasks.length,
+      pickups: bridgeTasks.filter((x) => x.kind === 'pickup' || x.kind === 'handover').length,
+      deliveries: bridgeTasks.filter((x) => x.kind === 'deliver').length,
+      cod: bridgeTasks.filter((x) => x.kind === 'deliver' && x.collectAmount > 0).length,
+    }),
+    [bridgeTasks],
   );
 
   // Tailors can call GET /orders/my-orders (normalized to the same
@@ -430,14 +442,9 @@ export default function DashboardScreen() {
           }
           sectionTitle={t('dashboard.yourQueue')}
           stats={[
-            // Mirrors Admin_Web EmployeeDashboard.jsx: same 5 cards, each
-            // deep-linking to a PRE-FILTERED order list (via ?status=) so no two
-            // cards land on the same view. "Assigned"/"Today's Tasks" have no
-            // single canonical status, so they open the full Orders list.
-            { title: t('dashboard.assignedOrders'), value: employeeStats.assigned, icon: 'receipt-outline', color: '#f59e0b', onPress: () => router.push('/(drawer)/orders') },
-            { title: t('dashboard.pickupQueue'), value: employeeStats.pickupQueue, icon: 'cube-outline', color: '#0ea5e9', onPress: () => router.push({ pathname: '/(drawer)/orders', params: { status: 'pickup_pending' } }) },
-            { title: t('dashboard.deliveryQueue'), value: employeeStats.deliveryQueue, icon: 'bicycle-outline', color: '#3b82f6', onPress: () => router.push({ pathname: '/(drawer)/orders', params: { status: 'out_for_delivery' } }) },
-            { title: t('dashboard.codPending'), value: employeeStats.codPending, icon: 'cash-outline', color: '#ef4444', onPress: () => router.push({ pathname: '/(drawer)/orders', params: { status: 'out_for_delivery' } }) },
+            { title: t('dashboard.myPickups'), value: employeeStats.pickups, icon: 'cube-outline', color: '#0ea5e9', onPress: () => router.push('/(drawer)/pickups') },
+            { title: t('dashboard.myDeliveries'), value: employeeStats.deliveries, icon: 'bicycle-outline', color: '#3b82f6', onPress: () => router.push('/(drawer)/deliveries') },
+            { title: t('dashboard.codPending'), value: employeeStats.cod, icon: 'cash-outline', color: '#ef4444', onPress: () => router.push('/(drawer)/deliveries') },
           ]}
         />
       </View>
@@ -475,10 +482,10 @@ export default function DashboardScreen() {
           }
           sectionTitle={t('dashboard.yourWork')}
           stats={[
-            { title: t('dashboard.assigned'), value: tailorStats.assigned, icon: 'cube-outline', color: '#8b5cf6', onPress: () => router.push('/(drawer)/orders') },
-            { title: t('dashboard.stitching'), value: tailorStats.stitching, icon: 'cut-outline', color: '#f97316', onPress: () => router.push('/(drawer)/orders') },
-            { title: t('dashboard.ready'), value: tailorStats.ready, icon: 'checkmark-done-outline', color: '#6366f1', onPress: () => router.push('/(drawer)/orders') },
-            { title: t('dashboard.completed'), value: tailorStats.completed, icon: 'ribbon-outline', color: '#22c55e', onPress: () => router.push('/(drawer)/orders') },
+            { title: t('dashboard.assigned'), value: tailorStats.assigned, icon: 'cube-outline', color: '#8b5cf6', onPress: () => router.push({ pathname: '/(drawer)/orders', params: { bucket: 'todo', ts: String(Date.now()) } }) },
+            { title: t('dashboard.stitching'), value: tailorStats.stitching, icon: 'cut-outline', color: '#f97316', onPress: () => router.push({ pathname: '/(drawer)/orders', params: { bucket: 'stitching', ts: String(Date.now()) } }) },
+            { title: t('dashboard.ready'), value: tailorStats.ready, icon: 'checkmark-done-outline', color: '#6366f1', onPress: () => router.push({ pathname: '/(drawer)/orders', params: { bucket: 'ready', ts: String(Date.now()) } }) },
+            { title: t('dashboard.completed'), value: tailorStats.completed, icon: 'ribbon-outline', color: '#22c55e', onPress: () => router.push({ pathname: '/(drawer)/orders', params: { bucket: 'done', ts: String(Date.now()) } }) },
           ]}
         />
       </View>

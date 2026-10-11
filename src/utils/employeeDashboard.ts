@@ -1,4 +1,5 @@
 import { ORDER_STATUS } from '@/constants/orderStatus';
+import { tailorBucket } from '@/features/orders/workflow';
 import type { AdminOrderItem } from '@/types/orders';
 
 // The backend has no employee-specific dashboard aggregation endpoint (only
@@ -79,46 +80,32 @@ export interface TailorDashboardStats {
   completed: number;
 }
 
-const STITCHING_STATUSES = new Set<string>([
-  ORDER_STATUS.STITCHING_STARTED,
-  ORDER_STATUS.IN_PROGRESS,
-  ORDER_STATUS.FINAL_CHECK,
-]);
-
+/**
+ * Counts use the same grouping as the tailor's Orders tabs (tailorBucket), so a
+ * dashboard tile and the list it opens always show the same number:
+ *   assigned = "To start", stitching, ready, completed = "Done".
+ */
 export const computeTailorDashboardStats = (
   orders: AdminOrderItem[],
 ): TailorDashboardStats => {
-  let assigned = 0;
-  let stitching = 0;
-  let ready = 0;
-  let completed = 0;
-
+  const stats: TailorDashboardStats = { assigned: 0, stitching: 0, ready: 0, completed: 0 };
   for (const order of orders) {
-    // TAILOR_ASSIGNED - order is with this tailor but the cloth hasn't
-    // physically arrived yet (Bridge hasn't handed it over) - still real,
-    // currently-relevant work, so it belongs in "Assigned" alongside
-    // CLOTH_RECEIVED_BY_TAILOR rather than falling through uncounted.
-    if (
-      order.status === ORDER_STATUS.TAILOR_ASSIGNED ||
-      order.status === ORDER_STATUS.CLOTH_RECEIVED_BY_TAILOR
-    ) {
-      assigned += 1;
-    } else if (STITCHING_STATUSES.has(order.status)) {
-      stitching += 1;
-    } else if (order.status === ORDER_STATUS.READY_FOR_DISPATCH) {
-      ready += 1;
-    } else if (
-      order.status === ORDER_STATUS.COMPLETED ||
-      order.status === ORDER_STATUS.DELIVERED
-    ) {
-      // DELIVERED and COMPLETED are both "done" from the tailor's
-      // perspective (their stitching work is finished either way) -
-      // previously only COMPLETED counted, so a DELIVERED order was
-      // invisible on the dashboard until some later transition to
-      // COMPLETED.
-      completed += 1;
+    switch (tailorBucket(order.status)) {
+      case 'todo':
+        stats.assigned += 1;
+        break;
+      case 'stitching':
+        stats.stitching += 1;
+        break;
+      case 'ready':
+        stats.ready += 1;
+        break;
+      case 'done':
+        stats.completed += 1;
+        break;
+      default:
+        break;
     }
   }
-
-  return { assigned, stitching, ready, completed };
+  return stats;
 };

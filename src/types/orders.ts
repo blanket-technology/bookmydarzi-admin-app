@@ -236,6 +236,8 @@ export interface MyOrderItem {
   PickupType?: string | null;
   ScheduledPickupAt?: string | null;
   ExpectedDeliveryDate?: string | null;
+  /** IST calendar date, e.g. "2026-10-12" - what the UI should display. */
+  ExpectedDeliveryDateIso?: string | null;
   CreatedAt: string;
   address?: MyOrderAddress | null;
   measurement?: RawOrderMeasurement | null;

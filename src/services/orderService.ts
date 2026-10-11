@@ -59,7 +59,8 @@ function normalizeOrderResponse(item: MyOrderItem): AdminOrderItem {
     pickup_type: item.PickupType ?? undefined,
     scheduled_pickup_at: item.ScheduledPickupAt ?? undefined,
     created_at: item.CreatedAt,
-    expected_delivery_date: item.ExpectedDeliveryDate ?? undefined,
+    // Prefer the backend's IST calendar date: the raw timestamp shifts a day with the device timezone.
+    expected_delivery_date: item.ExpectedDeliveryDateIso ?? item.ExpectedDeliveryDate ?? undefined,
     description: item.Description ?? null,
     fabric_notes: item.FabricNotes ?? null,
     customization_notes: item.CustomizationNotes ?? null,
