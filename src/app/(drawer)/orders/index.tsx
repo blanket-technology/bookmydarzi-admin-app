@@ -3,10 +3,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
-import { Badge, EmptyState, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
+import { Badge, EmptyState, FilterChips, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
 import { ORDER_STATUS_COLORS, orderStatusLabel } from '@/constants/orderStatus';
 import { useOrders } from '@/features/orders/hooks/useOrders';
 import { OrdersFilterSheet, type OrdersFilters } from '@/features/orders/components/OrdersFilterSheet';
+import { TAILOR_BUCKETS, tailorBucket, type TailorBucket } from '@/features/orders/workflow';
+import { orderNextStepHint } from '@/features/orders/workflowHints';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
@@ -15,6 +17,9 @@ import type { AdminOrderItem } from '@/types/orders';
 import { formatApiErrorDetail, formatCurrency, formatDate } from '@/utils/errors';
 
 const LIMIT = 10;
+// GET /orders/my-orders caps at 50 per page; a tailor's queue is grouped into
+// tabs client-side, so fetch the largest page rather than paginating per tab.
+const TAILOR_LIMIT = 50;
 const EMPTY_FILTERS: OrdersFilters = {
   status: '',
   paymentStatus: '',
@@ -23,13 +28,22 @@ const EMPTY_FILTERS: OrdersFilters = {
   dateTo: '',
 };
 
+const itemsSummary = (order: AdminOrderItem): string | null => {
+  const items = order.items ?? [];
+  if (items.length === 0) return null;
+  const parts = items.slice(0, 2).map((i) => `${i.quantity}\u00D7 ${i.service_name ?? ''}`.trim());
+  return items.length > 2 ? `${parts.join(', ')} +${items.length - 2}` : parts.join(', ');
+};
+
 export default function OrdersScreen() {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
-  const { contentMaxWidth } = useResponsive();
+  const { contentMaxWidth, isDesktop } = useResponsive();
   const { user, selectedRole } = useAuth();
   const role = String(user?.role ?? selectedRole ?? '').toLowerCase();
   const isTailorRole = role === 'tailor';
+  const isEmployeeRole = role === 'employee';
+  const [bucket, setBucket] = useState<TailorBucket | 'all'>('all');
   // A tailor only ever sees their own orders via GET /orders/my-orders (see
   // useOrders.ts), which only forwards page/limit/status - the
   // Tailor/payment-status/date-range filters and the "Needs Tailor" toggle
@@ -65,7 +79,7 @@ export default function OrdersScreen() {
   const params = useMemo(
     () => ({
       page,
-      limit: LIMIT,
+      limit: isTailorRole ? TAILOR_LIMIT : LIMIT,
       search: debouncedSearch || undefined,
       status: filters.status || undefined,
       payment_status: filters.paymentStatus || undefined,
@@ -76,13 +90,20 @@ export default function OrdersScreen() {
       date_to: filters.dateTo ? `${filters.dateTo}T23:59:59` : undefined,
       needs_manual_assignment: needsManualAssignment || undefined,
     }),
-    [page, debouncedSearch, filters, needsManualAssignment],
+    [page, debouncedSearch, filters, needsManualAssignment, isTailorRole],
   );
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useOrders(params);
 
-  const orders = data?.orders ?? [];
-  const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / LIMIT));
+  const allOrders = data?.orders ?? [];
+  const bucketCounts = useMemo(() => {
+    const counts: Record<TailorBucket, number> = { todo: 0, stitching: 0, ready: 0, done: 0 };
+    for (const order of allOrders) counts[tailorBucket(order.status)] += 1;
+    return counts;
+  }, [allOrders]);
+  const orders = isTailorRole && bucket !== 'all' ? allOrders.filter((o) => tailorBucket(o.status) === bucket) : allOrders;
+  const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / (isTailorRole ? TAILOR_LIMIT : LIMIT)));
+  const columns = isDesktop ? 2 : 1;
 
   const renderItem = ({ item }: { item: AdminOrderItem }) => {
     const statusColor = ORDER_STATUS_COLORS[item.status] ?? colors.primary;
@@ -91,7 +112,10 @@ export default function OrdersScreen() {
       <Pressable
         onPress={() => router.push(`/(drawer)/orders/${item.order_id}`)}
         className="rounded-3xl p-4 mb-3 border"
+        accessibilityLabel={`${item.order_code ?? item.order_id}, ${orderStatusLabel(item.status)}`}
         style={{
+          flex: 1,
+          maxWidth: columns > 1 ? `${100 / columns - 1}%` : undefined,
           backgroundColor: item.needs_manual_assignment ? `${colors.error}0D` : colors.card,
           borderColor: item.needs_manual_assignment ? colors.error : colors.border,
         }}
@@ -108,6 +132,19 @@ export default function OrdersScreen() {
               <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
                 {t('orders.tailorLabel')}: {item.tailor_name ?? t('orders.unassigned')}
               </Text>
+            ) : null}
+            {itemsSummary(item) ? (
+              <Text className="text-xs mt-1" style={{ color: colors.textSecondary }} numberOfLines={1}>
+                {itemsSummary(item)}
+              </Text>
+            ) : null}
+            {(isTailorRole || isEmployeeRole) && orderNextStepHint(role, item.status) ? (
+              <View className="flex-row items-center mt-2 self-start px-2.5 py-1 rounded-full" style={{ backgroundColor: colors.primaryLight }}>
+                <Ionicons name="arrow-forward-circle-outline" size={13} color={colors.primary} />
+                <Text className="text-xs font-semibold ml-1.5" style={{ color: colors.primary }} numberOfLines={1}>
+                  {orderNextStepHint(role, item.status)}
+                </Text>
+              </View>
             ) : null}
             {item.needs_manual_assignment ? (
               <View className="flex-row items-center gap-1 mt-1">
@@ -126,7 +163,9 @@ export default function OrdersScreen() {
         </View>
         <View className="flex-row items-center justify-between mt-3 pt-3 border-t" style={{ borderColor: colors.border }}>
           <Text className="text-sm" style={{ color: colors.textMuted }}>
-            {formatDate(item.created_at)}
+            {item.expected_delivery_date && isTailorRole
+              ? t('orders.dueOn', { date: formatDate(item.expected_delivery_date) })
+              : formatDate(item.created_at)}
           </Text>
           {!isTailorRole ? (
             <Text className="font-bold" style={{ color: colors.primary }}>
@@ -203,6 +242,18 @@ export default function OrdersScreen() {
           </Pressable>
         ) : null}
 
+        {isTailorRole && !isLoading && !isError ? (
+          <FilterChips
+            className="mb-3"
+            chips={[
+              { key: 'all', label: t('orders.tabAll'), count: allOrders.length },
+              ...TAILOR_BUCKETS.map((b) => ({ key: b.key, label: t(`orders.bucket.${b.key}`), count: bucketCounts[b.key] })),
+            ]}
+            value={bucket}
+            onChange={setBucket}
+          />
+        ) : null}
+
         {isLoading ? (
           <SkeletonList count={5} />
         ) : isError ? (
@@ -214,7 +265,11 @@ export default function OrdersScreen() {
           />
         ) : (
           <FlatList
+            // numColumns can't change on a mounted FlatList; remount on breakpoint change.
+            key={`orders-${columns}`}
             data={orders}
+            numColumns={columns}
+            columnWrapperStyle={columns > 1 ? { gap: 12 } : undefined}
             keyExtractor={(item) => item.order_id}
             renderItem={renderItem}
             showsVerticalScrollIndicator={false}
@@ -229,7 +284,7 @@ export default function OrdersScreen() {
               />
             }
             ListFooterComponent={
-              <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+              totalPages > 1 ? <Pagination page={page} totalPages={totalPages} onPageChange={setPage} /> : null
             }
           />
         )}

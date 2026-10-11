@@ -1,4 +1,5 @@
 import * as Haptics from 'expo-haptics';
+import { cssInterop } from 'nativewind';
 import { forwardRef } from 'react';
 import { Platform, Pressable as RNPressable, type GestureResponderEvent, type PressableProps as RNPressableProps, type StyleProp, type View, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -28,6 +29,11 @@ export interface PressableProps extends Omit<RNPressableProps, 'style'> {
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(RNPressable);
+// Web only: without this, `className` on <Pressable> (w-11, grow, basis-*, rounded-*,
+// ...) is dropped because the animated wrapper isn't a NativeWind-aware component.
+if (Platform.OS === 'web') {
+  cssInterop(AnimatedPressable, { className: 'style' });
+}
 
 const fireHaptic = (style: HapticStyle) => {
   if (style === 'none' || Platform.OS === 'web') return;

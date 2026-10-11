@@ -7,6 +7,7 @@ export { DateField } from './DateField';
 export { ChartCard } from './ChartCard';
 export { DrawerItem } from './DrawerItem';
 export { EmptyState } from './EmptyState';
+export { FilterChips, type FilterChip } from './FilterChips';
 export { FilterSheet } from './FilterSheet';
 export { Header } from './Header';
 export { Input } from './Input';

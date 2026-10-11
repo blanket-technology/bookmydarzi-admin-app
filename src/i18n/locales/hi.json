@@ -104,7 +104,8 @@
     "assigned": "असाइन किया गया",
     "stitching": "सिलाई हो रही है",
     "ready": "तैयार",
-    "completed": "पूरा हुआ"
+    "completed": "पूरा हुआ",
+    "goOnline": "ऑनलाइन हों"
   },
   "profile": {
     "title": "प्रोफ़ाइल",
@@ -193,7 +194,15 @@
     "adjustFilters": "अपनी खोज या फ़िल्टर बदलकर देखें",
     "noTailorFoundTitle": "कोई दर्जी नहीं मिला",
     "noTailorFoundBody": "हर ब्रॉडकास्ट राउंड के बाद भी, सभी-दर्जी फॉलबैक सहित, किसी ने स्वीकार नहीं किया। नीचे मैन्युअल रूप से दर्जी असाइन करें।",
-    "exhausted": "{{date}} को समाप्त हुआ"
+    "exhausted": "{{date}} को समाप्त हुआ",
+    "dueOn": "{{date}} तक",
+    "tabAll": "सभी",
+    "bucket": {
+      "todo": "शुरू करना है",
+      "stitching": "सिलाई",
+      "ready": "तैयार",
+      "done": "पूर्ण"
+    }
   },
   "orderSummary": {
     "mobile": "मोबाइल",
@@ -770,5 +779,77 @@
     "you_re_online": "आप ऑनलाइन हैं",
     "you_re_offline": "आप ऑफ़लाइन हैं",
     "payment_received": "भुगतान प्राप्त हुआ"
+  },
+  "tasks": {
+    "call": "कॉल",
+    "navigate": "नेविगेट",
+    "pickupTitle": "{{name}} से पिकअप",
+    "handoverTitle": "{{name}} को कपड़ा सौंपें",
+    "collectTitle": "{{name}} से लें",
+    "deliverTitle": "{{name}} को डिलीवर करें",
+    "ctaPickup": "पिकअप शुरू करें",
+    "ctaHandover": "कपड़ा सौंपें",
+    "ctaCollect": "ऑर्डर खोलें",
+    "ctaDeliver": "डिलीवर करें",
+    "ctaDeliverCash": "डिलीवर और पैसे लें",
+    "collect": "{{amount}} लें",
+    "prepaid": "भुगतान हो चुका",
+    "scheduledFor": "{{when}}",
+    "yourTasks": "आपके काम",
+    "myPickups": "मेरे पिकअप",
+    "myDeliveries": "मेरी डिलीवरी",
+    "offers": "नए ऑफ़र",
+    "seeAll": "सभी देखें",
+    "noTasks": "कोई सक्रिय काम नहीं",
+    "noTasksHint": "आपके स्वीकार किए गए काम यहाँ दिखेंगे।",
+    "loadFailed": "आपके काम लोड नहीं हो सके",
+    "noTailorTasks": "अभी सिलने के लिए कुछ नहीं",
+    "noTailorTasksHint": "कपड़ा आपके पास पहुँचते ही नए ऑर्डर यहाँ दिखेंगे।",
+    "upNext": "अगला काम",
+    "tailor": {
+      "start": "सिलाई शुरू करें",
+      "continue": "सिलाई जारी रखें",
+      "finish": "फ़ाइनल चेक पूरा करें",
+      "waitingPickup": "कपड़े का इंतज़ार",
+      "waitingDispatch": "तैयार · डिलीवरी का इंतज़ार",
+      "ctaStart": "सिलाई शुरू करें",
+      "ctaContinue": "प्रगति अपडेट करें",
+      "ctaFinish": "तैयार करें",
+      "ctaView": "ऑर्डर देखें"
+    }
+  },
+  "workflow": {
+    "phase": {
+      "placed": "ऑर्डर",
+      "tailor": "दर्ज़ी",
+      "pickup": "पिकअप",
+      "stitching": "सिलाई",
+      "delivery": "डिलीवरी",
+      "done": "पूर्ण"
+    },
+    "hint": {
+      "tailor": {
+        "waitingPickup": "ब्रिज के कपड़ा लेने का इंतज़ार",
+        "clothComing": "कपड़ा आपके पास आ रहा है",
+        "start": "सिलाई शुरू करें",
+        "inProgress": "काम के साथ प्रगति अपडेट करें",
+        "finalCheck": "फ़ाइनल चेक पूरा करके तैयार करें",
+        "waitingDispatch": "ब्रिज के डिलीवरी करने का इंतज़ार"
+      },
+      "employee": {
+        "pickup": "ग्राहक से कपड़ा लें",
+        "handover": "कपड़ा दर्ज़ी को सौंपें",
+        "collect": "दर्ज़ी से लेकर डिलीवर करें",
+        "deliver": "डिलीवर करें और बकाया राशि लें"
+      }
+    },
+    "sections": {
+      "operations": "संचालन",
+      "people": "लोग",
+      "catalog": "कैटलॉग और कंटेंट",
+      "finance": "पैसा",
+      "system": "सिस्टम",
+      "account": "खाता"
+    }
   }
 }
