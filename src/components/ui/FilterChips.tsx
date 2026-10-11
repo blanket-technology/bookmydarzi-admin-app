@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Pressable } from '@/components/ui/Pressable';
 import { useTheme } from '@/hooks/useTheme';
@@ -22,9 +23,26 @@ interface FilterChipsProps<T extends string> {
  */
 export function FilterChips<T extends string>({ chips, value, onChange, className }: FilterChipsProps<T>) {
   const { colors } = useTheme();
+  const scrollRef = useRef<ScrollView>(null);
+  const offsets = useRef<Record<string, { x: number; width: number }>>({});
+  const viewport = useRef(0);
+
+  // Keep the selected chip visible: a deep link (or a tap) can select a chip that is
+  // currently scrolled off-screen, which made the active tab invisible.
+  useEffect(() => {
+    const chip = offsets.current[value];
+    if (!chip || !scrollRef.current) return;
+    const target = Math.max(0, chip.x - (viewport.current - chip.width) / 2);
+    scrollRef.current.scrollTo({ x: target, animated: true });
+  }, [value]);
+
   return (
     <View className={className}>
       <ScrollView
+        ref={scrollRef}
+        onLayout={(e) => {
+          viewport.current = e.nativeEvent.layout.width;
+        }}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ gap: 8, paddingRight: 8 }}
@@ -36,6 +54,13 @@ export function FilterChips<T extends string>({ chips, value, onChange, classNam
             <Pressable
               key={chip.key}
               onPress={() => onChange(chip.key)}
+              onLayout={(e) => {
+                offsets.current[chip.key] = { x: e.nativeEvent.layout.x, width: e.nativeEvent.layout.width };
+                if (chip.key === value && scrollRef.current) {
+                  const target = Math.max(0, e.nativeEvent.layout.x - (viewport.current - e.nativeEvent.layout.width) / 2);
+                  scrollRef.current.scrollTo({ x: target, animated: false });
+                }
+              }}
               pressScale={0.96}
               haptic="selection"
               accessibilityRole="tab"

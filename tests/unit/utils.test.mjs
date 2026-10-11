@@ -111,3 +111,123 @@ test('workflow phases and tailor buckets cover the lifecycle', () => {
   assert.equal(tailorBucket('ready_for_dispatch'), 'ready');
   assert.equal(tailorBucket('delivered'), 'done');
 });
+
+// ---------------------------------------------------------------- order rules matrix
+const { computeOrderRules } = await import('../../src/features/orders/orderRules.ts');
+
+const rules = (role, status, over = {}) =>
+  computeOrderRules({ role, userId: 7, order: { status, tailor_id: '3', assigned_employee_id: null, delivery_employee_id: null, remaining_amount: 0, ...over } });
+const ids = (role, status, over) => rules(role, status, over).actions.map((a) => a.id);
+
+test('tailor: only the next stitching step, nothing else', () => {
+  assert.deepEqual(ids('tailor', 'cloth_received_by_tailor'), ['stitching_started']);
+  assert.deepEqual(ids('tailor', 'stitching_started'), ['in_progress']);
+  assert.deepEqual(ids('tailor', 'in_progress'), ['final_check']);
+  assert.deepEqual(ids('tailor', 'final_check'), ['ready_for_dispatch']);
+  assert.deepEqual(ids('tailor', 'at_tailor_for_repair'), ['complete_repair']);
+  for (const s of ['tailor_assigned', 'pickup_pending', 'picked_up', 'ready_for_dispatch', 'out_for_delivery', 'delivered', 'completed']) {
+    assert.deepEqual(ids('tailor', s), [], s);
+  }
+});
+
+test('bridge pickup leg: confirm pickup, measurements and add-ons only while collecting', () => {
+  const mine = { assigned_employee_id: '7' };
+  assert.deepEqual(ids('employee', 'pickup_pending', mine), ['confirm_pickup', 'manage_measurement', 'add_addon']);
+  assert.deepEqual(ids('employee', 'picked_up', mine), ['hand_to_tailor', 'manage_measurement', 'add_addon']);
+  assert.deepEqual(ids('employee', 'tailor_assigned', mine), ['schedule_pickup']);
+  // the pickup leg is finished once the cloth is with the tailor
+  for (const s of ['cloth_received_by_tailor', 'stitching_started', 'in_progress', 'final_check', 'ready_for_dispatch']) {
+    assert.deepEqual(ids('employee', s, mine), [], s);
+  }
+});
+
+test('bridge never sees update-measurement or add-ons at the delivery stage', () => {
+  // the pickup employee whose order is now out for delivery with someone else
+  const pickupEmployee = { assigned_employee_id: '7', delivery_employee_id: '9', remaining_amount: 450 };
+  assert.deepEqual(ids('employee', 'out_for_delivery', pickupEmployee), []);
+  assert.equal(rules('employee', 'out_for_delivery', pickupEmployee).canEditMeasurements, false);
+  // the delivery employee
+  const courier = { assigned_employee_id: '8', delivery_employee_id: '7', remaining_amount: 450 };
+  const r = rules('employee', 'out_for_delivery', courier);
+  assert.deepEqual(r.actions.map((a) => a.id), ['collect_cod', 'refuse_delivery', 'view_payment']);
+  assert.equal(r.canEditMeasurements, false);
+  assert.equal(r.canAddAddons, false);
+  assert.equal(r.isCodCollectionRequired, true);
+});
+
+test('delivery: collect first when money is due, otherwise mark delivered', () => {
+  const courier = { delivery_employee_id: '7' };
+  assert.equal(rules('employee', 'out_for_delivery', { ...courier, remaining_amount: 100 }).actions[0].id, 'collect_cod');
+  assert.equal(rules('employee', 'out_for_delivery', { ...courier, remaining_amount: 0 }).actions[0].id, 'complete');
+  // another employee holds the delivery leg
+  assert.deepEqual(ids('employee', 'out_for_delivery', { delivery_employee_id: '9' }), []);
+});
+
+test('bridge claims unclaimed work and cannot act on someone else\'s leg', () => {
+  assert.deepEqual(ids('employee', 'order_placed', { tailor_id: null }), ['accept', 'reject']);
+  assert.deepEqual(ids('employee', 'tailor_assigned', { assigned_employee_id: null }), ['accept']);
+  assert.deepEqual(ids('employee', 'pickup_pending', { assigned_employee_id: '8' }), []);
+  assert.equal(rules('employee', 'pickup_pending', { assigned_employee_id: '8' }).canEditMeasurements, false);
+});
+
+test('hand to tailor is blocked until a tailor is assigned', () => {
+  const a = rules('employee', 'picked_up', { assigned_employee_id: '7', tailor_id: null }).actions;
+  assert.equal(a.find((x) => x.id === 'hand_to_tailor').disabledReason, 'needTailor');
+  assert.ok(a.some((x) => x.id === 'assign_tailor'));
+});
+
+test('admin: leads with assign tailor, measurements only before stitching, no add-ons', () => {
+  const noTailor = rules('admin', 'broadcasted', { tailor_id: null }).actions;
+  assert.equal(noTailor[0].id, 'assign_tailor');
+  assert.equal(noTailor[0].tone, 'primary');
+  assert.ok(!noTailor.some((a) => a.id === 'add_addon'));
+
+  assert.ok(ids('admin', 'cloth_received_by_tailor').includes('update_measurement'));
+  for (const s of ['stitching_started', 'in_progress', 'final_check', 'ready_for_dispatch', 'out_for_delivery', 'delivered']) {
+    assert.ok(!ids('admin', s).includes('update_measurement'), s);
+  }
+  assert.ok(ids('admin', 'stitching_started').includes('in_progress'));
+  assert.ok(ids('admin', 'out_for_delivery', { remaining_amount: 10 }).includes('collect_cod'));
+  assert.ok(!ids('admin', 'delivered').includes('cancel'));
+  assert.ok(ids('admin', 'delivered').includes('correct_status'));
+  assert.deepEqual(ids('admin', 'completed'), ['view_payment']);
+  assert.deepEqual(ids('admin', 'cancelled'), ['view_payment']);
+});
+
+test('order placed: accept comes first for admin', () => {
+  const a = rules('admin', 'order_placed', { tailor_id: null }).actions;
+  assert.equal(a[0].id, 'accept');
+  assert.equal(a[0].tone, 'primary');
+});
+
+test('unknown roles get nothing', () => {
+  assert.deepEqual(ids('user', 'out_for_delivery'), []);
+  assert.deepEqual(ids(undefined, 'order_placed'), []);
+});
+
+// ---------------------------------------------------------------- due dates
+const { getDueInfo, isDueRelevant } = await import('../../src/utils/dueDate.ts');
+
+test('due date tone and days are calendar-day based and timezone-stable', () => {
+  const now = new Date(2026, 9, 11, 23, 30); // 11 Oct, late evening local
+  assert.deepEqual(
+    ['2026-10-10', '2026-10-11', '2026-10-12', '2026-10-14', '2026-10-20'].map((d) => getDueInfo(d, now).tone),
+    ['overdue', 'today', 'soon', 'ok', 'ok'],
+  );
+  assert.equal(getDueInfo('2026-10-14', now).daysLeft, 3);
+  assert.equal(getDueInfo('2026-10-08', now).daysLeft, -3);
+  assert.equal(getDueInfo(null, now), null);
+  assert.equal(getDueInfo('not a date', now), null);
+});
+
+test('due dates stop mattering once the garment is delivered or the order is closed', () => {
+  assert.equal(isDueRelevant('stitching_started'), true);
+  assert.equal(isDueRelevant('out_for_delivery'), true);
+  for (const s of ['delivered', 'completed', 'cancelled', 'inspection_window']) assert.equal(isDueRelevant(s), false, s);
+});
+
+test('cancelled and returned orders are not counted in the tailor Done tab', () => {
+  assert.equal(tailorBucket('cancelled'), 'closed');
+  assert.equal(tailorBucket('returned'), 'closed');
+  assert.equal(tailorBucket('inspection_window'), 'done');
+});

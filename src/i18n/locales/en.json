@@ -105,7 +105,9 @@
     "stitching": "Stitching",
     "ready": "Ready",
     "completed": "Completed",
-    "goOnline": "Go online"
+    "goOnline": "Go online",
+    "myPickups": "My Pickups",
+    "myDeliveries": "My Deliveries"
   },
   "profile": {
     "title": "Profile",
@@ -202,7 +204,11 @@
       "stitching": "Stitching",
       "ready": "Ready",
       "done": "Done"
-    }
+    },
+    "bucketEmptyTitle": "Nothing in \"{{tab}}\"",
+    "bucketEmptyHint": "Orders move here as they progress.",
+    "bridgeMine": "My orders",
+    "bridgeOpen": "Open"
   },
   "orderSummary": {
     "mobile": "Mobile",
@@ -248,7 +254,8 @@
     "confirmActionMessage": "Are you sure you want to {{action}}?",
     "forceRestartBroadcast": "Force Restart Broadcast",
     "forceRestartBroadcastMessage": "This restarts tailor broadcast for this order regardless of its current status. Use this to recover a stuck order.",
-    "triggerBroadcast": "Trigger Broadcast"
+    "triggerBroadcast": "Trigger Broadcast",
+    "confirmDeliveredMessage": "Confirm that you have handed the garment to the customer. This cannot be undone."
   },
   "measurement": {
     "title": "Measurements",
@@ -405,7 +412,8 @@
     "alreadyPaid": "The customer has already paid. No cash is due.",
     "noBalance": "There is no balance to collect for this order.",
     "notOnline": "Online QR payment is not available right now. Please collect cash.",
-    "close": "Close"
+    "close": "Close",
+    "deliverHint": "Payment received. Hand over the garment, then confirm the delivery."
   },
   "correctStatus": {
     "title": "Correct Status",
@@ -649,7 +657,9 @@
     "sendFinalCheck": "Send for Final Check",
     "readyForDispatch": "Ready for Dispatch",
     "needBridge": "Assign a Bridge employee for pickup first",
-    "needTailor": "Assign a tailor first"
+    "needTailor": "Assign a tailor first",
+    "markDelivered": "Mark as Delivered",
+    "collectAndDeliver": "Collect Payment & Deliver"
   },
   "toastMessages": {
     "a_new_code_has_been_sent": "A new code has been sent",
@@ -778,7 +788,8 @@
     "add_on_added_to_order": "Add-on added to order",
     "you_re_online": "You're online",
     "you_re_offline": "You're offline",
-    "payment_received": "Payment received"
+    "payment_received": "Payment received",
+    "delivery_confirmed": "Delivery confirmed"
   },
   "tasks": {
     "call": "Call",
@@ -840,7 +851,8 @@
         "pickup": "Pick up the cloth from the customer",
         "handover": "Hand the cloth to the tailor",
         "collect": "Collect from the tailor and deliver",
-        "deliver": "Deliver and collect any balance"
+        "deliver": "Deliver and collect any balance",
+        "withOtherRider": "Out for delivery with another rider"
       }
     },
     "sections": {
@@ -851,5 +863,12 @@
       "system": "System",
       "account": "Account"
     }
+  },
+  "due": {
+    "overdue": "Overdue by {{count}} d",
+    "today": "Due today",
+    "tomorrow": "Due tomorrow",
+    "inDays": "Due in {{count}} days",
+    "notSet": "Not set"
   }
 }

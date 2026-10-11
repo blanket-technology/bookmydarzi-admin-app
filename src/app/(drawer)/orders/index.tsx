@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
-import { Badge, EmptyState, FilterChips, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
+import { Badge, DueChip, EmptyState, FilterChips, Header, Pagination, Pressable, SearchBar, SkeletonList } from '@/components/ui';
 import { ORDER_STATUS_COLORS, orderStatusLabel } from '@/constants/orderStatus';
 import { useOrders } from '@/features/orders/hooks/useOrders';
 import { OrdersFilterSheet, type OrdersFilters } from '@/features/orders/components/OrdersFilterSheet';
@@ -14,12 +14,14 @@ import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { AdminOrderItem } from '@/types/orders';
+import { isDueRelevant } from '@/utils/dueDate';
 import { formatApiErrorDetail, formatCurrency, formatDate } from '@/utils/errors';
 
 const LIMIT = 10;
 // GET /orders/my-orders caps at 50 per page; a tailor's queue is grouped into
 // tabs client-side, so fetch the largest page rather than paginating per tab.
 const TAILOR_LIMIT = 50;
+type BridgeView = 'mine' | 'open' | 'all';
 const EMPTY_FILTERS: OrdersFilters = {
   status: '',
   paymentStatus: '',
@@ -44,6 +46,7 @@ export default function OrdersScreen() {
   const isTailorRole = role === 'tailor';
   const isEmployeeRole = role === 'employee';
   const [bucket, setBucket] = useState<TailorBucket | 'all'>('all');
+  const [bridgeView, setBridgeView] = useState<BridgeView>('mine');
   // A tailor only ever sees their own orders via GET /orders/my-orders (see
   // useOrders.ts), which only forwards page/limit/status - the
   // Tailor/payment-status/date-range filters and the "Needs Tailor" toggle
@@ -56,7 +59,7 @@ export default function OrdersScreen() {
   // ?status=<order_status> so each card lands on a pre-filtered list instead
   // of the same unfiltered Orders screen. Only `status` is honored to keep the
   // entry point simple; the in-screen filter sheet still drives everything else.
-  const { status: statusParam } = useLocalSearchParams<{ status?: string }>();
+  const { status: statusParam, bucket: bucketParam, ts: tsParam } = useLocalSearchParams<{ status?: string; bucket?: string; ts?: string }>();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search, 350);
@@ -72,6 +75,14 @@ export default function OrdersScreen() {
     setFilters((prev) => (prev.status === statusParam ? prev : { ...prev, status: statusParam }));
     setPage(1);
   }, [statusParam]);
+  // Tailor dashboard tiles deep-link to a tab (?bucket=done). The drawer keeps this screen
+  // mounted, so follow the param on every change (and reset to All when it is cleared).
+  useEffect(() => {
+    if (!isTailorRole) return;
+    const next = ['todo', 'stitching', 'ready', 'done'].includes(String(bucketParam)) ? (bucketParam as TailorBucket) : 'all';
+    setBucket(next);
+    // tsParam changes on every tile tap, so tapping the same tile again re-applies it.
+  }, [bucketParam, tsParam, isTailorRole]);
   const [needsManualAssignment, setNeedsManualAssignment] = useState(false);
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
@@ -79,7 +90,7 @@ export default function OrdersScreen() {
   const params = useMemo(
     () => ({
       page,
-      limit: isTailorRole ? TAILOR_LIMIT : LIMIT,
+      limit: isTailorRole || isEmployeeRole ? TAILOR_LIMIT : LIMIT,
       search: debouncedSearch || undefined,
       status: filters.status || undefined,
       payment_status: filters.paymentStatus || undefined,
@@ -90,19 +101,39 @@ export default function OrdersScreen() {
       date_to: filters.dateTo ? `${filters.dateTo}T23:59:59` : undefined,
       needs_manual_assignment: needsManualAssignment || undefined,
     }),
-    [page, debouncedSearch, filters, needsManualAssignment, isTailorRole],
+    [page, debouncedSearch, filters, needsManualAssignment, isTailorRole, isEmployeeRole],
   );
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useOrders(params);
 
   const allOrders = data?.orders ?? [];
   const bucketCounts = useMemo(() => {
-    const counts: Record<TailorBucket, number> = { todo: 0, stitching: 0, ready: 0, done: 0 };
+    const counts: Record<TailorBucket, number> = { todo: 0, stitching: 0, ready: 0, done: 0, closed: 0 };
     for (const order of allOrders) counts[tailorBucket(order.status)] += 1;
     return counts;
   }, [allOrders]);
-  const orders = isTailorRole && bucket !== 'all' ? allOrders.filter((o) => tailorBucket(o.status) === bucket) : allOrders;
-  const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / (isTailorRole ? TAILOR_LIMIT : LIMIT)));
+  // Bridge: "Mine" = legs I hold, "Open" = not yet claimed by anyone (pick up via offers/accept).
+  const isMine = (o: AdminOrderItem) =>
+    (!!o.assigned_employee_id && String(o.assigned_employee_id) === String(user?.id)) ||
+    (!!o.delivery_employee_id && String(o.delivery_employee_id) === String(user?.id));
+  const isOpen = (o: AdminOrderItem) => !o.assigned_employee_id && !o.delivery_employee_id;
+  const bridgeCounts = {
+    mine: allOrders.filter(isMine).length,
+    open: allOrders.filter(isOpen).length,
+    all: allOrders.length,
+  };
+  const orders = isTailorRole
+    ? bucket !== 'all'
+      ? allOrders.filter((o) => tailorBucket(o.status) === bucket)
+      : allOrders
+    : isEmployeeRole
+      ? bridgeView === 'mine'
+        ? allOrders.filter(isMine)
+        : bridgeView === 'open'
+          ? allOrders.filter(isOpen)
+          : allOrders
+      : allOrders;
+  const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / (isTailorRole || isEmployeeRole ? TAILOR_LIMIT : LIMIT)));
   const columns = isDesktop ? 2 : 1;
 
   const renderItem = ({ item }: { item: AdminOrderItem }) => {
@@ -138,11 +169,17 @@ export default function OrdersScreen() {
                 {itemsSummary(item)}
               </Text>
             ) : null}
-            {(isTailorRole || isEmployeeRole) && orderNextStepHint(role, item.status) ? (
+            {(isTailorRole || isEmployeeRole) && orderNextStepHint(role, item.status, {
+                  myPickup: !!item.assigned_employee_id && String(item.assigned_employee_id) === String(user?.id),
+                  myDelivery: !!item.delivery_employee_id && String(item.delivery_employee_id) === String(user?.id),
+                }) ? (
               <View className="flex-row items-center mt-2 self-start px-2.5 py-1 rounded-full" style={{ backgroundColor: colors.primaryLight }}>
                 <Ionicons name="arrow-forward-circle-outline" size={13} color={colors.primary} />
                 <Text className="text-xs font-semibold ml-1.5" style={{ color: colors.primary }} numberOfLines={1}>
-                  {orderNextStepHint(role, item.status)}
+                  {orderNextStepHint(role, item.status, {
+                  myPickup: !!item.assigned_employee_id && String(item.assigned_employee_id) === String(user?.id),
+                  myDelivery: !!item.delivery_employee_id && String(item.delivery_employee_id) === String(user?.id),
+                })}
                 </Text>
               </View>
             ) : null}
@@ -162,11 +199,13 @@ export default function OrdersScreen() {
           />
         </View>
         <View className="flex-row items-center justify-between mt-3 pt-3 border-t" style={{ borderColor: colors.border }}>
-          <Text className="text-sm" style={{ color: colors.textMuted }}>
-            {item.expected_delivery_date && isTailorRole
-              ? t('orders.dueOn', { date: formatDate(item.expected_delivery_date) })
-              : formatDate(item.created_at)}
-          </Text>
+          {item.expected_delivery_date && isDueRelevant(item.status) ? (
+            <DueChip value={item.expected_delivery_date} />
+          ) : (
+            <Text className="text-sm" style={{ color: colors.textMuted }}>
+              {formatDate(item.created_at)}
+            </Text>
+          )}
           {!isTailorRole ? (
             <Text className="font-bold" style={{ color: colors.primary }}>
               {formatCurrency(item.final_amount ?? item.amount)}
@@ -254,6 +293,19 @@ export default function OrdersScreen() {
           />
         ) : null}
 
+        {isEmployeeRole && !isLoading && !isError ? (
+          <FilterChips
+            className="mb-3"
+            chips={[
+              { key: 'mine', label: t('orders.bridgeMine'), count: bridgeCounts.mine },
+              { key: 'open', label: t('orders.bridgeOpen'), count: bridgeCounts.open },
+              { key: 'all', label: t('orders.tabAll'), count: bridgeCounts.all },
+            ]}
+            value={bridgeView}
+            onChange={setBridgeView}
+          />
+        ) : null}
+
         {isLoading ? (
           <SkeletonList count={5} />
         ) : isError ? (
@@ -279,8 +331,12 @@ export default function OrdersScreen() {
             ListEmptyComponent={
               <EmptyState
                 icon="receipt-outline"
-                title={t('orders.noOrdersFound')}
-                description={t('orders.adjustFilters')}
+                title={
+                  isTailorRole && bucket !== 'all'
+                    ? t('orders.bucketEmptyTitle', { tab: t(`orders.bucket.${bucket}`).toLowerCase() })
+                    : t('orders.noOrdersFound')
+                }
+                description={isTailorRole && bucket !== 'all' ? t('orders.bucketEmptyHint') : t('orders.adjustFilters')}
               />
             }
             ListFooterComponent={

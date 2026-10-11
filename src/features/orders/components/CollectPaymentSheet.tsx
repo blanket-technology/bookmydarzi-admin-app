@@ -6,6 +6,7 @@ import { BottomSheet, Button, Pressable } from '@/components/ui';
 import {
   useCancelDeliveryQrMutation,
   useCollectPaymentMutation,
+  useCompleteOrderMutation,
   useCreateDeliveryQrMutation,
   useDeliveryPaymentStatus,
 } from '@/features/orders/hooks/useOrders';
@@ -14,8 +15,6 @@ import { useTheme } from '@/hooks/useTheme';
 import { getUserFacingMessage } from '@/utils/errors';
 
 type Tab = 'qr' | 'cash';
-
-const AUTO_CLOSE_MS = 2200;
 
 const formatRupees = (amount: number): string =>
   `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
@@ -58,6 +57,9 @@ export const CollectPaymentSheet = ({
 
   const [tab, setTab] = useState<Tab>('qr');
   const [cashConfirmed, setCashConfirmed] = useState(false);
+  // Cash recorded in this session: the backend now reports no balance, but show the
+  // "paid" state (not "nothing to collect") until the delivery is confirmed.
+  const [cashRecorded, setCashRecorded] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const autoCreatedFor = useRef<string | null>(null);
@@ -66,18 +68,21 @@ export const CollectPaymentSheet = ({
   const createQr = useCreateDeliveryQrMutation();
   const cancelQr = useCancelDeliveryQrMutation();
   const collectCash = useCollectPaymentMutation();
+  const completeDelivery = useCompleteOrderMutation();
 
   const status = statusQuery.data;
   const state = status?.status;
   const dueAmount = status?.amount ?? remainingAmount ?? 0;
-  const isPaid = state === 'paid';
+  const isPaid = state === 'paid' || cashRecorded;
 
   // Fresh state every time the sheet opens.
   useEffect(() => {
     if (visible) {
       setTab('qr');
       setCashConfirmed(false);
+      setCashRecorded(false);
       setImageFailed(false);
+      completeDelivery.reset();
       autoCreatedFor.current = null;
       createQr.reset();
     }
@@ -114,13 +119,12 @@ export const CollectPaymentSheet = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, secondsLeft]);
 
-  // Paid: confirm with a haptic, then dismiss on its own.
+  // Paid: confirm with a haptic. The sheet then stays open on "Mark as delivered",
+  // so collecting and handing over are one flow instead of two disconnected steps.
   useEffect(() => {
-    if (!visible || !isPaid) return undefined;
+    if (!visible || !isPaid) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
-    const id = setTimeout(onClose, AUTO_CLOSE_MS);
-    return () => clearTimeout(id);
-  }, [visible, isPaid, onClose]);
+  }, [visible, isPaid]);
 
   const regenerate = useCallback(() => {
     setImageFailed(false);
@@ -132,7 +136,10 @@ export const CollectPaymentSheet = ({
     collectCash.mutate(
       { orderId, payload: { method: 'cash', amount: dueAmount } },
       {
-        onSuccess: () => onClose(),
+        onSuccess: () => {
+          setCashRecorded(true);
+          statusQuery.refetch();
+        },
         // e.g. "already paid by QR": show the true state instead of a stale one.
         onError: () => statusQuery.refetch(),
       },
@@ -150,7 +157,17 @@ export const CollectPaymentSheet = ({
   // ----------------------------------------------------------------- footer
   let footer: React.ReactNode = null;
   if (isPaid || noBalance) {
-    footer = <Button title={t('collectPayment.close')} onPress={onClose} fullWidth />;
+    footer = (
+      <View className="gap-2">
+        <Button
+          title={t('orderActions.markDelivered')}
+          onPress={() => completeDelivery.mutate({ orderId, payload: undefined }, { onSuccess: () => onClose() })}
+          loading={completeDelivery.isPending}
+          fullWidth
+        />
+        <Button title={t('collectPayment.close')} variant="ghost" onPress={onClose} fullWidth />
+      </View>
+    );
   } else if (tab === 'cash') {
     footer = (
       <View className="gap-2">
@@ -221,7 +238,10 @@ export const CollectPaymentSheet = ({
             {formatRupees(status?.amount ?? 0)}
           </Text>
           <Text className="text-sm text-center" style={{ color: colors.textSecondary }}>
-            {status?.method === 'cash' ? t('collectPayment.paidCash') : t('collectPayment.paidBy')}
+            {status?.method === 'cash' || cashRecorded ? t('collectPayment.paidCash') : t('collectPayment.paidBy')}
+          </Text>
+          <Text className="text-sm text-center mt-4 font-semibold" style={{ color: colors.text }}>
+            {t('collectPayment.deliverHint')}
           </Text>
         </View>
       );
@@ -233,6 +253,9 @@ export const CollectPaymentSheet = ({
           <Ionicons name="information-circle-outline" size={40} color={colors.textMuted} />
           <Text className="text-sm text-center mt-3" style={{ color: colors.textSecondary }}>
             {t('collectPayment.noBalance')}
+          </Text>
+          <Text className="text-sm text-center mt-4 font-semibold" style={{ color: colors.text }}>
+            {t('collectPayment.deliverHint')}
           </Text>
         </View>
       );
