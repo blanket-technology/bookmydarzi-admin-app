@@ -574,6 +574,21 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
       });
     }
 
+    // For an admin looking at an order that still has no tailor, "Assign tailor" is the
+    // step that unblocks everything else, so lead with it; claiming the pickup leg
+    // yourself ("Acquire for pickup") is the fallback, not the headline.
+    if ((normalizedRole === 'admin' || normalizedRole === 'superadmin') && !order?.tailor_id) {
+      const assignIndex = list.findIndex((a) => a.id === 'assign_tailor');
+      if (assignIndex >= 0) {
+        const [assign] = list.splice(assignIndex, 1);
+        assign.tone = 'primary';
+        for (const a of list) {
+          if (a.id === 'accept' && a.tone === 'primary' && a.label === t('orderActions.acquirePickup')) a.tone = 'secondary';
+        }
+        list.unshift(assign);
+      }
+    }
+
     return list;
   }, [
     orderId,

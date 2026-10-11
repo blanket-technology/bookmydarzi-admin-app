@@ -1,3 +1,4 @@
+import { BridgeTaskList, TailorTaskList } from '@/features/tasks/components/TaskLists';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -167,6 +168,12 @@ const OnlineStatusPill = ({ isOnline }: { isOnline: boolean }) => {
       <Text className="text-xs font-semibold" style={{ color: colors.drawerText }}>
         {isOnline ? t('dashboard.online') : t('dashboard.offline')}
       </Text>
+      {!isOnline ? (
+        <Text className="text-xs ml-1" style={{ color: colors.drawerText, opacity: 0.75 }}>
+          {'\u00B7 '}
+          {t('dashboard.goOnline')}
+        </Text>
+      ) : null}
     </View>
   );
 };
@@ -404,16 +411,22 @@ export default function DashboardScreen() {
           refreshing={isEmployeeOrdersRefetching}
           footnote={t('dashboard.employeeFootnote', { count: employeeOrdersData?.orders.length ?? 0 })}
           hero={
-            <RoleDashboardHero
-              greeting={timeOfDayGreeting(t)}
-              name={firstName ?? t('dashboard.thereGreeting')}
-              primaryStat={{ label: t('dashboard.todaysTasks'), value: employeeStats.todaysTasks }}
-              onlineBadge={
-                <Pressable onPress={() => router.push('/(drawer)/pickups')}>
-                  <OnlineStatusPill isOnline={Boolean(employeeOnlineStatus?.is_online)} />
-                </Pressable>
-              }
-            />
+            <>
+              <RoleDashboardHero
+                greeting={timeOfDayGreeting(t)}
+                name={firstName ?? t('dashboard.thereGreeting')}
+                primaryStat={{ label: t('dashboard.todaysTasks'), value: employeeStats.todaysTasks }}
+                onlineBadge={
+                  <Pressable onPress={() => router.push('/(drawer)/pickups')}>
+                    <OnlineStatusPill isOnline={Boolean(employeeOnlineStatus?.is_online)} />
+                  </Pressable>
+                }
+              />
+              <Text className="text-base font-bold mb-3 mt-2" style={{ color: colors.text }}>
+                {t('tasks.yourTasks')}
+              </Text>
+              <BridgeTaskList limit={4} />
+            </>
           }
           sectionTitle={t('dashboard.yourQueue')}
           stats={[
@@ -443,12 +456,22 @@ export default function DashboardScreen() {
           refreshing={isTailorOrdersRefetching}
           footnote={t('dashboard.tailorFootnote', { count: tailorOrdersData?.orders.length ?? 0 })}
           hero={
-            <RoleDashboardHero
-              greeting={timeOfDayGreeting(t)}
-              name={firstName ?? t('dashboard.thereGreeting')}
-              primaryStat={{ label: t('dashboard.earningsCompleted'), value: formatCurrency(tailorCompletedEarnings) }}
-              onlineBadge={<OnlineStatusPill isOnline={Boolean(tailorProfile?.IsOnline)} />}
-            />
+            <>
+              <RoleDashboardHero
+                greeting={timeOfDayGreeting(t)}
+                name={firstName ?? t('dashboard.thereGreeting')}
+                primaryStat={{ label: t('dashboard.earningsCompleted'), value: formatCurrency(tailorCompletedEarnings) }}
+                onlineBadge={
+                  <Pressable onPress={() => router.push('/(drawer)/broadcasts')}>
+                    <OnlineStatusPill isOnline={Boolean(tailorProfile?.IsOnline)} />
+                  </Pressable>
+                }
+              />
+              <Text className="text-base font-bold mb-3 mt-2" style={{ color: colors.text }}>
+                {t('tasks.upNext')}
+              </Text>
+              <TailorTaskList limit={4} />
+            </>
           }
           sectionTitle={t('dashboard.yourWork')}
           stats={[

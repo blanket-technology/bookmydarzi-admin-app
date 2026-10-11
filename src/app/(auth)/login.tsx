@@ -61,7 +61,8 @@ function GlassField({
         <TextInput
           placeholderTextColor="#b3a493"
           className="flex-1 py-3.5 px-3 text-base"
-          style={{ color: '#2C1A0E' }}
+          // minWidth 0 lets the flex-1 input shrink so the trailing eye icon stays inside the field on web.
+          style={{ color: '#2C1A0E', minWidth: 0 }}
           {...inputProps}
           onFocus={(e) => {
             focus.value = withTiming(1, { duration: 180 });
