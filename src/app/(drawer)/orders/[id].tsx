@@ -36,7 +36,10 @@ import { AddOrderAddonSheet } from '@/features/orders/components/AddOrderAddonSh
 import { UpdateProgressSheet } from '@/features/orders/components/UpdateProgressSheet';
 import { ProgressPhotosSection } from '@/features/orders/components/ProgressPhotosSection';
 import { PendingOfferCard } from '@/features/orders/components/PendingOfferCard';
+import { OrderStepper } from '@/features/orders/components/OrderStepper';
 import { OrderSummaryCard } from '@/features/orders/components/OrderSummaryCard';
+import { StickyActionBar } from '@/features/orders/components/StickyActionBar';
+import { orderNextStepHint } from '@/features/orders/workflow';
 import { OrderAddressCard } from '@/features/orders/components/OrderAddressCard';
 import { OrderNotesCard } from '@/features/orders/components/OrderNotesCard';
 import { RepairRequestCard } from '@/features/orders/components/RepairRequestCard';
@@ -195,6 +198,10 @@ export default function OrderDetailsScreen() {
   );
 
   const { actions } = useOrderActions({ role, userId: user?.id, order });
+  // Field roles (tailor / bridge) get their next step pinned to the bottom of the
+  // screen; admins keep the full inline action list.
+  const pinnedAction =
+    isTailorRole || isEmployeeRole ? (actions.find((action) => action.tone === 'primary') ?? null) : null;
 
   const tailors = isAdminRole ? adminTailorsData?.tailors ?? adminTailorsData?.items ?? [] : employeeTailorsData ?? [];
 
@@ -395,6 +402,13 @@ export default function OrderDetailsScreen() {
             }
           />
         ) : null}
+
+        <View
+          className="rounded-3xl border px-3 pt-4 pb-3 mb-4"
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        >
+          <OrderStepper status={order.status} />
+        </View>
 
         <OrderSummaryCard order={order} isTailorRole={isTailorRole} />
 
@@ -620,12 +634,13 @@ export default function OrderDetailsScreen() {
           />
         ) : null}
 
-        {actions.length > 0 ? (
+        {actions.filter((action) => !(pinnedAction && action.id === pinnedAction.id)).length > 0 ? (
           <>
             <Text className="text-xs font-semibold uppercase tracking-wide mb-2 ml-1" style={{ color: colors.textMuted }}>
               {t('orderDetail.actions')}
             </Text>
             {actions
+              .filter((action) => !(pinnedAction && action.id === pinnedAction.id))
               .filter((action) =>
                 order.items.length > 1
                   ? action.id !== 'update_measurement' &&
@@ -783,6 +798,16 @@ export default function OrderDetailsScreen() {
         ) : null}
         <View className="mb-8" />
       </ScreenContent>
+
+      {pinnedAction ? (
+        <StickyActionBar
+          label={pinnedAction.label}
+          onPress={() => handleActionPress(pinnedAction)}
+          loading={pinnedAction.isLoading}
+          disabledReason={pinnedAction.disabledReason}
+          hint={orderNextStepHint(normalizedRole, order.status) ?? undefined}
+        />
+      ) : null}
 
       <AssignTailorSheet visible={assignSheetVisible} onClose={() => setAssignSheetVisible(false)} tailors={tailors} onAssign={handleAssign} />
       <AssignBridgeEmployeeSheet

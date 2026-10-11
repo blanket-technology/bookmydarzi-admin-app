@@ -4,6 +4,7 @@ import { useNavigation } from 'expo-router';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Pressable } from '@/components/ui/Pressable';
+import { useResponsive } from '@/hooks/useResponsive';
 import { useTheme } from '@/hooks/useTheme';
 
 interface HeaderProps {
@@ -22,6 +23,10 @@ export const Header = ({
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  // Tablet/desktop show a permanent sidebar (see (drawer)/_layout), so a hamburger
+  // that opens nothing would be a dead control.
+  const { isTablet } = useResponsive();
+  const showMenuButton = showMenu && !isTablet;
 
   return (
     <View
@@ -29,7 +34,7 @@ export const Header = ({
       style={{ paddingTop: insets.top + 8, backgroundColor: colors.background }}
     >
       <View className="flex-row items-center flex-1">
-        {showMenu ? (
+        {showMenuButton ? (
           <Pressable
             onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
             pressScale={0.92}
