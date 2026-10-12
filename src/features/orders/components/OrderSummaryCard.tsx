@@ -60,7 +60,12 @@ export const OrderSummaryCard = ({ order, isTailorRole = false }: { order: Admin
         </>
       ) : null}
       <DetailRow label={t('orders.service')} value={order.service_name ?? '—'} colors={colors} />
-      <DetailRow label={t('orderSummary.category')} value={order.category_name ?? '—'} colors={colors} />
+      {order.category_name_raw ? (
+        <DetailRow label={t('orderSummary.category')} value={order.category_name_raw} colors={colors} />
+      ) : null}
+      {order.alteration_group ? (
+        <DetailRow label={t('orderSummary.alterationType')} value={capitalize(order.alteration_group)} colors={colors} />
+      ) : null}
       {!isTailorRole ? (
         <DetailRow label={t('orders.tailorLabel')} value={order.tailor_name ?? t('orders.unassigned')} colors={colors} />
       ) : null}

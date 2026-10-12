@@ -63,6 +63,7 @@ import { useTailors, useTailorsForEmployee } from '@/features/tailors/hooks/useT
 import { useTheme } from '@/hooks/useTheme';
 import type { OrderStatus } from '@/types/orders';
 import { formatApiErrorDetail } from '@/utils/errors';
+import { safeGoBack } from '@/utils/navigation';
 
 /**
  * Order detail screen, shared by all 4 roles (Admin/Superadmin/Tailor/
@@ -362,7 +363,7 @@ export default function OrderDetailsScreen() {
           title={isError ? t('orderDetail.failedToLoad') : t('orderDetail.notFound')}
           description={isError ? formatApiErrorDetail(error) : undefined}
           actionLabel={isError ? t('common.retry') : t('orderDetail.goBack')}
-          onAction={isError ? () => refetch() : () => router.back()}
+          onAction={isError ? () => refetch() : () => safeGoBack('/(drawer)/orders')}
         />
       </View>
     );
@@ -396,7 +397,7 @@ export default function OrderDetailsScreen() {
               </Pressable>
             ) : null}
             <Pressable
-              onPress={() => router.back()}
+              onPress={() => safeGoBack('/(drawer)/orders')}
               hitSlop={10}
               accessibilityRole="button"
               accessibilityLabel={t('orderDetail.closeOrderDetails')}

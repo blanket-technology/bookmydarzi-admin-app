@@ -105,7 +105,15 @@ export interface AdminOrderItem {
    * actually show it, matching the web admin panel's Delivery Address card. */
   address?: MyOrderAddress | null;
   service_name?: string;
+  /** Customer-card-style category subtitle - blank for Custom Alterations
+   * (see category_name below for the real, always-populated category). */
   category_name?: string;
+  /** Real service category name, always populated when one exists - unlike
+   * category_name above, never blanked for Custom Alterations. Prefer this
+   * over category_name on tailor/admin detail screens. */
+  category_name_raw?: string | null;
+  /** repair | resize | restyle - set only for Custom Alterations services. */
+  alteration_group?: string | null;
   status: OrderStatus | string;
   payment_status?: string;
   final_amount?: number;
@@ -226,6 +234,8 @@ export interface MyOrderItem {
   ServiceName?: string | null;
   ServiceTitle?: string | null;
   ServiceSubtitle?: string | null;
+  CategoryName?: string | null;
+  AlterationGroup?: string | null;
   Status: string;
   StatusLabel?: string | null;
   PaymentStatus?: string | null;

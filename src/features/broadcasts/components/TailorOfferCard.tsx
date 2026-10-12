@@ -34,10 +34,12 @@ const GarmentItemCard = ({
   item,
   index,
   onViewReferencePhoto,
+  onViewGarmentImage,
 }: {
   item: BroadcastItem;
   index: number;
   onViewReferencePhoto: (url: string) => void;
+  onViewGarmentImage: (url: string) => void;
 }) => {
   const { colors } = useTheme();
   const m = item.measurement;
@@ -46,18 +48,20 @@ const GarmentItemCard = ({
     <View className="rounded-2xl p-3 mb-2 border" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
       <View className="flex-row">
         {item.image_url ? (
-          <Image
-            source={{ uri: item.image_url }}
-            className="w-14 h-14 rounded-xl mr-3"
-            style={{ backgroundColor: colors.card }}
-            resizeMode="cover"
-          />
+          <Pressable onPress={() => onViewGarmentImage(item.image_url!)}>
+            <Image
+              source={{ uri: item.image_url }}
+              className="w-20 h-20 rounded-xl mr-3"
+              style={{ backgroundColor: colors.card }}
+              resizeMode="cover"
+            />
+          </Pressable>
         ) : (
           <View
-            className="w-14 h-14 rounded-xl mr-3 items-center justify-center"
+            className="w-20 h-20 rounded-xl mr-3 items-center justify-center"
             style={{ backgroundColor: colors.card }}
           >
-            <Ionicons name="shirt-outline" size={22} color={colors.textMuted} />
+            <Ionicons name="shirt-outline" size={28} color={colors.textMuted} />
           </View>
         )}
         <View className="flex-1">
@@ -193,7 +197,13 @@ export const TailorOfferCard = ({
       {offer.items && offer.items.length > 0 ? (
         <View className="mb-1">
           {offer.items.map((item, index) => (
-            <GarmentItemCard key={index} item={item} index={index} onViewReferencePhoto={setPreviewUrl} />
+            <GarmentItemCard
+              key={index}
+              item={item}
+              index={index}
+              onViewReferencePhoto={setPreviewUrl}
+              onViewGarmentImage={setPreviewUrl}
+            />
           ))}
         </View>
       ) : null}
@@ -282,7 +292,7 @@ export const TailorOfferCard = ({
         </View>
       </View>
 
-      <Modal visible={!!previewUrl} onClose={() => setPreviewUrl(null)} title="Reference Photo">
+      <Modal visible={!!previewUrl} onClose={() => setPreviewUrl(null)} title="Photo">
         {previewUrl ? (
           <Image
             source={{ uri: previewUrl }}

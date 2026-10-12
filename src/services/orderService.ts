@@ -42,6 +42,8 @@ function normalizeOrderResponse(item: MyOrderItem): AdminOrderItem {
     address: item.address ?? null,
     service_name: item.ServiceTitle ?? item.ServiceName ?? undefined,
     category_name: item.ServiceSubtitle ?? undefined,
+    category_name_raw: item.CategoryName ?? null,
+    alteration_group: item.AlterationGroup ?? null,
     status: item.Status,
     payment_status: item.PaymentStatus ?? undefined,
     final_amount: item.FinalAmount,

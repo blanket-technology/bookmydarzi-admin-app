@@ -213,6 +213,7 @@
   "orderSummary": {
     "mobile": "मोबाइल",
     "category": "श्रेणी",
+    "alterationType": "अल्टरेशन प्रकार",
     "payment": "भुगतान",
     "urgency": "प्राथमिकता",
     "created": "बनाया गया",

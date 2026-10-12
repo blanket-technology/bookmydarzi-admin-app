@@ -213,6 +213,7 @@
   "orderSummary": {
     "mobile": "Mobile",
     "category": "Category",
+    "alterationType": "Alteration Type",
     "payment": "Payment",
     "urgency": "Urgency",
     "created": "Created",
