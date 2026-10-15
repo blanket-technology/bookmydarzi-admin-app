@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform, View } from 'react-native';
+import { View } from 'react-native';
 import { z } from 'zod';
 import { Button, Header, Input, PasswordInput, ScreenContent } from '@/components/ui';
 import { useCreateStaffMutation } from '@/features/staff/hooks/useStaff';
@@ -59,11 +59,12 @@ export default function AddAdminScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Header title="Register Admin" subtitle="Create a new admin account" showMenu={false} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-      >
-        <ScreenContent keyboardShouldPersistTaps="handled">
+      {/* ScreenContent already wraps itself in a correctly-configured
+          KeyboardAvoidingView (avoidKeyboard defaults true) - this screen
+          doesn't need its own, and nesting two caused Android to
+          double-apply keyboard avoidance (one from this now-removed outer
+          KAV, one from ScreenContent's), hiding/squishing the form. */}
+      <ScreenContent keyboardShouldPersistTaps="handled">
           <Controller
             control={control}
             name="firstName"
@@ -139,8 +140,7 @@ export default function AddAdminScreen() {
             loading={createMutation.isPending}
             fullWidth
           />
-        </ScreenContent>
-      </KeyboardAvoidingView>
+      </ScreenContent>
     </View>
   );
 }

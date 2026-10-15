@@ -60,7 +60,13 @@ export const ScreenContent = ({
   if (!avoidKeyboard) return content;
 
   return (
-    <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    // Android keyboard handling is already done at the OS level via
+    // app.json's softwareKeyboardLayoutMode: "resize" - the window itself
+    // shrinks to fit the keyboard, so KeyboardAvoidingView must do nothing
+    // there (behavior={undefined} disables it). "height" mode double-applies
+    // on top of that OS resize, which is what was squishing/hiding content
+    // like message input bars behind the keyboard instead of showing them.
+    <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {content}
     </KeyboardAvoidingView>
   );

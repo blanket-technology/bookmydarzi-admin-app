@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Button, Header, Input, Pressable, ScreenContent } from '@/components/ui';
 import { useCreateTicketMutation } from '@/features/support/hooks/useSupportTickets';
 import { useTheme } from '@/hooks/useTheme';
@@ -44,11 +44,12 @@ export default function NewSupportTicketScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Header title={isPrefilled ? 'Contact Support' : 'Raise a Ticket'} showMenu={false} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-      >
-        <ScreenContent keyboardShouldPersistTaps="handled">
+      {/* ScreenContent already wraps itself in a correctly-configured
+          KeyboardAvoidingView (avoidKeyboard defaults true) - nesting a
+          second one here double-applied Android's keyboard avoidance on top
+          of app.json's softwareKeyboardLayoutMode: "resize", hiding/squishing
+          the form instead of showing it above the keyboard. */}
+      <ScreenContent keyboardShouldPersistTaps="handled">
           {isPrefilled ? (
             <View
               className="flex-row items-center px-3.5 py-2.5 rounded-2xl mb-4"
@@ -116,8 +117,7 @@ export default function NewSupportTicketScreen() {
             disabled={subject.trim().length < 3 || !message.trim()}
             fullWidth
           />
-        </ScreenContent>
-      </KeyboardAvoidingView>
+      </ScreenContent>
     </View>
   );
 }

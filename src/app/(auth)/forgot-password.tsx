@@ -96,7 +96,10 @@ export default function ForgotPasswordScreen() {
   return (
     <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} className="flex-1">
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        // Android already resizes the window for the keyboard via app.json's
+        // softwareKeyboardLayoutMode: "resize" - "height" here double-applied
+        // on top of that and hid/squished content behind the keyboard.
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
       >
         <ScrollView

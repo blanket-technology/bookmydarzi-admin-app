@@ -89,7 +89,10 @@ export default function SupportTicketDetailScreen() {
         }
       />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        // Android already resizes the window for the keyboard via app.json's
+        // softwareKeyboardLayoutMode: "resize" - "height" here double-applied
+        // on top of that, which is what was hiding the reply input bar.
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
       >
       <View className="flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>

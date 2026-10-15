@@ -193,7 +193,10 @@ export default function LoginScreen() {
       />
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        // Android already resizes the window for the keyboard via app.json's
+        // softwareKeyboardLayoutMode: "resize" - "height" here double-applied
+        // on top of that and hid/squished content behind the keyboard.
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
       >
         <ScrollView
