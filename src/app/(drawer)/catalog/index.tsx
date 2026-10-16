@@ -100,7 +100,17 @@ export default function CatalogScreen() {
       toast.error('Photo library permission is required');
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    // allowsEditing + aspect [1,1]: forces the OS's native crop UI to a
+    // square before upload, matching the website catalog card's own
+    // aspect-square rendering - without this, a wide source image (e.g. an
+    // infographic-style banner) got silently cropped by the browser at
+    // display time with no way for admin to control which part survived.
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
     if (result.canceled || !result.assets?.[0]) return;
     const asset = result.assets[0];
     uploadImageMutation.mutate(
