@@ -110,7 +110,7 @@ export default function ForgotPasswordScreen() {
             justifyContent: 'center',
           }}
         >
-          <Pressable onPress={() => router.back()} className="px-6 mb-4">
+          <Pressable onPress={() => router.back()} hitSlop={8} className="px-6 mb-4">
             <Ionicons name="arrow-back" size={24} color="#7D622A" />
           </Pressable>
 

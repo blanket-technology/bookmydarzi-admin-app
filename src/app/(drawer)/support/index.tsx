@@ -157,6 +157,7 @@ function ConversationsTab() {
       <View className="px-5 pt-3 flex-row justify-end">
         <Pressable
           onPress={() => setFilterVisible(true)}
+          hitSlop={8}
           className="w-10 h-10 rounded-xl items-center justify-center border"
           style={{ backgroundColor: colors.surface, borderColor: colors.border }}
         >
@@ -458,6 +459,7 @@ export default function SupportScreen() {
           activeTab === 'tickets' ? (
             <Pressable
               onPress={() => router.push('/(drawer)/support/tickets/new')}
+              hitSlop={8}
               className="w-10 h-10 rounded-xl items-center justify-center"
               style={{ backgroundColor: colors.primary }}
             >
@@ -466,6 +468,7 @@ export default function SupportScreen() {
           ) : activeTab === 'conversations' && canSeeConversations ? (
             <Pressable
               onPress={() => router.push('/(drawer)/support/analytics')}
+              hitSlop={8}
               className="w-10 h-10 rounded-xl items-center justify-center"
               style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }}
             >

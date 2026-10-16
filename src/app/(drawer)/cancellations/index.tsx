@@ -88,6 +88,7 @@ export default function CancellationsScreen() {
         rightAction={
           <Pressable
             onPress={() => router.push('/(drawer)/cancellations/policy')}
+            hitSlop={8}
             className="w-10 h-10 rounded-xl items-center justify-center border"
             style={{ backgroundColor: colors.surface, borderColor: colors.border }}
           >

@@ -305,6 +305,7 @@ function AdminPermissionEditor({ admin, onBack }: { admin: AdminStaffListItem; o
                     <Pressable
                       onPress={() => handleCellPress(screen, perm)}
                       disabled={busy}
+                      hitSlop={8}
                       className="w-8 h-8 rounded-lg items-center justify-center"
                       style={{ opacity: busy ? 0.5 : 1 }}
                     >

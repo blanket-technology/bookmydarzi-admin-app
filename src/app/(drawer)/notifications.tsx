@@ -239,6 +239,7 @@ export default function NotificationsScreen() {
               {canBroadcast ? (
                 <Pressable
                   onPress={() => setBroadcastVisible(true)}
+                  hitSlop={10}
                   className="w-9 h-9 rounded-xl items-center justify-center"
                   style={{ backgroundColor: colors.primary }}
                 >

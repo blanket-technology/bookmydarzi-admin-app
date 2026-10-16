@@ -339,7 +339,7 @@ export const CollectPaymentSheet = ({
                 >
                   {imageFailed ? (
                     <View className="items-center justify-center" style={{ width: qrSize, height: qrSize }}>
-                      <Pressable onPress={() => setImageFailed(false)}>
+                      <Pressable onPress={() => setImageFailed(false)} hitSlop={8}>
                         <Ionicons name="refresh" size={32} color={colors.primary} />
                       </Pressable>
                     </View>

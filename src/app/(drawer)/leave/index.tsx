@@ -143,6 +143,7 @@ function MyLeaveScreen() {
         rightAction={
           <Pressable
             onPress={() => setSheetVisible(true)}
+            hitSlop={8}
             className="w-10 h-10 rounded-xl items-center justify-center"
             style={{ backgroundColor: colors.primary }}
           >

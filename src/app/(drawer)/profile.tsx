@@ -410,6 +410,7 @@ function PortfolioSection({ images }: { images: string[] }) {
             <Pressable
               onPress={() => removeImage(url)}
               disabled={removing === url}
+              hitSlop={6}
               className="absolute top-1 right-1 w-6 h-6 rounded-full items-center justify-center"
               style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}
             >

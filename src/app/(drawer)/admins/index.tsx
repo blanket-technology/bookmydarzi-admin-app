@@ -69,6 +69,7 @@ export default function AdminsScreen() {
         rightAction={
           <Pressable
             onPress={() => router.push('/(drawer)/admins/add')}
+            hitSlop={8}
             className="w-10 h-10 rounded-xl items-center justify-center"
             style={{ backgroundColor: colors.primary }}
           >

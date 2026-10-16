@@ -147,6 +147,7 @@ export const UpdateProgressSheet = ({
               <Image source={{ uri: photo.uri }} style={{ width: thumbSize, height: thumbSize, borderRadius: 12 }} contentFit="cover" />
               <Pressable
                 onPress={() => handleRemove(photo.uri)}
+                hitSlop={8}
                 className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full items-center justify-center"
                 style={{ backgroundColor: colors.error }}
               >

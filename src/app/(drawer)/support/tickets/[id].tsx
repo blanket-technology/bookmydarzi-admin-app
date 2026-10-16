@@ -78,11 +78,11 @@ export default function SupportTicketDetailScreen() {
         showMenu={false}
         rightAction={
           isStaff ? (
-            <Pressable onPress={() => setStatusSheetVisible(true)}>
+            <Pressable onPress={() => setStatusSheetVisible(true)} hitSlop={8}>
               <Ionicons name="options-outline" size={22} color={colors.text} />
             </Pressable>
           ) : (
-            <Pressable onPress={() => router.back()}>
+            <Pressable onPress={() => router.back()} hitSlop={8}>
               <Ionicons name="close" size={24} color={colors.text} />
             </Pressable>
           )

@@ -100,6 +100,7 @@ export default function HomepageScreen() {
           <Pressable
             onPress={() => clearCacheMutation.mutate()}
             disabled={clearCacheMutation.isPending}
+            hitSlop={8}
             className="w-10 h-10 rounded-xl items-center justify-center border"
             style={{ backgroundColor: colors.surface, borderColor: colors.border }}
           >

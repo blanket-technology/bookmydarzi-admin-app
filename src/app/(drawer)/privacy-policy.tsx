@@ -52,7 +52,7 @@ export default function PrivacyPolicyScreen() {
         title="Privacy Policy"
         showMenu={false}
         rightAction={
-          <Pressable onPress={() => router.back()}>
+          <Pressable onPress={() => router.back()} hitSlop={8}>
             <Ionicons name="close" size={24} color={colors.text} />
           </Pressable>
         }

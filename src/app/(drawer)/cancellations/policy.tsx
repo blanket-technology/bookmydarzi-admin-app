@@ -60,7 +60,7 @@ export default function CancellationPolicyScreen() {
         subtitle="Per-stage refund rules"
         showMenu={false}
         rightAction={
-          <Pressable onPress={() => router.back()}>
+          <Pressable onPress={() => router.back()} hitSlop={8}>
             <Ionicons name="close" size={24} color={colors.text} />
           </Pressable>
         }
@@ -94,7 +94,7 @@ export default function CancellationPolicyScreen() {
                     </Text>
                   ) : null}
                 </View>
-                <Pressable onPress={() => openEdit(policy)}>
+                <Pressable onPress={() => openEdit(policy)} hitSlop={8}>
                   <Ionicons name="create-outline" size={20} color={colors.primary} />
                 </Pressable>
               </View>

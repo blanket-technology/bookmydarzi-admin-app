@@ -24,7 +24,7 @@ export default function ChatAnalyticsScreen() {
         subtitle={periodLabel}
         showMenu={false}
         rightAction={
-          <Pressable onPress={() => router.back()}>
+          <Pressable onPress={() => router.back()} hitSlop={8}>
             <Ionicons name="close" size={24} color={colors.text} />
           </Pressable>
         }

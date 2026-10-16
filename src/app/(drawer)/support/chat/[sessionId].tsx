@@ -228,10 +228,10 @@ export default function ChatThreadScreen() {
         showMenu={false}
         rightAction={
           <View className="flex-row items-center gap-3">
-            <Pressable onPress={() => setHistoryOpen(true)}>
+            <Pressable onPress={() => setHistoryOpen(true)} hitSlop={8}>
               <Ionicons name="time-outline" size={22} color={colors.text} />
             </Pressable>
-            <Pressable onPress={() => router.back()}>
+            <Pressable onPress={() => router.back()} hitSlop={8}>
               <Ionicons name="close" size={24} color={colors.text} />
             </Pressable>
           </View>

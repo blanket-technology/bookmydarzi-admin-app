@@ -649,7 +649,7 @@ export default function DashboardScreen() {
               title="Recent Orders"
               icon="receipt-outline"
               accessory={
-                <Pressable onPress={() => router.push('/(drawer)/orders')}>
+                <Pressable onPress={() => router.push('/(drawer)/orders')} hitSlop={8}>
                   <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
                 </Pressable>
               }
@@ -668,7 +668,7 @@ export default function DashboardScreen() {
               title="Latest Customers"
               icon="people-outline"
               accessory={
-                <Pressable onPress={() => router.push('/(drawer)/customers')}>
+                <Pressable onPress={() => router.push('/(drawer)/customers')} hitSlop={8}>
                   <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
                 </Pressable>
               }

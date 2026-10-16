@@ -20,6 +20,7 @@ export const Pagination = ({ page, totalPages, onPageChange }: PaginationProps) 
         disabled={page <= 1}
         onPress={() => onPageChange(page - 1)}
         pressScale={0.9}
+        hitSlop={8}
         className="w-10 h-10 rounded-xl items-center justify-center border"
         style={{
           borderColor: colors.border,
@@ -36,6 +37,7 @@ export const Pagination = ({ page, totalPages, onPageChange }: PaginationProps) 
         disabled={page >= totalPages}
         onPress={() => onPageChange(page + 1)}
         pressScale={0.9}
+        hitSlop={8}
         className="w-10 h-10 rounded-xl items-center justify-center border"
         style={{
           borderColor: colors.border,
