@@ -7,6 +7,7 @@ import { BottomSheet, Button, Pressable } from '@/components/ui';
 import { useUpdateStitchingStatusMutation } from '@/features/orders/hooks/useOrders';
 import { useUploadProgressPhotoMutation } from '@/features/orders/hooks/useProgressPhotos';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
+import { useResponsive } from '@/hooks/useResponsive';
 import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/store/toastStore';
 import type { ProgressPhotoStage } from '@/types/progressPhotos';
@@ -48,6 +49,8 @@ export const UpdateProgressSheet = ({
 }: UpdateProgressSheetProps) => {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
+  const { isLargeScreen } = useResponsive();
+  const thumbSize = isLargeScreen ? 104 : 80;
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -141,7 +144,7 @@ export const UpdateProgressSheet = ({
         <View className="flex-row flex-wrap mb-3" style={{ gap: 8 }}>
           {photos.map((photo) => (
             <View key={photo.uri}>
-              <Image source={{ uri: photo.uri }} style={{ width: 80, height: 80, borderRadius: 12 }} contentFit="cover" />
+              <Image source={{ uri: photo.uri }} style={{ width: thumbSize, height: thumbSize, borderRadius: 12 }} contentFit="cover" />
               <Pressable
                 onPress={() => handleRemove(photo.uri)}
                 className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full items-center justify-center"

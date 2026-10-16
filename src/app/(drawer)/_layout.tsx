@@ -13,7 +13,7 @@ import { useTheme } from '@/hooks/useTheme';
 export default function DrawerLayout() {
   const { isAuthenticated, isInitialized, isHydrated } = useAuth();
   const { colors } = useTheme();
-  const { isTablet } = useResponsive();
+  const { isTablet, isDesktop } = useResponsive();
   usePushRegistration();
   // Routes a tapped broadcast push straight to its screen (pickups,
   // deliveries, etc.) instead of just opening the app - see the hook's own
@@ -43,7 +43,11 @@ export default function DrawerLayout() {
             // a tablet screen just to show 6 nav items is wasted space.
             drawerType: isTablet ? 'permanent' : 'front',
             drawerStyle: {
-              width: isTablet ? 300 : '82%',
+              // Desktop-class (iPad landscape, laptop-width Expo web) gets a
+              // wider sidebar than a portrait tablet - 300px reads as
+              // cramped once there's 1024px+ of real estate to work with,
+              // especially for the longer menu-item labels in CustomDrawer.
+              width: isDesktop ? 340 : isTablet ? 300 : '82%',
               backgroundColor: colors.drawer,
             },
             overlayColor: colors.overlay,

@@ -10,6 +10,7 @@ import {
   useUploadProgressPhotoMutation,
 } from '@/features/orders/hooks/useProgressPhotos';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
+import { useResponsive } from '@/hooks/useResponsive';
 import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/store/toastStore';
 import type { OrderStatus } from '@/types/orders';
@@ -43,6 +44,8 @@ export const ProgressPhotosSection = ({
 }: ProgressPhotosSectionProps) => {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
+  const { isLargeScreen } = useResponsive();
+  const thumbSize = isLargeScreen ? 132 : 96;
   const [expanded, setExpanded] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { data, isLoading, isError } = useOrderPhotos(orderId, expanded);
@@ -139,12 +142,12 @@ export const ProgressPhotosSection = ({
                 >
                   <Image
                     source={{ uri: photo.photo_url }}
-                    style={{ width: 96, height: 96, borderRadius: 12 }}
+                    style={{ width: thumbSize, height: thumbSize, borderRadius: 12 }}
                     contentFit="cover"
                   />
                   <Text
                     className="text-xs mt-1 text-center"
-                    style={{ color: colors.textSecondary, width: 96 }}
+                    style={{ color: colors.textSecondary, width: thumbSize }}
                     numberOfLines={1}
                   >
                     {photo.stage.replace(/_/g, ' ')}

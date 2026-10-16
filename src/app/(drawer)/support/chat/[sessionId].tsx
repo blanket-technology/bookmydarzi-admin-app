@@ -29,7 +29,8 @@ import { formatDateTime } from '@/utils/errors';
 export default function ChatThreadScreen() {
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const { colors } = useTheme();
-  const { contentMaxWidth } = useResponsive();
+  const { contentMaxWidth, isLargeScreen } = useResponsive();
+  const chatImageSize = isLargeScreen ? 220 : 160;
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<LocalChatMessage>>(null);
@@ -171,7 +172,7 @@ export default function ChatThreadScreen() {
           {imageUrl ? (
             <Image
               source={{ uri: imageUrl }}
-              style={{ width: 160, height: 160, borderRadius: 10, marginBottom: item.body ? 6 : 0 }}
+              style={{ width: chatImageSize, height: chatImageSize, borderRadius: 10, marginBottom: item.body ? 6 : 0 }}
               contentFit="cover"
             />
           ) : null}

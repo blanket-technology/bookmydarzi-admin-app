@@ -229,6 +229,7 @@ export default function OrdersScreen() {
         rightAction={
           <Pressable
             onPress={() => setFilterVisible(true)}
+            hitSlop={8}
             className="w-10 h-10 rounded-xl items-center justify-center border"
             style={{ backgroundColor: activeFilterCount > 0 ? colors.primary : colors.surface, borderColor: colors.border }}
           >

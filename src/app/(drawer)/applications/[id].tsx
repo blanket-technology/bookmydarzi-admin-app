@@ -10,6 +10,7 @@ import {
   useRejectApplicationMutation,
 } from '@/features/applications/hooks/useApplications';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useResponsive } from '@/hooks/useResponsive';
 import { useTheme } from '@/hooks/useTheme';
 import { findFreshSignedUrl, isPdfUrl, resolveDocUrl } from '@/utils/documents';
 import { capitalize, formatApiErrorDetail, formatDate } from '@/utils/errors';
@@ -18,6 +19,8 @@ export default function ApplicationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
   const { permissions, role } = usePermissions();
+  const { isLargeScreen } = useResponsive();
+  const thumbSize = isLargeScreen ? 132 : 96;
   const [rejectSheetVisible, setRejectSheetVisible] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [confirmApprove, setConfirmApprove] = useState(false);
@@ -220,7 +223,7 @@ export default function ApplicationDetailScreen() {
                 >
                   <Image
                     source={{ uri: resolveDocUrl(url) }}
-                    style={{ width: 96, height: 96, borderRadius: 12 }}
+                    style={{ width: thumbSize, height: thumbSize, borderRadius: 12 }}
                     contentFit="cover"
                   />
                 </Pressable>

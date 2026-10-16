@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Image, Text, View } from 'react-native';
 import { Card, Modal, Pressable } from '@/components/ui';
+import { useResponsive } from '@/hooks/useResponsive';
 import { useTheme } from '@/hooks/useTheme';
 import type { AdminOrderItem } from '@/types/orders';
 
@@ -12,6 +13,8 @@ import type { AdminOrderItem } from '@/types/orders';
  * action bar (useOrderActions.ts), not this card. */
 export const RepairRequestCard = ({ order }: { order: AdminOrderItem }) => {
   const { colors } = useTheme();
+  const { isLargeScreen } = useResponsive();
+  const thumbSize = isLargeScreen ? 76 : 56;
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const repair = order.latest_repair_request;
 
@@ -45,7 +48,7 @@ export const RepairRequestCard = ({ order }: { order: AdminOrderItem }) => {
         <View className="flex-row flex-wrap gap-2 mb-2">
           {repair.issue_photo_urls.map((url, idx) => (
             <Pressable key={`${url}-${idx}`} onPress={() => setPreviewUrl(url)}>
-              <Image source={{ uri: url }} style={{ width: 56, height: 56, borderRadius: 8 }} resizeMode="cover" />
+              <Image source={{ uri: url }} style={{ width: thumbSize, height: thumbSize, borderRadius: 8 }} resizeMode="cover" />
             </Pressable>
           ))}
         </View>
