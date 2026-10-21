@@ -1,4 +1,11 @@
 {
+  "appLock": {
+    "prompt": "BookMyDarzi Admin अनलॉक करें",
+    "title": "ऐप लॉक है",
+    "hint": "जारी रखने के लिए Face ID या अपना पासकोड इस्तेमाल करें।",
+    "unlock": "अनलॉक करें",
+    "verifying": "सत्यापित हो रहा है..."
+  },
   "common": {
     "loading": "लोड हो रहा है...",
     "retry": "फिर कोशिश करें",

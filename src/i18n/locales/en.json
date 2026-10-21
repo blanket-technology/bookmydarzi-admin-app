@@ -1,4 +1,11 @@
 {
+  "appLock": {
+    "prompt": "Unlock BookMyDarzi Admin",
+    "title": "App Locked",
+    "hint": "Use Face ID or your passcode to continue.",
+    "unlock": "Unlock",
+    "verifying": "Verifying..."
+  },
   "common": {
     "loading": "Loading...",
     "retry": "Retry",
