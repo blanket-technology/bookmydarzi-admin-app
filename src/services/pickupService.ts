@@ -21,6 +21,10 @@ export const pickupService = {
     const { data } = await apiClient.patch(ENDPOINTS.EMPLOYEE.PICKUP_BROADCAST_DECLINE(orderId));
     return data;
   },
+  backOut: async (orderId: string, payload: { reason_code: string; reason_text?: string }) => {
+    const { data } = await apiClient.patch(ENDPOINTS.EMPLOYEE.PICKUP_BROADCAST_BACK_OUT(orderId), payload);
+    return data;
+  },
   setOnlineStatus: async (payload: {
     is_online: boolean;
     latitude?: number | null;

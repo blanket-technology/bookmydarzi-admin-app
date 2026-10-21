@@ -68,6 +68,11 @@ function normalizeOrderResponse(item: MyOrderItem): AdminOrderItem {
     customization_notes: item.CustomizationNotes ?? null,
     cloth_details: item.ClothDetails ?? null,
     reference_photo_url: item.ReferencePhotoUrl ?? null,
+    // The cart checkout screen's separate multi-image style-reference
+    // picker (distinct from reference_photo_url above, which is a single
+    // per-item customization photo) - previously wasn't surfaced anywhere
+    // in this app even though the backend has carried it for a while.
+    image_references: item.ImageReferences ?? null,
     voice_note_url: item.VoiceNoteUrl ?? null,
     latest_repair_request: item.LatestRepairRequest ?? null,
     assigned_employee_id: item.AssignedEmployeeId != null ? String(item.AssignedEmployeeId) : undefined,

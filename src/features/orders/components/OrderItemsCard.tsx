@@ -46,6 +46,20 @@ export const OrderItemsCard = ({
               {item.service_name ?? item.category_name ?? t('orderItems.item')}
               {item.person_name ? ` — ${item.person_name}` : ''}
             </Text>
+            {/* item.category_name is intentionally blank for Custom
+                Alterations (the service name itself is already specific -
+                see order_response_builder.py's _item_category_name), but a
+                Tailor/Bridge working a multi-item order still needs *some*
+                category label per line. Fall back to the order-level
+                category_name_raw/alteration_group, which are never blanked
+                for exactly this reason - was previously only ever shown in
+                the single-item summary card, never per-item here. */}
+            {!item.category_name && (order.category_name_raw || order.alteration_group) ? (
+              <Text className="text-xs mt-0.5" style={{ color: colors.primary }}>
+                {order.category_name_raw}
+                {order.alteration_group ? ` · ${capitalize(order.alteration_group)}` : ''}
+              </Text>
+            ) : null}
             <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
               {t('orderItems.qty', { qty: item.quantity })}
               {item.gender ? ` · ${capitalize(item.gender)}` : ''}

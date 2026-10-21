@@ -145,18 +145,24 @@ export const ENDPOINTS = {
       `/api/v1/employee/orders/${orderId}/delivery-broadcast/accept`,
     DELIVERY_BROADCAST_DECLINE: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/delivery-broadcast/decline`,
+    DELIVERY_BROADCAST_BACK_OUT: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/delivery-broadcast/back-out`,
     // Pickup broadcast (Rapido-style FCFS pickup-leg claim), mirrors delivery.
     PICKUP_BROADCASTS: '/api/v1/employee/pickup-broadcasts',
     PICKUP_BROADCAST_ACCEPT: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/pickup-broadcast/accept`,
     PICKUP_BROADCAST_DECLINE: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/pickup-broadcast/decline`,
+    PICKUP_BROADCAST_BACK_OUT: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/pickup-broadcast/back-out`,
     // Return broadcast (post-cancellation reverse trip), mirrors delivery.
     RETURN_BROADCASTS: '/api/v1/employee/return-broadcasts',
     RETURN_BROADCAST_ACCEPT: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/return-broadcast/accept`,
     RETURN_BROADCAST_DECLINE: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/return-broadcast/decline`,
+    RETURN_BROADCAST_BACK_OUT: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/return-broadcast/back-out`,
     RETURN_IN_TRANSIT: (orderId: string) => `/api/v1/employee/orders/${orderId}/return/in-transit`,
     RETURN_COMPLETE: (orderId: string) => `/api/v1/employee/orders/${orderId}/return/complete`,
     // Repair-pickup broadcast (garment at customer's home -> tailor, post-
@@ -166,6 +172,8 @@ export const ENDPOINTS = {
       `/api/v1/employee/orders/${orderId}/repair-pickup-broadcast/accept`,
     REPAIR_PICKUP_BROADCAST_DECLINE: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/repair-pickup-broadcast/decline`,
+    REPAIR_PICKUP_BROADCAST_BACK_OUT: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/repair-pickup-broadcast/back-out`,
     REPAIR_PICKUP_IN_TRANSIT: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/repair-pickup/in-transit`,
     REPAIR_PICKUP_DELIVERED_TO_TAILOR: (orderId: string) =>
@@ -177,6 +185,8 @@ export const ENDPOINTS = {
       `/api/v1/employee/orders/${orderId}/repair-delivery-broadcast/accept`,
     REPAIR_DELIVERY_BROADCAST_DECLINE: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/repair-delivery-broadcast/decline`,
+    REPAIR_DELIVERY_BROADCAST_BACK_OUT: (orderId: string) =>
+      `/api/v1/employee/orders/${orderId}/repair-delivery-broadcast/back-out`,
     REPAIR_DELIVERY_IN_TRANSIT: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/repair-delivery/in-transit`,
     REPAIR_DELIVERY_COMPLETE: (orderId: string) =>

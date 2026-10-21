@@ -66,6 +66,11 @@ export const OrderMeasurementCard = ({
   // own docstring in types/orders.ts.
   const referencePhotoUrl = order.reference_photo_url ?? order.items?.[0]?.reference_photo_url ?? null;
   const voiceNoteUrl = order.voice_note_url ?? null;
+  // Style-reference photos picked at cart checkout - separate from the
+  // single per-item reference photo above (see image_references' own
+  // docstring in types/orders.ts). Previously never rendered anywhere in
+  // this app even though the backend has carried the field for a while.
+  const imageReferences = order.image_references ?? [];
 
   const addonsBlock =
     addons && addons.length > 0 ? (
@@ -96,6 +101,26 @@ export const OrderMeasurementCard = ({
     <VoiceNoteChip url={voiceNoteUrl} colors={colors} label={t('orderItems.playVoiceNote')} />
   ) : null;
 
+  const imageReferencesBlock =
+    imageReferences.length > 0 ? (
+      <View className="mb-4">
+        <Text className="text-xs font-semibold mb-1.5" style={{ color: colors.textMuted }}>
+          {t('orderItems.styleReferenceImages')}
+        </Text>
+        <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+          {imageReferences.map((url, idx) => (
+            <Pressable key={`${url}-${idx}`} onPress={() => setPreviewUrl(url)}>
+              <Image
+                source={{ uri: url }}
+                style={{ width: 64, height: 64, borderRadius: 12 }}
+                resizeMode="cover"
+              />
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    ) : null;
+
   const photoModal = (
     <Modal visible={!!previewUrl} onClose={() => setPreviewUrl(null)} title={t('orderItems.referencePhoto')}>
       {previewUrl ? (
@@ -114,7 +139,7 @@ export const OrderMeasurementCard = ({
     // Admin/Superadmin/Employee - add-ons are relevant to everyone, not
     // just the "measurement not collected" explainer, so render the card
     // whenever there's an addons block even if measurements aren't ready.
-    if (!isTailorRole && !addonsBlock && !referencePhotoBlock && !voiceNoteBlock) return null;
+    if (!isTailorRole && !addonsBlock && !referencePhotoBlock && !imageReferencesBlock && !voiceNoteBlock) return null;
     return (
       <Card className="mb-4">
         <Text className="font-bold mb-1" style={{ color: colors.text }}>
@@ -127,6 +152,7 @@ export const OrderMeasurementCard = ({
         ) : null}
         {addonsBlock}
         {referencePhotoBlock}
+        {imageReferencesBlock}
         {voiceNoteBlock}
         {photoModal}
       </Card>
@@ -141,6 +167,7 @@ export const OrderMeasurementCard = ({
       </Text>
       {addonsBlock}
       {referencePhotoBlock}
+      {imageReferencesBlock}
       {voiceNoteBlock}
       <Text className="text-xs mb-1" style={{ color: colors.textMuted }}>
         {m.profile_name}

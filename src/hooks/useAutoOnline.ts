@@ -7,6 +7,19 @@ import { broadcastService } from '@/services/broadcastService';
 import { pickupService } from '@/services/pickupService';
 import { useAuth } from '@/hooks/useAuth';
 
+// Same reasoning as useLocation.ts's own timeout: getCurrentPositionAsync
+// has no built-in cap, and on a poor/indoor GPS fix can hang indefinitely -
+// here that would leave `running` stuck true forever, silently blocking
+// every subsequent foreground-triggered auto-online attempt for the rest
+// of the session (not just this one call).
+const LOCATION_FIX_TIMEOUT_MS = 12_000;
+
+const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> =>
+  Promise.race([
+    promise,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Location fix timed out')), ms)),
+  ]);
+
 // Solves "forgot to toggle online" without the risk of a blind IsOnline=True
 // default: Tailor.IsOnline has no non-null-location requirement in the
 // broadcast fallback round (app/services/broadcast/broadcast_service.py), so
@@ -67,9 +80,10 @@ export function useAutoOnline() {
           return;
         }
 
-        const position = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
+        const position = await withTimeout(
+          Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+          LOCATION_FIX_TIMEOUT_MS,
+        );
         const { latitude, longitude } = position.coords;
 
         if (isTailor) {

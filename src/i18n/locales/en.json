@@ -114,7 +114,8 @@
     "completed": "Completed",
     "goOnline": "Go online",
     "myPickups": "My Pickups",
-    "myDeliveries": "My Deliveries"
+    "myDeliveries": "My Deliveries",
+    "jobsCompleted": "Jobs Completed"
   },
   "profile": {
     "title": "Profile",
@@ -290,6 +291,7 @@
     "fill": "Fill",
     "viewReferencePhoto": "View reference photo",
     "referencePhoto": "Reference Photo",
+    "styleReferenceImages": "Style Reference Images",
     "playVoiceNote": "Play voice note"
   },
   "orderNotes": {
@@ -400,6 +402,7 @@
     "cash": "Cash (COD)",
     "qr": "Scan QR",
     "scanQrHint": "Ask the customer to scan this QR with any UPI app (GPay, PhonePe, Paytm...).",
+    "qrLoadFailed": "Couldn't load the QR. Tap to try again.",
     "generating": "Generating QR...",
     "waiting": "Waiting for the customer's payment...",
     "autoConfirm": "This screen updates automatically as soon as the payment is received.",
@@ -667,7 +670,29 @@
     "needBridge": "Assign a Bridge employee for pickup first",
     "needTailor": "Assign a tailor first",
     "markDelivered": "Mark as Delivered",
-    "collectAndDeliver": "Collect Payment & Deliver"
+    "collectAndDeliver": "Collect Payment & Deliver",
+    "backOutPickup": "Can't Complete This Pickup",
+    "backOutDelivery": "Can't Complete This Delivery",
+    "backOutJob": "Can't Complete This"
+  },
+  "backOutSheet": {
+    "title": "Can't complete this?",
+    "subtitle": "Tell us why, and we'll find someone else right away.",
+    "reasonLabel": "Reason",
+    "reasons": {
+      "vehicleBreakdown": "Vehicle breakdown",
+      "weatherRoadBlocked": "Weather or road blocked",
+      "cannotReachLocation": "Can't reach location",
+      "other": "Other"
+    },
+    "reasonTextLabel": "Please describe what happened",
+    "reasonTextRequired": "Please describe what happened",
+    "confirmTitle": "Back out of this job?",
+    "confirmBody": "You'll be removed from this job and it will be offered to another Bridge partner immediately. This can't be undone.",
+    "continue": "Continue",
+    "confirmButton": "Yes, back out",
+    "cancel": "Cancel",
+    "success": "You've backed out — we're finding another partner now"
   },
   "toastMessages": {
     "a_new_code_has_been_sent": "A new code has been sent",

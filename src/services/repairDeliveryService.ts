@@ -17,6 +17,13 @@ export const repairDeliveryService = {
     const { data } = await apiClient.patch(ENDPOINTS.EMPLOYEE.REPAIR_DELIVERY_BROADCAST_DECLINE(orderId));
     return data;
   },
+  backOut: async (orderId: string, payload: { reason_code: string; reason_text?: string }) => {
+    const { data } = await apiClient.patch(
+      ENDPOINTS.EMPLOYEE.REPAIR_DELIVERY_BROADCAST_BACK_OUT(orderId),
+      payload,
+    );
+    return data;
+  },
   markInTransit: async (orderId: string) => {
     const { data } = await apiClient.patch(ENDPOINTS.EMPLOYEE.REPAIR_DELIVERY_IN_TRANSIT(orderId));
     return data;

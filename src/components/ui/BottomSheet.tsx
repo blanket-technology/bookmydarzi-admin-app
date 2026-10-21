@@ -143,6 +143,13 @@ export const BottomSheet = ({
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ flexGrow: 1 }}
               style={footer ? { flexGrow: 0, flexShrink: 1 } : undefined}
+              // iOS: lets RN automatically keep the focused TextInput above
+              // the keyboard by adjusting this ScrollView's content insets,
+              // on top of KeyboardAvoidingView pushing the whole sheet up -
+              // without this a field near the bottom of a long form (e.g.
+              // MeasurementManageSheet's Chest/Waist/Height rows) could stay
+              // under the keyboard even after the sheet itself made room.
+              automaticallyAdjustKeyboardInsets
             >
               {children}
             </ScrollView>

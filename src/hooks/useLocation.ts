@@ -8,6 +8,19 @@ export interface LocationCoords {
 
 export type LocationPermissionStatus = 'undetermined' | 'granted' | 'denied';
 
+// getCurrentPositionAsync has no built-in timeout - on a poor/indoor GPS
+// fix it can hang indefinitely, which left the online toggle stuck forever
+// mid-flight (Switch shows disabled via togglingOnline, awaiting a promise
+// that never resolves) with no error ever surfaced - looked exactly like
+// "the toggle doesn't work" from the outside.
+const LOCATION_FIX_TIMEOUT_MS = 12_000;
+
+const withTimeout = <T>(promise: Promise<T>, ms: number, message: string): Promise<T> =>
+  Promise.race([
+    promise,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
+  ]);
+
 export interface UseLocationResult {
   coords: LocationCoords | null;
   permissionStatus: LocationPermissionStatus;
@@ -48,9 +61,11 @@ export function useLocation(): UseLocationResult {
       }
       setPermissionStatus('granted');
 
-      const initial = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
+      const initial = await withTimeout(
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+        LOCATION_FIX_TIMEOUT_MS,
+        'Could not get a GPS fix - check your location signal and try again.',
+      );
       setCoords({
         latitude: initial.coords.latitude,
         longitude: initial.coords.longitude,

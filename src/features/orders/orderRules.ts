@@ -38,7 +38,9 @@ export type RuleActionId =
   | 'update_measurement'
   | 'manage_measurement'
   | 'add_addon'
-  | 'view_payment';
+  | 'view_payment'
+  | 'back_out_pickup'
+  | 'back_out_delivery';
 
 export type RuleTone = 'primary' | 'secondary' | 'destructive';
 
@@ -237,6 +239,16 @@ export function computeOrderRules({ role, userId, order }: RuleContext): OrderRu
         disabledReason: !order.tailor_id ? 'needTailor' : order.assigned_employee_id ? undefined : 'needBridge',
       });
     }
+    // Back out of an already-accepted pickup (vehicle breakdown, blocked
+    // road, can't reach the location) - only an employee who holds the
+    // leg may back out of it, and only before the garment is physically
+    // picked up (matches employee_back_out_pickup_broadcast's own
+    // ORDER_ACCEPTED-only guard in pickup_broadcast_service.py). Not
+    // offered to admin - this is the assigned partner's own "I can't do
+    // this" action, not an oversight lever.
+    if (status === 'order_accepted' && isEmployee && myPickupLeg) {
+      add({ id: 'back_out_pickup', tone: 'destructive', label: 'backOutPickup', requiresInput: true });
+    }
   }
 
   // Measurements and add-ons: only while the garment is still being collected.
@@ -277,6 +289,12 @@ export function computeOrderRules({ role, userId, order }: RuleContext): OrderRu
       requiresInput: true,
       requiresConfirmation: true,
     });
+    // Same back-out escape hatch as the pickup leg above, for the
+    // employee actually holding this delivery (not admin - oversight
+    // reassignment is a separate, existing lever).
+    if (isEmployee && myDeliveryLeg) {
+      add({ id: 'back_out_delivery', tone: 'destructive', label: 'backOutDelivery', requiresInput: true });
+    }
   }
 
   // Payment details: admin always; the delivery bridge while out for delivery.

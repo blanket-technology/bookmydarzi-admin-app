@@ -337,7 +337,17 @@ export const MeasurementManageSheet = ({
           )}
         </>
       ) : (
-        <ScrollView style={{ maxHeight: 460 }} showsVerticalScrollIndicator={false}>
+        // Bug fix: this used to be its own fixed-height ScrollView nested
+        // inside BottomSheet's own ScrollView. A nested scroll container
+        // breaks RN's built-in "scroll the focused TextInput above the
+        // keyboard" behavior (the parent ScrollView can't correctly measure
+        // an input's position inside an independently-scrolling child), which
+        // is exactly why Chest/Waist/Height etc. on this form - the most
+        // input-dense sheet in the app - stayed hidden under the keyboard.
+        // BottomSheet already provides one scroll container capped to 88% of
+        // the window height; this form just needs to flow inside that single
+        // container like every other sheet's content does.
+        <View>
           <Pressable onPress={() => { setMode('list'); setEditingProfile(null); }} className="flex-row items-center mb-1">
             <Ionicons name="arrow-back" size={16} color={colors.primary} />
             <Text className="ml-1 text-sm font-semibold" style={{ color: colors.primary }}>
@@ -432,7 +442,7 @@ export const MeasurementManageSheet = ({
               />
             </>
           )}
-        </ScrollView>
+        </View>
       )}
     </BottomSheet>
   );

@@ -20,17 +20,32 @@ import {
   useDownloadInvoiceMutation,
 } from '@/features/orders/hooks/useOrders';
 import { useOrderActions, type OrderAction } from '@/features/orders/hooks/useOrderActions';
-import { usePickupBroadcastOffers, useAcceptPickupBroadcastMutation } from '@/features/pickups/hooks/usePickups';
-import { useDeliveryBroadcastOffers, useAcceptDeliveryBroadcastMutation } from '@/features/deliveries/hooks/useDeliveries';
-import { useMarkReturnInTransitMutation, useMarkReturnCompleteMutation } from '@/features/returns/hooks/useReturns';
+import {
+  usePickupBroadcastOffers,
+  useAcceptPickupBroadcastMutation,
+  useBackOutPickupBroadcastMutation,
+} from '@/features/pickups/hooks/usePickups';
+import {
+  useDeliveryBroadcastOffers,
+  useAcceptDeliveryBroadcastMutation,
+  useBackOutDeliveryBroadcastMutation,
+} from '@/features/deliveries/hooks/useDeliveries';
+import {
+  useMarkReturnInTransitMutation,
+  useMarkReturnCompleteMutation,
+  useBackOutReturnBroadcastMutation,
+} from '@/features/returns/hooks/useReturns';
 import {
   useMarkRepairPickupDeliveredToTailorMutation,
   useMarkRepairPickupInTransitMutation,
+  useBackOutRepairPickupBroadcastMutation,
 } from '@/features/repairPickups/hooks/useRepairPickups';
 import {
   useMarkRepairDeliveryCompleteMutation,
   useMarkRepairDeliveryInTransitMutation,
+  useBackOutRepairDeliveryBroadcastMutation,
 } from '@/features/repairDeliveries/hooks/useRepairDeliveries';
+import { BackOutSheet } from '@/features/orders/components/BackOutSheet';
 import { MeasurementManageSheet } from '@/features/orders/components/MeasurementManageSheet';
 import { AddOrderAddonSheet } from '@/features/orders/components/AddOrderAddonSheet';
 import { UpdateProgressSheet } from '@/features/orders/components/UpdateProgressSheet';
@@ -105,6 +120,11 @@ export default function OrderDetailsScreen() {
   const [refuseDeliverySheetVisible, setRefuseDeliverySheetVisible] = useState(false);
   const [cancelSheetVisible, setCancelSheetVisible] = useState(false);
   const [collectSheetVisible, setCollectSheetVisible] = useState(false);
+  const [backOutPickupSheetVisible, setBackOutPickupSheetVisible] = useState(false);
+  const [backOutDeliverySheetVisible, setBackOutDeliverySheetVisible] = useState(false);
+  const [backOutReturnSheetVisible, setBackOutReturnSheetVisible] = useState(false);
+  const [backOutRepairPickupSheetVisible, setBackOutRepairPickupSheetVisible] = useState(false);
+  const [backOutRepairDeliverySheetVisible, setBackOutRepairDeliverySheetVisible] = useState(false);
   const [confirmAction, setConfirmAction] = useState<OrderAction | null>(null);
   const [paymentSheetVisible, setPaymentSheetVisible] = useState(false);
   const [notesSheetVisible, setNotesSheetVisible] = useState(false);
@@ -170,6 +190,11 @@ export default function OrderDetailsScreen() {
   const markRepairPickupDeliveredMutation = useMarkRepairPickupDeliveredToTailorMutation();
   const markRepairDeliveryInTransitMutation = useMarkRepairDeliveryInTransitMutation();
   const markRepairDeliveryCompleteMutation = useMarkRepairDeliveryCompleteMutation();
+  const backOutReturnMutation = useBackOutReturnBroadcastMutation();
+  const backOutRepairPickupMutation = useBackOutRepairPickupBroadcastMutation();
+  const backOutRepairDeliveryMutation = useBackOutRepairDeliveryBroadcastMutation();
+  const backOutPickupMutation = useBackOutPickupBroadcastMutation();
+  const backOutDeliveryMutation = useBackOutDeliveryBroadcastMutation();
 
   // Return / repair-pickup / repair-delivery leg progression (Mark In Transit /
   // Mark Complete). The backend only lets the employee who accepted that leg
@@ -290,6 +315,12 @@ export default function OrderDetailsScreen() {
         return;
       case 'cancel':
         setCancelSheetVisible(true);
+        return;
+      case 'back_out_pickup':
+        setBackOutPickupSheetVisible(true);
+        return;
+      case 'back_out_delivery':
+        setBackOutDeliverySheetVisible(true);
         return;
       case 'collect_cod':
         setCollectSheetVisible(true);
@@ -574,6 +605,16 @@ export default function OrderDetailsScreen() {
                 />
               )}
             </View>
+            {order.status === ORDER_STATUS.RETURN_SCHEDULED ? (
+              <View className="mt-2">
+                <Button
+                  title={t('orderActions.backOutJob')}
+                  variant="ghost"
+                  onPress={() => setBackOutReturnSheetVisible(true)}
+                  fullWidth
+                />
+              </View>
+            ) : null}
           </View>
         ) : null}
 
@@ -603,6 +644,16 @@ export default function OrderDetailsScreen() {
                 />
               )}
             </View>
+            {order.status === ORDER_STATUS.REPAIR_PICKUP_SCHEDULED ? (
+              <View className="mt-2">
+                <Button
+                  title={t('orderActions.backOutJob')}
+                  variant="ghost"
+                  onPress={() => setBackOutRepairPickupSheetVisible(true)}
+                  fullWidth
+                />
+              </View>
+            ) : null}
           </View>
         ) : null}
 
@@ -632,6 +683,16 @@ export default function OrderDetailsScreen() {
                 />
               )}
             </View>
+            {order.status === ORDER_STATUS.REPAIR_DELIVERY_SCHEDULED ? (
+              <View className="mt-2">
+                <Button
+                  title={t('orderActions.backOutJob')}
+                  variant="ghost"
+                  onPress={() => setBackOutRepairDeliverySheetVisible(true)}
+                  fullWidth
+                />
+              </View>
+            ) : null}
           </View>
         ) : null}
 
@@ -885,6 +946,66 @@ export default function OrderDetailsScreen() {
       <RefuseDeliverySheet visible={refuseDeliverySheetVisible} onClose={() => setRefuseDeliverySheetVisible(false)} orderId={order.order_id} />
 
       <CancelOrderSheet visible={cancelSheetVisible} onClose={() => setCancelSheetVisible(false)} orderId={order.order_id} />
+
+      <BackOutSheet
+        visible={backOutPickupSheetVisible}
+        onClose={() => setBackOutPickupSheetVisible(false)}
+        isSubmitting={backOutPickupMutation.isPending}
+        onSubmit={(payload) =>
+          backOutPickupMutation.mutate(
+            { orderId: order.order_id, payload },
+            { onSuccess: () => setBackOutPickupSheetVisible(false) },
+          )
+        }
+      />
+
+      <BackOutSheet
+        visible={backOutDeliverySheetVisible}
+        onClose={() => setBackOutDeliverySheetVisible(false)}
+        isSubmitting={backOutDeliveryMutation.isPending}
+        onSubmit={(payload) =>
+          backOutDeliveryMutation.mutate(
+            { orderId: order.order_id, payload },
+            { onSuccess: () => setBackOutDeliverySheetVisible(false) },
+          )
+        }
+      />
+
+      <BackOutSheet
+        visible={backOutReturnSheetVisible}
+        onClose={() => setBackOutReturnSheetVisible(false)}
+        isSubmitting={backOutReturnMutation.isPending}
+        onSubmit={(payload) =>
+          backOutReturnMutation.mutate(
+            { orderId: order.order_id, payload },
+            { onSuccess: () => setBackOutReturnSheetVisible(false) },
+          )
+        }
+      />
+
+      <BackOutSheet
+        visible={backOutRepairPickupSheetVisible}
+        onClose={() => setBackOutRepairPickupSheetVisible(false)}
+        isSubmitting={backOutRepairPickupMutation.isPending}
+        onSubmit={(payload) =>
+          backOutRepairPickupMutation.mutate(
+            { orderId: order.order_id, payload },
+            { onSuccess: () => setBackOutRepairPickupSheetVisible(false) },
+          )
+        }
+      />
+
+      <BackOutSheet
+        visible={backOutRepairDeliverySheetVisible}
+        onClose={() => setBackOutRepairDeliverySheetVisible(false)}
+        isSubmitting={backOutRepairDeliveryMutation.isPending}
+        onSubmit={(payload) =>
+          backOutRepairDeliveryMutation.mutate(
+            { orderId: order.order_id, payload },
+            { onSuccess: () => setBackOutRepairDeliverySheetVisible(false) },
+          )
+        }
+      />
 
       <CollectPaymentSheet
         visible={collectSheetVisible}

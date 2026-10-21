@@ -42,6 +42,27 @@ export const useDeclineRepairPickupBroadcastMutation = () => {
   });
 };
 
+export const useBackOutRepairPickupBroadcastMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      payload,
+    }: {
+      orderId: string;
+      payload: { reason_code: string; reason_text?: string };
+    }) => repairPickupService.backOut(orderId, payload),
+    onSuccess: (_data, { orderId }) => {
+      queryClient.invalidateQueries({ queryKey: ['repair-pickup-broadcasts'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(String(orderId)) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
+      toast.success("You've backed out — we're finding another partner now");
+    },
+    onError: (error) => toast.error(getMutationError(error)),
+  });
+};
+
 export const useMarkRepairPickupInTransitMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({

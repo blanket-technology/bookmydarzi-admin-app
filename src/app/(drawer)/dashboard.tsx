@@ -376,8 +376,15 @@ export default function DashboardScreen() {
       pickups: bridgeTasks.filter((x) => x.kind === 'pickup' || x.kind === 'handover').length,
       deliveries: bridgeTasks.filter((x) => x.kind === 'deliver').length,
       cod: bridgeTasks.filter((x) => x.kind === 'deliver' && x.collectAmount > 0).length,
+      // Bridge compensation isn't finalized yet (see my-earnings/index.tsx's
+      // "Coming Soon" placeholder) so there's no real earnings figure to
+      // show here - this non-monetary activity count fills the hero stat
+      // the same way tailorStats.completed does for the Tailor role below,
+      // scoped to the same capped 50-row fetch (same bound tailorStats
+      // already accepts, not a new precision bar).
+      completed: (employeeOrdersData?.orders ?? []).filter((o) => o.status === ORDER_STATUS.COMPLETED).length,
     }),
-    [bridgeTasks],
+    [bridgeTasks, employeeOrdersData],
   );
 
   // Tailors can call GET /orders/my-orders (normalized to the same
@@ -445,6 +452,7 @@ export default function DashboardScreen() {
             { title: t('dashboard.myPickups'), value: employeeStats.pickups, icon: 'cube-outline', color: '#0ea5e9', onPress: () => router.push('/(drawer)/pickups') },
             { title: t('dashboard.myDeliveries'), value: employeeStats.deliveries, icon: 'bicycle-outline', color: '#3b82f6', onPress: () => router.push('/(drawer)/deliveries') },
             { title: t('dashboard.codPending'), value: employeeStats.cod, icon: 'cash-outline', color: '#ef4444', onPress: () => router.push('/(drawer)/deliveries') },
+            { title: t('dashboard.jobsCompleted'), value: employeeStats.completed, icon: 'checkmark-circle-outline', color: '#16a34a', onPress: () => router.push('/(drawer)/orders') },
           ]}
         />
       </View>

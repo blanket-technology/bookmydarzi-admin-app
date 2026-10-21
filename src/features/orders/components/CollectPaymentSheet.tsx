@@ -339,9 +339,23 @@ export const CollectPaymentSheet = ({
                 >
                   {imageFailed ? (
                     <View className="items-center justify-center" style={{ width: qrSize, height: qrSize }}>
-                      <Pressable onPress={() => setImageFailed(false)} hitSlop={8}>
-                        <Ionicons name="refresh" size={32} color={colors.primary} />
+                      {/* Bug fix: tapping this used to just clear imageFailed
+                          and re-render the exact same (already-broken)
+                          qr_image_url, which would immediately error again -
+                          a dead end with no way to actually get a working
+                          QR. Regenerating asks the backend for a fresh QR
+                          (new image_url), the actual fix for a bad/expired
+                          image URL instead of retrying the same one. */}
+                      <Pressable onPress={regenerate} hitSlop={8} disabled={createQr.isPending}>
+                        {createQr.isPending ? (
+                          <ActivityIndicator size="small" color={colors.primary} />
+                        ) : (
+                          <Ionicons name="refresh" size={32} color={colors.primary} />
+                        )}
                       </Pressable>
+                      <Text className="text-xs mt-2 text-center" style={{ color: colors.textSecondary }}>
+                        {t('collectPayment.qrLoadFailed')}
+                      </Text>
                     </View>
                   ) : (
                     <Image

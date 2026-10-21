@@ -18,6 +18,8 @@ import {
   useUpdateOrderStatusMutation,
   useUpdateStitchingStatusMutation,
 } from '@/features/orders/hooks/useOrders';
+import { useBackOutPickupBroadcastMutation } from '@/features/pickups/hooks/usePickups';
+import { useBackOutDeliveryBroadcastMutation } from '@/features/deliveries/hooks/useDeliveries';
 
 export type OrderActionId = RuleActionId;
 
@@ -85,6 +87,8 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
   const tailorStitchingMutation = useUpdateStitchingStatusMutation();
   const staffStitchingMutation = useUpdateOrderStatusMutation();
   const completeRepairMutation = useCompleteRepairMutation();
+  const backOutPickupMutation = useBackOutPickupBroadcastMutation();
+  const backOutDeliveryMutation = useBackOutDeliveryBroadcastMutation();
 
   const isTailor = String(role ?? '').toLowerCase() === 'tailor';
   const orderId = order?.order_id;
@@ -112,6 +116,8 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
       in_progress: stitching.isPending,
       final_check: stitching.isPending,
       ready_for_dispatch: stitching.isPending,
+      back_out_pickup: backOutPickupMutation.isPending,
+      back_out_delivery: backOutDeliveryMutation.isPending,
     };
 
     // Direct (one-tap) actions. Anything that needs input opens a sheet in the
@@ -165,6 +171,8 @@ export function useOrderActions({ role, userId, order }: UseOrderActionsArgs): U
     completeRepairMutation.isPending,
     tailorStitchingMutation.isPending,
     staffStitchingMutation.isPending,
+    backOutPickupMutation.isPending,
+    backOutDeliveryMutation.isPending,
     acceptMutation,
     confirmPickupMutation,
     handToTailorMutation,

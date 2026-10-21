@@ -135,6 +135,10 @@ export interface AdminOrderItem {
    * (multi-item orders carry it per-item on items[].reference_photo_url
    * instead - see OrderLineItem). */
   reference_photo_url?: string | null;
+  /** Style-reference photos attached at cart checkout (distinct from
+   * reference_photo_url above, which is a single per-item customization
+   * photo) - an array since the cart screen allows more than one. */
+  image_references?: string[] | null;
   /** Optional voice-note recording (order-level only) - an alternative to
    * typed notes for a customer who finds speaking easier, or a tailor who
    * reads slowly. */
@@ -262,6 +266,7 @@ export interface MyOrderItem {
   CustomizationNotes?: string | null;
   ClothDetails?: string | null;
   ReferencePhotoUrl?: string | null;
+  ImageReferences?: string[] | null;
   VoiceNoteUrl?: string | null;
   LatestRepairRequest?: {
     issue_description: string;

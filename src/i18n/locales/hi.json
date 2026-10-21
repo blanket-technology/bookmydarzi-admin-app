@@ -114,7 +114,8 @@
     "completed": "पूरा हुआ",
     "goOnline": "ऑनलाइन हों",
     "myPickups": "मेरे पिकअप",
-    "myDeliveries": "मेरी डिलीवरी"
+    "myDeliveries": "मेरी डिलीवरी",
+    "jobsCompleted": "पूरी हुई नौकरियां"
   },
   "profile": {
     "title": "प्रोफ़ाइल",
@@ -290,6 +291,7 @@
     "fill": "भरें",
     "viewReferencePhoto": "संदर्भ फ़ोटो देखें",
     "referencePhoto": "संदर्भ फ़ोटो",
+    "styleReferenceImages": "स्टाइल संदर्भ छवियां",
     "playVoiceNote": "वॉइस नोट चलाएं"
   },
   "orderNotes": {
@@ -400,6 +402,7 @@
     "cash": "नकद (COD)",
     "qr": "QR स्कैन",
     "scanQrHint": "ग्राहक से किसी भी UPI ऐप (GPay, PhonePe, Paytm...) से यह QR स्कैन करने के लिए कहें।",
+    "qrLoadFailed": "QR लोड नहीं हो सका। फिर से कोशिश करने के लिए टैप करें।",
     "generating": "QR बन रहा है...",
     "waiting": "ग्राहक के भुगतान का इंतज़ार है...",
     "autoConfirm": "भुगतान मिलते ही यह स्क्रीन अपने आप अपडेट हो जाएगी।",
@@ -667,7 +670,29 @@
     "needBridge": "पहले पिकअप के लिए ब्रिज कर्मचारी असाइन करें",
     "needTailor": "पहले दर्ज़ी असाइन करें",
     "markDelivered": "डिलीवर हुआ चिह्नित करें",
-    "collectAndDeliver": "भुगतान लें और डिलीवर करें"
+    "collectAndDeliver": "भुगतान लें और डिलीवर करें",
+    "backOutPickup": "यह पिकअप पूरा नहीं कर सकते",
+    "backOutDelivery": "यह डिलीवरी पूरी नहीं कर सकते",
+    "backOutJob": "यह पूरा नहीं कर सकते"
+  },
+  "backOutSheet": {
+    "title": "यह पूरा नहीं कर सकते?",
+    "subtitle": "हमें कारण बताएं, हम तुरंत किसी और को ढूंढ लेंगे।",
+    "reasonLabel": "कारण",
+    "reasons": {
+      "vehicleBreakdown": "वाहन खराब हो गया",
+      "weatherRoadBlocked": "मौसम या रास्ता बंद",
+      "cannotReachLocation": "स्थान तक नहीं पहुंच सकते",
+      "other": "अन्य"
+    },
+    "reasonTextLabel": "कृपया बताएं क्या हुआ",
+    "reasonTextRequired": "कृपया बताएं क्या हुआ",
+    "confirmTitle": "इस काम से बाहर निकलें?",
+    "confirmBody": "आपको इस काम से हटा दिया जाएगा और इसे तुरंत किसी अन्य ब्रिज पार्टनर को दिया जाएगा। यह पूर्ववत नहीं किया जा सकता।",
+    "continue": "जारी रखें",
+    "confirmButton": "हां, बाहर निकलें",
+    "cancel": "रद्द करें",
+    "success": "आप बाहर निकल गए — हम अभी दूसरा पार्टनर ढूंढ रहे हैं"
   },
   "toastMessages": {
     "a_new_code_has_been_sent": "नया कोड भेज दिया गया है",
