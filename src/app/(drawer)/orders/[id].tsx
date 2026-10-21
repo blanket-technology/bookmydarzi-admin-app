@@ -115,7 +115,7 @@ export default function OrderDetailsScreen() {
   const [addAddonSheetVisible, setAddAddonSheetVisible] = useState(false);
   // Same "which item" targeting as measurementTargetItem, plus the
   // service_id needed to fetch that item's own add-on catalog.
-  const [addAddonTargetItem, setAddAddonTargetItem] = useState<{ id?: number; label?: string; serviceId?: number } | null>(null);
+  const [addAddonTargetItem, setAddAddonTargetItem] = useState<{ id?: number; label?: string; serviceId?: number; existingAddonIds?: number[] } | null>(null);
   const [rejectSheetVisible, setRejectSheetVisible] = useState(false);
   const [refuseDeliverySheetVisible, setRefuseDeliverySheetVisible] = useState(false);
   const [cancelSheetVisible, setCancelSheetVisible] = useState(false);
@@ -305,7 +305,13 @@ export default function OrderDetailsScreen() {
       case 'add_addon':
         setAddAddonTargetItem(
           order?.items.length === 1
-            ? { id: order.items[0].order_item_id ?? undefined, serviceId: order.items[0].service_id ?? undefined }
+            ? {
+                id: order.items[0].order_item_id ?? undefined,
+                serviceId: order.items[0].service_id ?? undefined,
+                existingAddonIds: (order.items[0].addons ?? [])
+                  .map((a) => a.addon_id)
+                  .filter((aid): aid is number => aid != null),
+              }
             : null,
         );
         setAddAddonSheetVisible(true);
@@ -1080,6 +1086,7 @@ export default function OrderDetailsScreen() {
         serviceId={addAddonTargetItem?.serviceId ?? (order.items.length === 1 ? order.items[0]?.service_id ?? undefined : undefined)}
         orderItemId={addAddonTargetItem?.id}
         itemLabel={addAddonTargetItem?.label}
+        existingAddonIds={addAddonTargetItem?.existingAddonIds}
       />
 
       <UpdateProgressSheet

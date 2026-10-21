@@ -499,9 +499,13 @@
   "addAddon": {
     "title": "Add Extra Service",
     "noExtraServices": "No extra services are configured for this item's service.",
+    "allAlreadyAdded": "Every extra service for this item has already been added.",
     "noteOptional": "Note (optional)",
     "notePlaceholder": "e.g. exact spot, size, preference",
-    "addToOrder": "Add to Order"
+    "addToOrder": "Add to Order",
+    "addCountToOrder": "Add {{count}} to Order",
+    "selectedCount": "{{count}} selected",
+    "partiallyAdded": "Added {{count}} of {{total}} - the rest failed, please retry"
   },
   "orderNotesEdit": {
     "title": "Edit Order Notes",

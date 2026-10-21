@@ -24,7 +24,7 @@ export const OrderItemsCard = ({
   /** Employee-only, same gate as canManageMeasurements' caller passes for
    * that prop - see useOrderActions.ts's add_addon action. */
   canAddAddon?: boolean;
-  onAddAddon?: (item: { id?: number; label?: string; serviceId?: number }) => void;
+  onAddAddon?: (item: { id?: number; label?: string; serviceId?: number; existingAddonIds?: number[] }) => void;
 }) => {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
@@ -107,6 +107,9 @@ export const OrderItemsCard = ({
                     id: item.order_item_id ?? undefined,
                     label: `${item.service_name ?? t('orderItems.item')}${item.person_name ? ` ${t('orderItems.forPerson', { name: item.person_name })}` : ''}`,
                     serviceId: item.service_id ?? undefined,
+                    existingAddonIds: (item.addons ?? [])
+                      .map((a) => a.addon_id)
+                      .filter((id): id is number => id != null),
                   })
                 }
                 className="px-3 py-2 rounded-xl border"

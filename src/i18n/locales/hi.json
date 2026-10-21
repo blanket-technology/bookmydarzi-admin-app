@@ -499,9 +499,13 @@
   "addAddon": {
     "title": "अतिरिक्त सेवा जोड़ें",
     "noExtraServices": "इस आइटम की सेवा के लिए कोई अतिरिक्त सेवा कॉन्फ़िगर नहीं है।",
+    "allAlreadyAdded": "इस आइटम की सभी अतिरिक्त सेवाएं पहले से जोड़ी जा चुकी हैं।",
     "noteOptional": "टिप्पणी (वैकल्पिक)",
     "notePlaceholder": "जैसे सटीक जगह, साइज़, पसंद",
-    "addToOrder": "ऑर्डर में जोड़ें"
+    "addToOrder": "ऑर्डर में जोड़ें",
+    "addCountToOrder": "{{count}} ऑर्डर में जोड़ें",
+    "selectedCount": "{{count}} चयनित",
+    "partiallyAdded": "{{total}} में से {{count}} जोड़ी गईं - बाकी असफल रहीं, कृपया फिर से कोशिश करें"
   },
   "orderNotesEdit": {
     "title": "ऑर्डर टिप्पणी बदलें",
