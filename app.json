@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bookmydarzi.admin",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true
@@ -33,7 +33,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.bookmydarzi.admin",
-      "versionCode": 3,
+      "versionCode": 4,
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
       "permissions": [
