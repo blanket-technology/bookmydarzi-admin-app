@@ -122,6 +122,11 @@ export interface AdminOrderItem {
   remaining_amount?: number;
   tailor_id?: string;
   tailor_name?: string;
+  /** Staff-only (same visibility rule as tailor_name) - lets a Bridge
+   * partner get directions to the tailor for hand-off after pickup. */
+  tailor_location?: string | null;
+  tailor_latitude?: number | null;
+  tailor_longitude?: number | null;
   urgency_level?: string;
   pickup_type?: 'instant' | 'scheduled' | string;
   scheduled_pickup_at?: string;
@@ -235,6 +240,9 @@ export interface MyOrderItem {
   TailorId?: number | null;
   TailorSpecialization?: string | null;
   TailorName?: string | null;
+  TailorLocation?: string | null;
+  TailorLatitude?: number | null;
+  TailorLongitude?: number | null;
   ServiceName?: string | null;
   ServiceTitle?: string | null;
   ServiceSubtitle?: string | null;

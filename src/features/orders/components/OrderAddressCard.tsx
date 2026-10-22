@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
-import { Card } from '@/components/ui';
+import { Card, Pressable } from '@/components/ui';
 import apiClient from '@/config/axios';
+import { openMap } from '@/features/broadcasts/offerCardHelpers';
 import { useTheme } from '@/hooks/useTheme';
 import type { AdminOrderItem } from '@/types/orders';
 import { DetailRow } from './DetailRow';
@@ -78,6 +79,23 @@ export const OrderAddressCard = ({ order }: { order: AdminOrderItem }) => {
         />
       ) : null}
       {cityStatePin ? <DetailRow label="City/State" value={cityStatePin} colors={colors} /> : null}
+
+      {/* Bug fix: a Bridge partner on the way to pick up or deliver had no
+          way to actually navigate there from this screen - the address text
+          was shown, but tapping it did nothing. Reuses openMap, already
+          proven on the pre-accept broadcast offer cards. */}
+      {address.latitude != null && address.longitude != null ? (
+        <Pressable
+          onPress={() => openMap(address.latitude, address.longitude, address.address_line_1 ?? undefined)}
+          className="flex-row items-center self-start mt-2 px-3 py-1.5 rounded-full"
+          style={{ backgroundColor: colors.primaryLight }}
+        >
+          <Ionicons name="navigate-outline" size={14} color={colors.primary} />
+          <Text className="text-xs font-semibold ml-1.5" style={{ color: colors.primary }}>
+            Get Directions
+          </Text>
+        </Pressable>
+      ) : null}
 
       {serviceability && serviceability.distance_km != null ? (
         serviceability.serviceable ? (

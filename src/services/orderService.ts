@@ -57,6 +57,12 @@ function normalizeOrderResponse(item: MyOrderItem): AdminOrderItem {
       item.TailorId != null
         ? (item.TailorName ?? item.TailorSpecialization ?? `Tailor #${item.TailorId}`)
         : undefined,
+    // Same staff-only visibility rule as tailor_name above - lets a Bridge
+    // partner get directions to the tailor after pickup (hand-off) without
+    // this ever reaching a customer-facing response.
+    tailor_location: item.TailorLocation ?? null,
+    tailor_latitude: item.TailorLatitude ?? null,
+    tailor_longitude: item.TailorLongitude ?? null,
     urgency_level: item.UrgencyLevel ?? undefined,
     pickup_type: item.PickupType ?? undefined,
     scheduled_pickup_at: item.ScheduledPickupAt ?? undefined,

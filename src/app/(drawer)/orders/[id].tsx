@@ -46,6 +46,7 @@ import {
   useBackOutRepairDeliveryBroadcastMutation,
 } from '@/features/repairDeliveries/hooks/useRepairDeliveries';
 import { BackOutSheet } from '@/features/orders/components/BackOutSheet';
+import { openMap } from '@/features/broadcasts/offerCardHelpers';
 import { MeasurementManageSheet } from '@/features/orders/components/MeasurementManageSheet';
 import { AddOrderAddonSheet } from '@/features/orders/components/AddOrderAddonSheet';
 import { UpdateProgressSheet } from '@/features/orders/components/UpdateProgressSheet';
@@ -539,6 +540,50 @@ export default function OrderDetailsScreen() {
           </View>
         ) : null}
 
+        {/* Bug fix: a Bridge partner who just picked up a garment (or the
+            order's status moved to cloth-handed-to-tailor) had no next-step
+            guidance at all - no indication of which tailor to hand it off
+            to, or how to get there. Mirrors the READY_FOR_DISPATCH/
+            RETURN_PENDING hint cards below, gated to the employee who
+            actually holds this pickup leg (same ownership check the sticky
+            action bar's hint already uses at myPickup below). */}
+        {isEmployeeRole &&
+        !!order.assigned_employee_id &&
+        String(order.assigned_employee_id) === String(user?.id) &&
+        (order.status === ORDER_STATUS.PICKED_UP || order.status === ORDER_STATUS.CLOTH_RECEIVED_BY_TAILOR) ? (
+          <View
+            className="mb-4 flex-row items-start rounded-3xl p-4"
+            style={{ backgroundColor: colors.primaryLight }}
+          >
+            <Ionicons name="shirt-outline" size={18} color={colors.primary} style={{ marginTop: 1 }} />
+            <View className="ml-2.5 flex-1">
+              <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+                {order.status === ORDER_STATUS.PICKED_UP
+                  ? t('orderDetail.handOffToTailor')
+                  : t('orderDetail.clothWithTailor')}
+              </Text>
+              {order.tailor_name ? (
+                <Text className="text-xs mt-0.5" style={{ color: colors.textSecondary }}>
+                  {order.tailor_name}
+                  {order.tailor_location ? ` · ${order.tailor_location}` : ''}
+                </Text>
+              ) : null}
+              {order.tailor_latitude != null && order.tailor_longitude != null ? (
+                <Pressable
+                  onPress={() => openMap(order.tailor_latitude, order.tailor_longitude, order.tailor_name ?? undefined)}
+                  className="flex-row items-center self-start mt-2 px-3 py-1.5 rounded-full"
+                  style={{ backgroundColor: colors.surface }}
+                >
+                  <Ionicons name="navigate-outline" size={14} color={colors.primary} />
+                  <Text className="text-xs font-bold ml-1.5" style={{ color: colors.primary }}>
+                    {t('orderDetail.getDirectionsToTailor')}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+          </View>
+        ) : null}
+
         {isEmployeeRole && order.status === ORDER_STATUS.READY_FOR_DISPATCH ? (
           <View
             className="mb-4 flex-row items-start rounded-3xl p-4"
@@ -611,6 +656,20 @@ export default function OrderDetailsScreen() {
                 />
               )}
             </View>
+            {/* Return leg goes to the tailor (collecting the item back from
+                them) - same "where am I headed" gap as pickup/delivery. */}
+            {order.tailor_latitude != null && order.tailor_longitude != null ? (
+              <Pressable
+                onPress={() => openMap(order.tailor_latitude, order.tailor_longitude, order.tailor_name ?? undefined)}
+                className="flex-row items-center self-start mt-2 px-3 py-1.5 rounded-full"
+                style={{ backgroundColor: colors.surface }}
+              >
+                <Ionicons name="navigate-outline" size={14} color={colors.primary} />
+                <Text className="text-xs font-bold ml-1.5" style={{ color: colors.primary }}>
+                  {t('orderDetail.getDirectionsToTailor')}
+                </Text>
+              </Pressable>
+            ) : null}
             {order.status === ORDER_STATUS.RETURN_SCHEDULED ? (
               <View className="mt-2">
                 <Button
@@ -650,6 +709,21 @@ export default function OrderDetailsScreen() {
                 />
               )}
             </View>
+            {/* Repair-pickup leg ends at the tailor (bringing the garment
+                back for repair) - same "where am I headed" gap as the
+                initial pickup leg. */}
+            {order.tailor_latitude != null && order.tailor_longitude != null ? (
+              <Pressable
+                onPress={() => openMap(order.tailor_latitude, order.tailor_longitude, order.tailor_name ?? undefined)}
+                className="flex-row items-center self-start mt-2 px-3 py-1.5 rounded-full"
+                style={{ backgroundColor: colors.surface }}
+              >
+                <Ionicons name="navigate-outline" size={14} color={colors.primary} />
+                <Text className="text-xs font-bold ml-1.5" style={{ color: colors.primary }}>
+                  {t('orderDetail.getDirectionsToTailor')}
+                </Text>
+              </Pressable>
+            ) : null}
             {order.status === ORDER_STATUS.REPAIR_PICKUP_SCHEDULED ? (
               <View className="mt-2">
                 <Button
