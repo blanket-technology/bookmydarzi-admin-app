@@ -357,6 +357,8 @@ export default function ChatThreadScreen() {
               </Pressable>
               <View className="flex-1">
                 <Input
+                  containerClassName="mb-0"
+                  style={{ maxHeight: 100 }}
                   value={draft}
                   onChangeText={(text) => {
                     setDraft(text);

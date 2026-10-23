@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import { Badge, Card, useDueLabel } from '@/components/ui';
 import { ORDER_STATUS_COLORS, orderStatusLabel } from '@/constants/orderStatus';
+import { paymentStatusLabel } from '@/constants/paymentStatus';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import type { AdminOrderItem } from '@/types/orders';
@@ -92,7 +93,7 @@ export const OrderSummaryCard = ({ order, isTailorRole = false }: { order: Admin
       ) : null}
       {!isTailorRole ? (
         <>
-          <DetailRow label={t('orderSummary.payment')} value={capitalize(order.payment_status ?? '—')} colors={colors} />
+          <DetailRow label={t('orderSummary.payment')} value={paymentStatusLabel(order.payment_status)} colors={colors} />
           {typeof order.remaining_amount === 'number' && order.remaining_amount > 0 && (
             <DetailRow label={t('orders.balanceDue')} value={formatCurrency(order.remaining_amount)} colors={colors} />
           )}

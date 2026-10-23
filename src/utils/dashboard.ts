@@ -270,7 +270,6 @@ export const parseDashboardStats = (
   const employees = data?.employees;
   const orders = data?.orders;
   const revenue = data?.revenue;
-  const tailors = data?.tailors;
 
   const cards: DashboardStatItem[] = [
     {
@@ -290,12 +289,6 @@ export const parseDashboardStats = (
       value: formatCount(users?.total),
       icon: 'people-outline',
       color: '#3b82f6',
-    },
-    {
-      title: 'Active Tailors',
-      value: formatCount(tailors?.active),
-      icon: 'cut-outline',
-      color: '#ec4899',
     },
     {
       title: 'Total Employees',

@@ -1,9 +1,33 @@
-// Mirrors backend app/constants/payment_status.py PaymentStatus.ALL — keep in sync.
+// Covers BOTH vocabularies from app/constants/payment_status.py, same as
+// Admin_Web's paymentConstants.js PAYMENT_STATUS_LABELS:
+//   - PaymentStatus (a single transaction row): initiated/success/failed/
+//     refunded.
+//   - OrderPaymentStatus (an order's settlement state): payment_pending/
+//     advance_pending (legacy)/advance_paid (legacy)/fully_paid/
+//     advance_failed/balance_pending (legacy)/cod_pending.
+// Bug fix (BUG-16): paymentStatusLabel() used to only know the transaction
+// vocabulary, so passing it an order-level status (e.g. the Payments screen
+// badge, or OrderSummaryCard's raw capitalize() bypassing it entirely)
+// fell through to the raw enum value - "Advance Pending" instead of
+// "Online Payment Pending" on any pre-rename order.
 export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  // Payment-record status
   initiated: 'Initiated',
   success: 'Paid',
   failed: 'Failed',
   refunded: 'Refunded',
+  partially_refunded: 'Partially Refunded',
+  pending: 'Pending',
+  // Order-level settlement status - payment_pending is the current name
+  // (BUG-118 rename); advance_pending is kept for historical orders
+  // created before the rename.
+  payment_pending: 'Online Payment Pending',
+  advance_pending: 'Online Payment Pending',
+  advance_paid: 'Paid',
+  fully_paid: 'Paid',
+  advance_failed: 'Failed',
+  balance_pending: 'Balance Pending',
+  cod_pending: 'Pay on Delivery',
 };
 
 export const PAYMENT_STATUS_COLORS: Record<string, string> = {
@@ -15,7 +39,11 @@ export const PAYMENT_STATUS_COLORS: Record<string, string> = {
 
 export function paymentStatusLabel(status?: string | null): string {
   if (!status) return '—';
-  return PAYMENT_STATUS_LABELS[status] ?? status;
+  const key = status.toLowerCase().trim();
+  if (PAYMENT_STATUS_LABELS[key]) return PAYMENT_STATUS_LABELS[key];
+  // Any other/unmapped value still reads as plain words instead of a raw
+  // snake_case enum, e.g. "balance_pending" -> "Balance Pending".
+  return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 // Manual superadmin correction only (require_superadmin server-side) — used by

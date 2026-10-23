@@ -57,6 +57,14 @@ const WorkloadRow = ({ item, colors }: { item: TailorWorkloadItem; colors: Retur
           Done
         </Text>
       </View>
+      <View className="items-center">
+        <Text className="font-bold text-base" style={{ color: colors.text }}>
+          {item.total_orders ?? 0}
+        </Text>
+        <Text className="text-[10px]" style={{ color: colors.textMuted }}>
+          Total
+        </Text>
+      </View>
     </View>
   </View>
 );

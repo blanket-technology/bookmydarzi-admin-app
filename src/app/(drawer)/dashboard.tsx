@@ -556,7 +556,7 @@ export default function DashboardScreen() {
                   className="bg-white/15 rounded-2xl px-4 py-3 flex-1"
                 >
                   <Text className="text-xs" style={{ color: colors.drawerText, opacity: 0.7 }}>
-                    Needs Attention
+                    Pending Orders
                   </Text>
                   <Text className="font-bold text-lg mt-1" style={{ color: colors.drawerText }}>
                     {formatDashboardCount(pendingCount, 'orders')}

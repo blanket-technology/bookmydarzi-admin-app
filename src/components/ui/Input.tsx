@@ -11,6 +11,7 @@ export const Input = ({
   label,
   error,
   containerClassName,
+  style,
   ...props
 }: InputProps) => {
   const { colors } = useTheme();
@@ -28,11 +29,19 @@ export const Input = ({
       <TextInput
         placeholderTextColor={colors.textMuted}
         className="rounded-2xl px-4 py-3.5 text-base border"
-        style={{
-          backgroundColor: colors.surface,
-          borderColor: error ? colors.error : colors.border,
-          color: colors.text,
-        }}
+        style={[
+          {
+            backgroundColor: colors.surface,
+            borderColor: error ? colors.error : colors.border,
+            color: colors.text,
+          },
+          // A caller-supplied style (e.g. a chat composer capping
+          // multiline growth with maxHeight) used to silently replace
+          // these base styles entirely - a plain object spread after
+          // `style` overrides it outright instead of merging, unlike
+          // RN's array form here.
+          style,
+        ]}
         {...props}
       />
       {error ? (

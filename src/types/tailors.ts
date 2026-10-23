@@ -54,6 +54,9 @@ export interface TailorWorkloadItem {
   active_orders?: number;
   pending_orders?: number;
   completed_orders?: number;
+  /** active + completed + pending + cancelled - every order ever assigned
+   * to this tailor. */
+  total_orders?: number;
   utilization_percentage?: number;
   /** Live customer-rating average (Tailor.Rating) - 0 for no ratings yet. */
   rating?: number;
