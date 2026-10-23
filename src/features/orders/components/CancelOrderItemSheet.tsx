@@ -1,11 +1,26 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { BottomSheet, Button, Input } from '@/components/ui';
 import { useAdminItemCancellationPreview, useCancelOrderItemMutation } from '@/features/orders/hooks/useOrders';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { formatCurrency } from '@/utils/errors';
+
+// Same quick-pick reasons as the customer-facing cancel modals (web +
+// app) - kept identical everywhere so this feels like one consistent
+// flow regardless of which app someone is cancelling from. "Other"
+// clears the field for free text instead of leaving a chip's wording in
+// it, since admin reasons are often operationally specific ("customer
+// called support", "wrong tailor assigned") rather than one of these.
+const CANCEL_ITEM_REASONS = [
+  'Ordered by mistake',
+  'Found a better price elsewhere',
+  'No longer needed',
+  'Taking too long',
+  'Wrong size or measurement',
+  'Other',
+];
 
 // Per-item sibling of CancelOrderSheet.tsx - cancels ONE line item within a
 // multi-item order, without touching the rest of the order. Only usable in
@@ -54,7 +69,6 @@ export const CancelOrderItemSheet = ({
     <BottomSheet
       visible={visible}
       onClose={onClose}
-      title={t('cancelItem.title')}
       footer={
         blocked ? undefined : (
           <Button
@@ -68,11 +82,24 @@ export const CancelOrderItemSheet = ({
         )
       }
     >
-      {itemName ? (
-        <Text className="text-sm font-semibold mb-3" style={{ color: colors.text }}>
-          {itemName}
-        </Text>
-      ) : null}
+      <View className="flex-row items-center mb-4">
+        <View
+          className="w-11 h-11 rounded-full items-center justify-center mr-3"
+          style={{ backgroundColor: '#FEE2E2' }}
+        >
+          <Ionicons name="close" size={20} color="#DC2626" />
+        </View>
+        <View className="flex-1">
+          <Text className="text-lg font-black" style={{ color: colors.text }}>
+            {t('cancelItem.title')}
+          </Text>
+          {itemName ? (
+            <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }} numberOfLines={1}>
+              {itemName}
+            </Text>
+          ) : null}
+        </View>
+      </View>
 
       {loadingPreview ? (
         <View className="flex-row items-center justify-center py-6 mb-3">
@@ -140,13 +167,38 @@ export const CancelOrderItemSheet = ({
       ) : null}
 
       {!blocked ? (
-        <Input
-          label={t('cancelOrder.reason')}
-          value={reason}
-          onChangeText={setReason}
-          multiline
-          error={isReasonTooShort ? t('cancelOrder.reasonTooShort') : undefined}
-        />
+        <>
+          <View className="flex-row flex-wrap mb-3" style={{ gap: 8 }}>
+            {CANCEL_ITEM_REASONS.map((option) => {
+              const active = reason === option;
+              return (
+                <Pressable
+                  key={option}
+                  onPress={() => setReason(active ? '' : option === 'Other' ? '' : option)}
+                  className="rounded-full px-3.5 py-1.5 border"
+                  style={{
+                    borderColor: active ? colors.text : colors.border,
+                    backgroundColor: active ? colors.text : 'transparent',
+                  }}
+                >
+                  <Text
+                    className="text-xs font-semibold"
+                    style={{ color: active ? '#fff' : colors.textSecondary }}
+                  >
+                    {option}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Input
+            label={t('cancelOrder.reason')}
+            value={reason}
+            onChangeText={setReason}
+            multiline
+            error={isReasonTooShort ? t('cancelOrder.reasonTooShort') : undefined}
+          />
+        </>
       ) : null}
     </BottomSheet>
   );
