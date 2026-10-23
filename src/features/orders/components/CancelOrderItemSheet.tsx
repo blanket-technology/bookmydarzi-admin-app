@@ -141,12 +141,6 @@ export const CancelOrderItemSheet = ({
             <Text className="text-xs" style={{ color: colors.textSecondary }}>{t('cancelOrder.paymentType')}</Text>
             <Text className="text-xs font-semibold capitalize" style={{ color: colors.text }}>{preview.payment_type}</Text>
           </View>
-          <View className="flex-row items-center justify-between mb-1.5">
-            <Text className="text-xs" style={{ color: colors.textSecondary }}>{t('cancelOrder.penalty')}</Text>
-            <Text className="text-xs font-semibold" style={{ color: preview.penalty_amount > 0 ? '#DC2626' : colors.text }}>
-              {preview.penalty_amount > 0 ? formatCurrency(preview.penalty_amount) : t('cancelOrder.none')}
-            </Text>
-          </View>
           {preview.payment_type === 'prepaid' ? (
             <View
               className="flex-row items-center justify-between pt-1.5 mt-0.5 border-t"
@@ -155,14 +149,13 @@ export const CancelOrderItemSheet = ({
               <Text className="text-xs font-semibold" style={{ color: colors.text }}>{t('cancelOrder.refundToCustomer')}</Text>
               <Text className="text-sm font-bold" style={{ color: colors.primary }}>{formatCurrency(preview.refund_amount)}</Text>
             </View>
-          ) : preview.penalty_amount > 0 ? (
-            <Text
-              className="text-xs pt-1.5 mt-0.5 border-t"
-              style={{ color: colors.textMuted, borderColor: colors.border }}
-            >
-              {t('cancelOrder.postpaidPenaltyNote')}
-            </Text>
           ) : null}
+          <Text
+            className="text-xs pt-1.5 mt-1.5 border-t"
+            style={{ color: colors.textMuted, borderColor: colors.border }}
+          >
+            {t('cancelItem.noChargeNote')}
+          </Text>
         </View>
       ) : null}
 

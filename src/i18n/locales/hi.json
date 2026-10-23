@@ -401,7 +401,8 @@
   "cancelItem": {
     "title": "आइटम रद्द करें",
     "itemPrice": "आइटम की कीमत",
-    "cancelThisItem": "इस आइटम को रद्द करें"
+    "cancelThisItem": "इस आइटम को रद्द करें",
+    "noChargeNote": "एक आइटम को रद्द करना हमेशा मुफ़्त है - कोई रद्दीकरण शुल्क नहीं।"
   },
   "collectPayment": {
     "title": "भुगतान लें",

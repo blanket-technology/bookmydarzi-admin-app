@@ -401,7 +401,8 @@
   "cancelItem": {
     "title": "Cancel Item",
     "itemPrice": "Item price",
-    "cancelThisItem": "Cancel this item"
+    "cancelThisItem": "Cancel this item",
+    "noChargeNote": "Cancelling a single item is always free - no cancellation charge."
   },
   "collectPayment": {
     "title": "Collect payment",
