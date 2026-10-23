@@ -70,6 +70,7 @@ import { SchedulePickupSheet } from '@/features/orders/components/SchedulePickup
 import { CorrectStatusSheet } from '@/features/orders/components/CorrectStatusSheet';
 import { RefuseDeliverySheet } from '@/features/orders/components/RefuseDeliverySheet';
 import { RejectOrderSheet } from '@/features/orders/components/RejectOrderSheet';
+import { CancelOrderItemSheet } from '@/features/orders/components/CancelOrderItemSheet';
 import { CancelOrderSheet } from '@/features/orders/components/CancelOrderSheet';
 import { CollectPaymentSheet } from '@/features/orders/components/CollectPaymentSheet';
 import { PaymentDetailsSheet } from '@/features/orders/components/PaymentDetailsSheet';
@@ -120,6 +121,7 @@ export default function OrderDetailsScreen() {
   const [rejectSheetVisible, setRejectSheetVisible] = useState(false);
   const [refuseDeliverySheetVisible, setRefuseDeliverySheetVisible] = useState(false);
   const [cancelSheetVisible, setCancelSheetVisible] = useState(false);
+  const [cancelItemTarget, setCancelItemTarget] = useState<{ id: number; label?: string } | null>(null);
   const [collectSheetVisible, setCollectSheetVisible] = useState(false);
   const [backOutPickupSheetVisible, setBackOutPickupSheetVisible] = useState(false);
   const [backOutDeliverySheetVisible, setBackOutDeliverySheetVisible] = useState(false);
@@ -790,6 +792,8 @@ export default function OrderDetailsScreen() {
               setAddAddonTargetItem(item);
               setAddAddonSheetVisible(true);
             }}
+            canCancelItems={isAdminRole}
+            onCancelItem={(item) => setCancelItemTarget(item)}
           />
         ) : null}
 
@@ -1026,6 +1030,15 @@ export default function OrderDetailsScreen() {
       <RefuseDeliverySheet visible={refuseDeliverySheetVisible} onClose={() => setRefuseDeliverySheetVisible(false)} orderId={order.order_id} />
 
       <CancelOrderSheet visible={cancelSheetVisible} onClose={() => setCancelSheetVisible(false)} orderId={order.order_id} />
+      {cancelItemTarget ? (
+        <CancelOrderItemSheet
+          visible={!!cancelItemTarget}
+          onClose={() => setCancelItemTarget(null)}
+          orderId={order.order_id}
+          itemId={String(cancelItemTarget.id)}
+          itemName={cancelItemTarget.label}
+        />
+      ) : null}
 
       <BackOutSheet
         visible={backOutPickupSheetVisible}

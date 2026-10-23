@@ -7,6 +7,9 @@ import { catalogService } from '@/services/catalogService';
 import { cancellationService } from '@/services/cancellationService';
 import { useAuth } from '@/hooks/useAuth';
 import type {
+  AdminCancelOrderItemRequest,
+} from '@/types/cancellations';
+import type {
   AdminCancelOrderRequest,
   AdminOrderMeasurementRequest,
   AssignBridgeEmployeeRequest,
@@ -368,6 +371,38 @@ export const useCancelOrderMutation = () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(variables.orderId) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
       toast.success('Order cancelled');
+    },
+    onError: (error) => toast.error(formatApiErrorDetail(error)),
+  });
+};
+
+// Per-item cancel preview - mirrors useAdminCancellationPreview above, just
+// item-scoped. No waive-penalty toggle on the item preview (kept simple
+// for the item flow - admin can still waive via the request payload).
+export const useAdminItemCancellationPreview = (orderId: string, itemId: string, enabled: boolean) =>
+  useQuery({
+    queryKey: ['admin-item-cancellation-preview', orderId, itemId],
+    queryFn: () => cancellationService.getAdminItemPreview(orderId, itemId),
+    enabled: enabled && !!orderId && !!itemId,
+  });
+
+export const useCancelOrderItemMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      itemId,
+      payload,
+    }: {
+      orderId: string;
+      itemId: string;
+      payload: AdminCancelOrderItemRequest;
+    }) => cancellationService.cancelItem(orderId, itemId, payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(variables.orderId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
+      toast.success('Item cancelled');
     },
     onError: (error) => toast.error(formatApiErrorDetail(error)),
   });

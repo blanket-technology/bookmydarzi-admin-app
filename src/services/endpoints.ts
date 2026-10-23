@@ -71,6 +71,10 @@ export const ENDPOINTS = {
     ORDER_CANCEL: (orderId: string) => `/api/v1/admin/orders/${orderId}/cancel`,
     ORDER_CANCELLATION_PREVIEW: (orderId: string) => `/api/v1/admin/orders/${orderId}/cancellation-preview`,
     ORDER_CANCELLATION_RECORD: (orderId: string) => `/api/v1/admin/orders/${orderId}/cancellation`,
+    ORDER_ITEM_CANCEL: (orderId: string, itemId: string) =>
+      `/api/v1/admin/orders/${orderId}/items/${itemId}/cancel`,
+    ORDER_ITEM_CANCELLATION_PREVIEW: (orderId: string, itemId: string) =>
+      `/api/v1/admin/orders/${orderId}/items/${itemId}/cancellation-preview`,
     ORDER_NOTES: (orderId: string) => `/api/v1/admin/orders/${orderId}/notes`,
     ORDER_BROADCAST: (orderId: string) => `/api/v1/admin/orders/${orderId}/broadcast`,
     HOMEPAGE_BANNERS: '/api/v1/admin/homepage/banners',

@@ -1,6 +1,7 @@
 import apiClient from '@/config/axios';
 import { ENDPOINTS } from '@/services/endpoints';
 import type {
+  AdminCancelOrderItemRequest,
   CancellationApproveRequest,
   CancellationListResponse,
   CancellationPatchRequest,
@@ -9,7 +10,9 @@ import type {
   CancellationPreview,
   CancellationRejectRequest,
   CancellationsQueryParams,
+  ItemCancellationPreview,
   OrderCancellationDetail,
+  OrderItemCancellationDetail,
 } from '@/types/cancellations';
 
 export const cancellationService = {
@@ -96,6 +99,29 @@ export const cancellationService = {
   ): Promise<CancellationPolicyItem> => {
     const { data } = await apiClient.put<CancellationPolicyItem>(
       ENDPOINTS.ADMIN.CANCELLATION_POLICY_STAGE(stage),
+      payload,
+    );
+    return data;
+  },
+
+  // Per-item cancel (cancel one line item within a multi-item order,
+  // without cancelling the whole order) - admin side. Same
+  // penalty/refund-preview-then-confirm shape as the whole-order flow
+  // above, bypassing the contact-support stage gate the same way.
+  getAdminItemPreview: async (orderId: string, itemId: string): Promise<ItemCancellationPreview> => {
+    const { data } = await apiClient.get<ItemCancellationPreview>(
+      ENDPOINTS.ADMIN.ORDER_ITEM_CANCELLATION_PREVIEW(orderId, itemId),
+    );
+    return data;
+  },
+
+  cancelItem: async (
+    orderId: string,
+    itemId: string,
+    payload: AdminCancelOrderItemRequest,
+  ): Promise<OrderItemCancellationDetail> => {
+    const { data } = await apiClient.post<OrderItemCancellationDetail>(
+      ENDPOINTS.ADMIN.ORDER_ITEM_CANCEL(orderId, itemId),
       payload,
     );
     return data;

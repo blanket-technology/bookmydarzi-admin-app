@@ -17,6 +17,8 @@ export const OrderItemsCard = ({
   onManageMeasurement,
   canAddAddon,
   onAddAddon,
+  canCancelItems,
+  onCancelItem,
 }: {
   order: AdminOrderItem;
   canManageMeasurements: boolean;
@@ -25,10 +27,18 @@ export const OrderItemsCard = ({
    * that prop - see useOrderActions.ts's add_addon action. */
   canAddAddon?: boolean;
   onAddAddon?: (item: { id?: number; label?: string; serviceId?: number; existingAddonIds?: number[] }) => void;
+  /** Admin-only - staff can cancel an individual item on behalf of a
+   * customer. Real eligibility (stage, last-active-item) is enforced by
+   * the preview the sheet itself loads; this just controls whether the
+   * button appears at all. */
+  canCancelItems?: boolean;
+  onCancelItem?: (item: { id: number; label?: string }) => void;
 }) => {
   const { colors } = useTheme();
   const { t } = useAppLanguage();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const activeItemCount = order.items.filter((it) => !it.is_cancelled).length;
 
   return (
     <Card className="mb-4">
@@ -41,11 +51,19 @@ export const OrderItemsCard = ({
           className="flex-row items-center justify-between py-2.5"
           style={idx < order.items.length - 1 ? { borderBottomWidth: 1, borderColor: colors.border } : undefined}
         >
-          <View className="flex-1 pr-3">
-            <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+          <View className="flex-1 pr-3" style={item.is_cancelled ? { opacity: 0.5 } : undefined}>
+            <Text
+              className="text-sm font-semibold"
+              style={{ color: colors.text, textDecorationLine: item.is_cancelled ? 'line-through' : 'none' }}
+            >
               {item.service_name ?? item.category_name ?? t('orderItems.item')}
               {item.person_name ? ` — ${item.person_name}` : ''}
             </Text>
+            {item.is_cancelled ? (
+              <Text className="text-xs mt-0.5 font-semibold" style={{ color: colors.error }}>
+                {t('cancelItem.title')}
+              </Text>
+            ) : null}
             {/* item.category_name is intentionally blank for Custom
                 Alterations (the service name itself is already specific -
                 see order_response_builder.py's _item_category_name), but a
@@ -138,6 +156,20 @@ export const OrderItemsCard = ({
                 <Text className="text-xs font-bold" style={{ color: item.has_measurement ? colors.text : '#fff' }}>
                   {item.has_measurement ? t('common.edit') : t('orderItems.fill')}
                 </Text>
+              </Pressable>
+            ) : null}
+            {canCancelItems && !item.is_cancelled && activeItemCount > 1 && item.order_item_id != null ? (
+              <Pressable
+                onPress={() =>
+                  onCancelItem?.({
+                    id: item.order_item_id!,
+                    label: `${item.service_name ?? t('orderItems.item')}${item.person_name ? ` ${t('orderItems.forPerson', { name: item.person_name })}` : ''}`,
+                  })
+                }
+                className="px-3 py-2 rounded-xl border"
+                style={{ borderColor: colors.error }}
+              >
+                <Ionicons name="close-circle-outline" size={16} color={colors.error} />
               </Pressable>
             ) : null}
           </View>

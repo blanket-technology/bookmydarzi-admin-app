@@ -105,6 +105,7 @@ function normalizeOrderResponse(item: MyOrderItem): AdminOrderItem {
       person_name: raw.person_name ?? null,
       gender: raw.gender ?? null,
       has_measurement: raw.has_measurement ?? false,
+      is_cancelled: raw.is_cancelled ?? false,
       notes: raw.notes ?? null,
       reference_photo_url: raw.reference_photo_url ?? null,
     })),

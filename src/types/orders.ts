@@ -80,6 +80,10 @@ export interface OrderLineItem {
   price: number | null;
   person_name: string | null;
   gender: string | null;
+  /** True once this item has been individually cancelled - see
+   * item_cancellation_service.py. The order stays active with its
+   * remaining items; only this one line is dropped. */
+  is_cancelled?: boolean;
   has_measurement: boolean;
   /** Customer's own note for this specific garment, if any. */
   notes?: string | null;
@@ -226,6 +230,7 @@ export interface RawOrderItemSummary {
   price?: number | null;
   person_name?: string | null;
   gender?: string | null;
+  is_cancelled?: boolean;
   has_measurement: boolean;
   notes?: string | null;
   reference_photo_url?: string | null;

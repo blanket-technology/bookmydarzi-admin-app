@@ -398,6 +398,11 @@
     "waivePenaltyDescription": "Cancel as a goodwill gesture with no penalty charged and a full refund of the amount paid.",
     "existingRequestWarning": "A customer cancellation request ({{code}}) is already {{status}} in the Cancellations queue. This will start a separate, independent cancellation."
   },
+  "cancelItem": {
+    "title": "Cancel Item",
+    "itemPrice": "Item price",
+    "cancelThisItem": "Cancel this item"
+  },
   "collectPayment": {
     "title": "Collect payment",
     "amountDue": "Amount due",
