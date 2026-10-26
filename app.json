@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bookmydarzi.admin",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true
@@ -19,7 +19,8 @@
         "NSFaceIDUsageDescription": "BookMyDarzi Admin uses Face ID to unlock the app after login.",
         "NSLocationWhenInUseUsageDescription": "BookMyDarzi Admin uses your location to mark you online for nearby pickup and delivery broadcasts.",
         "NSCameraUsageDescription": "BookMyDarzi Admin uses the camera to take photos for catalog items, tailor applications, and order progress.",
-        "NSPhotoLibraryUsageDescription": "BookMyDarzi Admin uses your photo library to upload images for catalog items, tailor applications, and order progress."
+        "NSPhotoLibraryUsageDescription": "BookMyDarzi Admin uses your photo library to upload images for catalog items, tailor applications, and order progress.",
+        "NSMicrophoneUsageDescription": "BookMyDarzi Admin uses your microphone to play order voice notes."
       },
       "config": {
         "usesNonExemptEncryption": false
