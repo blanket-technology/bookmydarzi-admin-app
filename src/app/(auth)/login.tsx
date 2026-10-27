@@ -42,8 +42,8 @@ function GlassField({
   }));
 
   return (
-    <View className="mb-4">
-      <Text className="text-xs font-semibold mb-2 tracking-wide" style={{ color: '#8a7561' }}>
+    <View style={{ marginBottom: 16 }}>
+      <Text style={{ fontSize: 12, fontWeight: '600', marginBottom: 8, letterSpacing: 0.4, color: '#8a7561' }}>
         {label.toUpperCase()}
       </Text>
       <Animated.View
@@ -52,17 +52,18 @@ function GlassField({
             borderWidth: 1.5,
             borderRadius: 18,
             backgroundColor: 'rgba(255,255,255,0.7)',
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 16,
           },
           borderStyle,
         ]}
-        className="flex-row items-center px-4"
       >
         <Ionicons name={icon} size={19} color="#9c8874" />
         <TextInput
           placeholderTextColor="#b3a493"
-          className="flex-1 py-3.5 px-3 text-base"
           // minWidth 0 lets the flex-1 input shrink so the trailing eye icon stays inside the field on web.
-          style={{ color: '#2C1A0E', minWidth: 0 }}
+          style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 12, fontSize: 16, color: '#2C1A0E', minWidth: 0 }}
           {...inputProps}
           onFocus={(e) => {
             focus.value = withTiming(1, { duration: 180 });
@@ -76,7 +77,7 @@ function GlassField({
         {rightElement}
       </Animated.View>
       {error ? (
-        <Text className="text-xs mt-1.5 ml-1" style={{ color: '#dc2626' }}>
+        <Text style={{ fontSize: 12, marginTop: 6, marginLeft: 4, color: '#dc2626' }}>
           {error}
         </Text>
       ) : null}
@@ -165,7 +166,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} className="flex-1">
+    <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} style={{ flex: 1 }}>
       {/* Ambient glow shapes — depth without a blur dependency */}
       <View
         pointerEvents="none"
@@ -197,7 +198,7 @@ export default function LoginScreen() {
         // softwareKeyboardLayoutMode: "resize" - "height" here double-applied
         // on top of that and hid/squished content behind the keyboard.
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={{
@@ -208,12 +209,17 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View className="px-6 flex-1 justify-center items-center">
-            <View className="w-full" style={{ maxWidth: 440 }}>
-              <View className="items-center mb-9">
+          <View style={{ paddingHorizontal: 24, flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ width: '100%', maxWidth: 440 }}>
+              <View style={{ alignItems: 'center', marginBottom: 36 }}>
                 <View
-                  className="w-[72px] h-[72px] rounded-[24px] items-center justify-center mb-5"
                   style={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: 24,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 20,
                     backgroundColor: 'rgba(255,255,255,0.75)',
                     borderWidth: 1,
                     borderColor: 'rgba(184,146,62,0.28)',
@@ -221,12 +227,22 @@ export default function LoginScreen() {
                 >
                   <Ionicons name="cut" size={32} color="#B8923E" />
                 </View>
-                <Text className="text-[28px] font-bold tracking-tight" style={{ color: '#2C1A0E' }}>
+                <Text style={{ fontSize: 28, fontWeight: '700', letterSpacing: -0.5, color: '#2C1A0E' }}>
                   BookMyDarzi
                 </Text>
-                <View className="flex-row items-center mt-2 px-3 py-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.6)' }}>
-                  <View className="w-1.5 h-1.5 rounded-full mr-2" style={{ backgroundColor: '#B8923E' }} />
-                  <Text className="text-xs font-semibold tracking-wide" style={{ color: '#7D622A' }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginTop: 8,
+                    paddingHorizontal: 12,
+                    paddingVertical: 4,
+                    borderRadius: 999,
+                    backgroundColor: 'rgba(255,255,255,0.6)',
+                  }}
+                >
+                  <View style={{ width: 6, height: 6, borderRadius: 3, marginRight: 8, backgroundColor: '#B8923E' }} />
+                  <Text style={{ fontSize: 12, fontWeight: '600', letterSpacing: 0.4, color: '#7D622A' }}>
                     OPERATIONS PORTAL
                   </Text>
                 </View>
@@ -241,10 +257,10 @@ export default function LoginScreen() {
                   padding: 24,
                 }}
               >
-                <Text className="text-xl font-bold mb-1" style={{ color: '#2C1A0E' }}>
+                <Text style={{ fontSize: 20, fontWeight: '700', marginBottom: 4, color: '#2C1A0E' }}>
                   Welcome back
                 </Text>
-                <Text className="text-sm mb-7" style={{ color: '#8a7561' }}>
+                <Text style={{ fontSize: 14, marginBottom: 28, color: '#8a7561' }}>
                   Sign in with your staff account credentials
                 </Text>
 
@@ -294,15 +310,20 @@ export default function LoginScreen() {
                   )}
                 />
 
-                <View className="flex-row items-center justify-between mb-7 mt-1">
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, marginTop: 4 }}>
                   <Pressable
                     onPress={toggleRememberMe}
-                    className="flex-row items-center"
+                    style={{ flexDirection: 'row', alignItems: 'center' }}
                     hitSlop={6}
                   >
                     <View
-                      className="w-[18px] h-[18px] rounded-[6px] mr-2 items-center justify-center"
                       style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: 6,
+                        marginRight: 8,
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         borderWidth: 1.5,
                         borderColor: rememberMe ? '#B8923E' : '#d4c3ae',
                         backgroundColor: rememberMe ? '#B8923E' : 'transparent',
@@ -310,14 +331,14 @@ export default function LoginScreen() {
                     >
                       {rememberMe ? <Ionicons name="checkmark" size={12} color="#2C1A0E" /> : null}
                     </View>
-                    <Text className="text-sm" style={{ color: '#8a7561' }}>
+                    <Text style={{ fontSize: 14, color: '#8a7561' }}>
                       Remember me
                     </Text>
                   </Pressable>
 
                   <Link href="/(auth)/forgot-password" asChild>
                     <Pressable hitSlop={6}>
-                      <Text className="text-sm font-semibold" style={{ color: '#B8923E' }}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#B8923E' }}>
                         Forgot password?
                       </Text>
                     </Pressable>
@@ -345,10 +366,10 @@ export default function LoginScreen() {
                       }}
                     >
                       {loginMutation.isPending ? (
-                        <Text className="text-[#052a2e] font-bold text-base">Signing in…</Text>
+                        <Text style={{ color: '#052a2e', fontWeight: '700', fontSize: 16 }}>Signing in…</Text>
                       ) : (
                         <>
-                          <Text className="text-[#052a2e] font-bold text-base mr-1.5">Sign In</Text>
+                          <Text style={{ color: '#052a2e', fontWeight: '700', fontSize: 16, marginRight: 6 }}>Sign In</Text>
                           <Ionicons name="arrow-forward" size={18} color="#052a2e" />
                         </>
                       )}
@@ -357,9 +378,9 @@ export default function LoginScreen() {
                 </Animated.View>
               </View>
 
-              <View className="flex-row items-center justify-center mt-8">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 32 }}>
                 <Ionicons name="shield-checkmark-outline" size={14} color="#b3a493" />
-                <Text className="text-xs ml-1.5" style={{ color: '#b3a493' }}>
+                <Text style={{ fontSize: 12, marginLeft: 6, color: '#b3a493' }}>
                   Secured by BookMyDarzi authentication system.
                 </Text>
               </View>
