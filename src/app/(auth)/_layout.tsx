@@ -55,7 +55,7 @@ export default function AuthLayout() {
     // while authenticated but before hasNoAccess/role routing takes over.
     if (mustChangePassword) {
       return (
-        <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+        <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="force-change-password" />
         </Stack>
       );
@@ -63,7 +63,7 @@ export default function AuthLayout() {
     return <Redirect href={getDefaultRouteForRole(user?.role, selectedRole) as never} />;
   }
   return (
-    <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="login" />
       <Stack.Screen name="forgot-password" />
       <Stack.Screen name="login-otp-verification" />
