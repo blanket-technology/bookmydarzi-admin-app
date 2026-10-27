@@ -196,7 +196,7 @@ export function AddStaffForm({ lockedRole, title, subtitle }: AddStaffFormProps)
           )}
           <Button
             title="Create Staff"
-            onPress={handleSubmit(onSubmit)}
+            onPress={() => void handleSubmit(onSubmit)()}
             loading={createMutation.isPending}
             fullWidth
           />

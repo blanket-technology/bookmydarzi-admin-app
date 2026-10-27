@@ -321,7 +321,7 @@ function TailorProfileSection() {
 
         <Button
           title={t('profile.saveChanges')}
-          onPress={form.handleSubmit(onSave)}
+          onPress={() => void form.handleSubmit(onSave)()}
           loading={updateMutation.isPending}
           fullWidth
         />
@@ -537,7 +537,7 @@ function EmployeeProfileSection() {
 
         <Button
           title={t('profile.saveChanges')}
-          onPress={form.handleSubmit(onSave)}
+          onPress={() => void form.handleSubmit(onSave)()}
           loading={updateMutation.isPending}
           fullWidth
         />

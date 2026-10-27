@@ -222,7 +222,7 @@ export default function PaymentsScreen() {
             keyExtractor={(item) => item.order_id}
             renderItem={renderItem}
             refreshControl={
-              <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+              <RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch(); }} tintColor={colors.primary} />
             }
             ListEmptyComponent={<EmptyState icon="wallet-outline" title="No payments found" />}
             ListFooterComponent={

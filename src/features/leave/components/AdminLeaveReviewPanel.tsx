@@ -251,7 +251,7 @@ export const AdminLeaveReviewPanel = () => {
               />
             )}
             refreshControl={
-              <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+              <RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch(); }} tintColor={colors.primary} />
             }
             ListEmptyComponent={
               <EmptyState icon="calendar-outline" title="No leave requests" description="Nothing matches these filters." />

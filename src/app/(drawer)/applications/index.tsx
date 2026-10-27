@@ -225,7 +225,7 @@ export default function ApplicationsScreen() {
             refreshControl={
               <RefreshControl
                 refreshing={isRefetching}
-                onRefresh={refetch}
+                onRefresh={() => { void refetch(); }}
                 tintColor={colors.primary}
               />
             }

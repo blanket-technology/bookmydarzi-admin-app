@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View, type ScrollViewInstance } from 'react-native';
 import { Pressable } from '@/components/ui/Pressable';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -23,7 +23,7 @@ interface FilterChipsProps<T extends string> {
  */
 export function FilterChips<T extends string>({ chips, value, onChange, className }: FilterChipsProps<T>) {
   const { colors } = useTheme();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const offsets = useRef<Record<string, { x: number; width: number }>>({});
   const viewport = useRef(0);
 

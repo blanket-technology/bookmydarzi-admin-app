@@ -148,7 +148,7 @@ export default function PayoutsScreen() {
                 keyExtractor={(item) => String(item.id)}
                 renderItem={renderItem}
                 refreshControl={
-                  <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+                  <RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch(); }} tintColor={colors.primary} />
                 }
                 ListEmptyComponent={<EmptyState icon="wallet-outline" title="No payouts yet" />}
                 ListFooterComponent={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}

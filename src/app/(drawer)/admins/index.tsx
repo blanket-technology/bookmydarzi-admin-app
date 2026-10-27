@@ -103,7 +103,7 @@ export default function AdminsScreen() {
             refreshControl={
               <RefreshControl
                 refreshing={isRefetching}
-                onRefresh={refetch}
+                onRefresh={() => { void refetch(); }}
                 tintColor={colors.primary}
               />
             }

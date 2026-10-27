@@ -328,7 +328,7 @@ export default function LoginScreen() {
                   <Pressable
                     onPressIn={() => (buttonScale.value = withSpring(0.97, { damping: 15 }))}
                     onPressOut={() => (buttonScale.value = withSpring(1, { damping: 12 }))}
-                    onPress={handleSubmit(onSubmit)}
+                    onPress={() => void handleSubmit(onSubmit)()}
                     disabled={loginMutation.isPending}
                     style={{ opacity: loginMutation.isPending ? 0.75 : 1 }}
                   >

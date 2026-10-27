@@ -46,7 +46,7 @@ export default function ChatAnalyticsScreen() {
         <ScreenContent
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+            <RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch(); }} tintColor={colors.primary} />
           }
         >
           <View className="flex-row flex-wrap mt-1" style={{ gap: 12 }}>

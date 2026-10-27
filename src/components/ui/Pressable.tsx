@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { cssInterop } from 'nativewind';
 import { forwardRef } from 'react';
-import { Platform, Pressable as RNPressable, type GestureResponderEvent, type PressableProps as RNPressableProps, type StyleProp, type View, type ViewStyle } from 'react-native';
+import { Platform, Pressable as RNPressable, type GestureResponderEvent, type HostInstance, type PressableProps as RNPressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 export type HapticStyle = 'light' | 'medium' | 'heavy' | 'selection' | 'none';
@@ -59,7 +59,7 @@ const fireHaptic = (style: HapticStyle) => {
 // iOS/Android's own system controls do on every tap. Every tappable surface
 // in the app (buttons, rows, cards, icons) should use this instead of the
 // raw react-native Pressable.
-export const Pressable = forwardRef<View, PressableProps>(
+export const Pressable = forwardRef<HostInstance, PressableProps>(
   ({ pressScale = 0.97, haptic = 'light', onPressIn, onPressOut, style, disabled, ...props }, ref) => {
     const scale = useSharedValue(1);
 

@@ -9,6 +9,7 @@ import {
   Text,
   useWindowDimensions,
   View,
+  type ScrollViewInstance,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Pressable } from '@/components/ui/Pressable';
@@ -51,7 +52,7 @@ export const BottomSheet = ({
   // A definite pixel cap: a percentage maxHeight resolves against an auto-height
   // parent and (on web) let the body shrink below its content, clipping text.
   const { height: windowHeight } = useWindowDimensions();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const incrementOpenSheets = useOpenSheetStore((s) => s.increment);
   const decrementOpenSheets = useOpenSheetStore((s) => s.decrement);
 

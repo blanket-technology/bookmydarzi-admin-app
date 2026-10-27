@@ -182,7 +182,7 @@ function ConversationsTab() {
             renderItem={renderItem}
             showsVerticalScrollIndicator={false}
             refreshControl={
-              <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+              <RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch(); }} tintColor={colors.primary} />
             }
             ListEmptyComponent={
               <EmptyState
@@ -210,7 +210,7 @@ function ConversationsTab() {
                 <Text className="text-center text-xs py-4" style={{ color: colors.textMuted }}>
                   {t('support.noMoreConversations')}
                 </Text>
-              ) : null
+              ) : undefined
             }
           />
         )}
@@ -339,7 +339,7 @@ function TicketsTab() {
             keyExtractor={(item) => item.id}
             renderItem={renderItem}
             refreshControl={
-              <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+              <RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch(); }} tintColor={colors.primary} />
             }
             ListEmptyComponent={
               <EmptyState

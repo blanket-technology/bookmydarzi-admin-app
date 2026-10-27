@@ -197,7 +197,7 @@ export default function AccountSettingsScreen() {
               />
               <Button
                 title={t('profile.updatePassword')}
-                onPress={passwordForm.handleSubmit(onChangePassword)}
+                onPress={() => void passwordForm.handleSubmit(onChangePassword)()}
                 loading={passwordMutation.isPending}
                 fullWidth
               />
@@ -225,7 +225,7 @@ export default function AccountSettingsScreen() {
           />
           <Button
             title={t('profile.saveChanges')}
-            onPress={profileForm.handleSubmit(onUpdateProfile)}
+            onPress={() => void profileForm.handleSubmit(onUpdateProfile)()}
             loading={updateMutation.isPending}
             fullWidth
           />

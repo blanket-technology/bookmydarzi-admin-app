@@ -7,7 +7,6 @@
     "icon": "./assets/icon.png",
     "scheme": "bookmydarzi-admin",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bookmydarzi.admin",
@@ -92,7 +91,11 @@
         }
       ],
       "expo-asset",
-      "@sentry/react-native"
+      "@sentry/react-native",
+      "expo-font",
+      "expo-image",
+      "expo-sharing",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true

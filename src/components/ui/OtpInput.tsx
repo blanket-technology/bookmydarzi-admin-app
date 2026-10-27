@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { Text, TextInput, View, useWindowDimensions, type TextInputInstance } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 
 interface OtpInputProps {
@@ -20,7 +20,7 @@ interface OtpInputProps {
 export const OtpInput = ({ value, onChange, length = 6, error, autoFocus = true }: OtpInputProps) => {
   const { colors } = useTheme();
   const { width: screenWidth } = useWindowDimensions();
-  const inputRefs = useRef<Array<TextInput | null>>([]);
+  const inputRefs = useRef<Array<TextInputInstance | null>>([]);
   const digits = Array.from({ length }, (_, i) => value[i] ?? '');
 
   // Box size (and therefore font size) must scale with the actual screen

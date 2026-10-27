@@ -327,7 +327,7 @@ export default function OrdersScreen() {
             renderItem={renderItem}
             showsVerticalScrollIndicator={false}
             refreshControl={
-              <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+              <RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch(); }} tintColor={colors.primary} />
             }
             ListEmptyComponent={
               <EmptyState
@@ -341,7 +341,7 @@ export default function OrdersScreen() {
               />
             }
             ListFooterComponent={
-              totalPages > 1 ? <Pagination page={page} totalPages={totalPages} onPageChange={setPage} /> : null
+              totalPages > 1 ? <Pagination page={page} totalPages={totalPages} onPageChange={setPage} /> : undefined
             }
           />
         )}

@@ -69,7 +69,7 @@ export const BiometricLockGate = ({ children }: BiometricLockGateProps) => {
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextState) => {
-      const wasAway = appState.current.match(/inactive|background/);
+      const wasAway = appState.current?.match(/inactive|background/);
       if (nextState === 'background') {
         leftAt.current = leftAt.current ?? Date.now();
       }

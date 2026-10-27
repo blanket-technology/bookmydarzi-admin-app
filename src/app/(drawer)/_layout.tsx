@@ -34,7 +34,12 @@ export default function DrawerLayout() {
     <BiometricLockGate>
       <RoutePermissionGuard>
         <Drawer
-          drawerContent={(props) => <CustomDrawer {...props} />}
+          // expo-router/drawer re-exports its own DrawerNavigationState type,
+          // structurally incompatible with @react-navigation/drawer 7.x's
+          // (missing preloadedRouteKeys) purely at the type level - both are
+          // the same shape at runtime, this is just two packages' type defs
+          // not lining up until @react-navigation/drawer ships a stable 8.x.
+          drawerContent={(props) => <CustomDrawer {...(props as any)} />}
           screenOptions={{
             headerShown: false,
             // Tablet/desktop-web gets a permanent sidebar (no overlay/swipe,

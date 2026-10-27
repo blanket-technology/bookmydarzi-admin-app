@@ -536,7 +536,7 @@ export default function DashboardScreen() {
         <ScreenContent
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+            <RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch(); }} tintColor={colors.primary} />
           }
         >
           <View style={{ borderRadius: 20, overflow: 'hidden' }}>

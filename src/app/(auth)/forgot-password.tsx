@@ -146,7 +146,7 @@ export default function ForgotPasswordScreen() {
                   />
                   <Button
                     title="Send OTP"
-                    onPress={handleSubmit(handleRequest)}
+                    onPress={() => void handleSubmit(handleRequest)()}
                     loading={requestMutation.isPending}
                     fullWidth
                   />

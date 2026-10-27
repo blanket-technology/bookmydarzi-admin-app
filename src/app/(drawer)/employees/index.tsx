@@ -110,7 +110,7 @@ export default function EmployeesScreen() {
             refreshControl={
               <RefreshControl
                 refreshing={isRefetching}
-                onRefresh={refetch}
+                onRefresh={() => { void refetch(); }}
                 tintColor={colors.primary}
               />
             }

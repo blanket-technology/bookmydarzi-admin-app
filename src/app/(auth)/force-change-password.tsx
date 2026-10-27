@@ -122,7 +122,7 @@ export default function ForceChangePasswordScreen() {
           />
           <Button
             title="Update Password"
-            onPress={form.handleSubmit(onSubmit)}
+            onPress={() => void form.handleSubmit(onSubmit)()}
             loading={mutation.isPending}
             fullWidth
           />

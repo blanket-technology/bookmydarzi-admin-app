@@ -136,7 +136,7 @@ export default function AddAdminScreen() {
           />
           <Button
             title="Create Admin"
-            onPress={handleSubmit(onSubmit)}
+            onPress={() => void handleSubmit(onSubmit)()}
             loading={createMutation.isPending}
             fullWidth
           />

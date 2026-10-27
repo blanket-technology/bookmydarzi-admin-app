@@ -192,7 +192,7 @@ export default function MyEarningsScreen() {
             keyExtractor={(item) => String(item.id)}
             renderItem={renderItem}
             refreshControl={
-              <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+              <RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch(); }} tintColor={colors.primary} />
             }
             ListEmptyComponent={
               <EmptyState icon="wallet-outline" title="No earnings yet" description="Completed orders will show up here once paid out." />

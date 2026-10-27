@@ -201,7 +201,7 @@ export default function TailorsScreen() {
                 refreshControl={
                   <RefreshControl
                     refreshing={isRefetching}
-                    onRefresh={refetch}
+                    onRefresh={() => { void refetch(); }}
                     tintColor={colors.primary}
                   />
                 }
@@ -227,7 +227,7 @@ export default function TailorsScreen() {
             refreshControl={
               <RefreshControl
                 refreshing={isWorkloadRefetching}
-                onRefresh={refetchWorkload}
+                onRefresh={() => { void refetchWorkload(); }}
                 tintColor={colors.primary}
               />
             }

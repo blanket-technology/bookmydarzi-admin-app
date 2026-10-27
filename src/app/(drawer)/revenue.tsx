@@ -261,7 +261,7 @@ export default function RevenueScreen() {
         <ScreenContent
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+            <RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch(); }} tintColor={colors.primary} />
           }
         >
           {/* Revenue KPI grid */}

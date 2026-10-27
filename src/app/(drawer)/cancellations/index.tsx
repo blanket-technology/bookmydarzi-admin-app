@@ -136,7 +136,7 @@ export default function CancellationsScreen() {
             keyExtractor={(item) => String(item.Id)}
             renderItem={renderItem}
             refreshControl={
-              <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+              <RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch(); }} tintColor={colors.primary} />
             }
             ListEmptyComponent={
               <EmptyState icon="close-circle-outline" title="No cancellation requests" />

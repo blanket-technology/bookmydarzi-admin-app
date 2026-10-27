@@ -173,7 +173,7 @@ function MyLeaveScreen() {
                 withdrawing={cancelMutation.isPending && withdrawingId === String(item.Id)}
               />
             )}
-            refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
+            refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch(); }} tintColor={colors.primary} />}
             ListEmptyComponent={
               <EmptyState
                 icon="calendar-outline"
