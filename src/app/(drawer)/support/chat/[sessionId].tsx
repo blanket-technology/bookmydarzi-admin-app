@@ -282,7 +282,7 @@ export default function ChatThreadScreen() {
         />
       ) : (
         <KeyboardAvoidingView
-          className="flex-1"
+          style={{ flex: 1 }}
           // app.json's softwareKeyboardLayoutMode is now "resize" (it used to
           // be "pan", a no-op for this purpose, which is why "height" was
           // added here previously as a fallback). With "resize" active the

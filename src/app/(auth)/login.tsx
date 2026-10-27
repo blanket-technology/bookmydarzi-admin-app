@@ -166,40 +166,46 @@ export default function LoginScreen() {
   };
 
   return (
-    <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} style={{ flex: 1 }}>
-      {/* Ambient glow shapes — depth without a blur dependency */}
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          top: -120,
-          right: -80,
-          width: 320,
-          height: 320,
-          borderRadius: 320,
-          backgroundColor: 'rgba(184,146,62,0.14)',
-        }}
-      />
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          bottom: -140,
-          left: -100,
-          width: 360,
-          height: 360,
-          borderRadius: 360,
-          backgroundColor: 'rgba(184,146,62,0.10)',
-        }}
-      />
+    // KeyboardAvoidingView is the OUTERMOST element (not nested inside
+    // LinearGradient) - a flex parent that isn't a plain View (e.g.
+    // LinearGradient's own layout host) can throw off KAV's measurement of
+    // how much to shift content on iOS, which is exactly what was reported:
+    // "padding" behavior silently not pushing content above the keyboard.
+    // This is the standard, most battle-tested nesting order.
+    <KeyboardAvoidingView
+      // Android already resizes the window for the keyboard via app.json's
+      // softwareKeyboardLayoutMode: "resize" - "height" here double-applied
+      // on top of that and hid/squished content behind the keyboard.
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={{ flex: 1 }}
+    >
+      <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} style={{ flex: 1 }}>
+        {/* Ambient glow shapes — depth without a blur dependency */}
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: -120,
+            right: -80,
+            width: 320,
+            height: 320,
+            borderRadius: 320,
+            backgroundColor: 'rgba(184,146,62,0.14)',
+          }}
+        />
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            bottom: -140,
+            left: -100,
+            width: 360,
+            height: 360,
+            borderRadius: 360,
+            backgroundColor: 'rgba(184,146,62,0.10)',
+          }}
+        />
 
-      <KeyboardAvoidingView
-        // Android already resizes the window for the keyboard via app.json's
-        // softwareKeyboardLayoutMode: "resize" - "height" here double-applied
-        // on top of that and hid/squished content behind the keyboard.
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
-      >
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
@@ -387,7 +393,7 @@ export default function LoginScreen() {
             </View>
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
-    </LinearGradient>
+      </LinearGradient>
+    </KeyboardAvoidingView>
   );
 }

@@ -24,11 +24,10 @@ export const Modal = ({ visible, onClose, title, children }: ModalProps) => {
       statusBarTranslucent
     >
       <KeyboardAvoidingView
-        className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ backgroundColor: colors.overlay }}
+        style={{ flex: 1, backgroundColor: colors.overlay }}
       >
-        <View className="flex-1 justify-center px-5">
+        <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 20 }}>
           <View
             className="rounded-3xl p-5 self-center w-full"
             style={{ backgroundColor: colors.surface, maxWidth: 480, maxHeight: '88%' }}

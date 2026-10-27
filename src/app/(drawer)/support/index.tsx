@@ -452,9 +452,10 @@ export default function SupportScreen() {
   }
 
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Header
         title={t('support.title')}
+        showBack
         rightAction={
           activeTab === 'tickets' ? (
             <Pressable

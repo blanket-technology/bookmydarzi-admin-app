@@ -72,40 +72,42 @@ export default function LoginOtpVerificationScreen() {
   const seconds = cooldown % 60;
 
   return (
-    <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} style={{ flex: 1 }}>
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          top: -100,
-          left: -90,
-          width: 300,
-          height: 300,
-          borderRadius: 300,
-          backgroundColor: 'rgba(184,146,62,0.10)',
-        }}
-      />
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          bottom: -130,
-          right: -80,
-          width: 320,
-          height: 320,
-          borderRadius: 320,
-          backgroundColor: 'rgba(184,146,62,0.14)',
-        }}
-      />
-
-      <KeyboardAvoidingView
-        // Android already resizes the window for the keyboard via app.json's
-        // softwareKeyboardLayoutMode: "resize" - "height" here double-applied
-        // on top of that and hid/squished content behind the keyboard.
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
-        style={{ flex: 1 }}
-      >
+    // KeyboardAvoidingView is the OUTERMOST element (not nested inside
+    // LinearGradient) - same fix as login.tsx: a flex parent that isn't a
+    // plain View can throw off KAV's "padding" measurement on iOS.
+    <KeyboardAvoidingView
+      // Android already resizes the window for the keyboard via app.json's
+      // softwareKeyboardLayoutMode: "resize" - "height" here double-applied
+      // on top of that and hid/squished content behind the keyboard.
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+      style={{ flex: 1 }}
+    >
+      <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} style={{ flex: 1 }}>
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: -100,
+            left: -90,
+            width: 300,
+            height: 300,
+            borderRadius: 300,
+            backgroundColor: 'rgba(184,146,62,0.10)',
+          }}
+        />
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            bottom: -130,
+            right: -80,
+            width: 320,
+            height: 320,
+            borderRadius: 320,
+            backgroundColor: 'rgba(184,146,62,0.14)',
+          }}
+        />
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
@@ -232,7 +234,7 @@ export default function LoginOtpVerificationScreen() {
             </View>
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
-    </LinearGradient>
+      </LinearGradient>
+    </KeyboardAvoidingView>
   );
 }

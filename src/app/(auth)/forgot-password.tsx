@@ -94,14 +94,16 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} style={{ flex: 1 }}>
-      <KeyboardAvoidingView
-        // Android already resizes the window for the keyboard via app.json's
-        // softwareKeyboardLayoutMode: "resize" - "height" here double-applied
-        // on top of that and hid/squished content behind the keyboard.
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
-      >
+    // KeyboardAvoidingView is the OUTERMOST element (not nested inside
+    // LinearGradient) - same fix as login.tsx/login-otp-verification.tsx.
+    <KeyboardAvoidingView
+      // Android already resizes the window for the keyboard via app.json's
+      // softwareKeyboardLayoutMode: "resize" - "height" here double-applied
+      // on top of that and hid/squished content behind the keyboard.
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={{ flex: 1 }}
+    >
+      <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
@@ -216,7 +218,7 @@ export default function ForgotPasswordScreen() {
             </View>
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
-    </LinearGradient>
+      </LinearGradient>
+    </KeyboardAvoidingView>
   );
 }

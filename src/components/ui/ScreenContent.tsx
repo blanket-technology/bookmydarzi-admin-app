@@ -42,8 +42,7 @@ export const ScreenContent = ({
 
   const content = (
     <ScrollView
-      className="flex-1"
-      style={style}
+      style={[{ flex: 1 }, style]}
       contentContainerStyle={[{ alignItems: 'center' }, contentContainerStyle]}
       scrollEnabled={effectiveScrollEnabled}
       // Without this the first tap on a button while the keyboard is open only
@@ -51,7 +50,7 @@ export const ScreenContent = ({
       keyboardShouldPersistTaps="handled"
       {...props}
     >
-      <View className="w-full px-5" style={{ maxWidth }}>
+      <View style={{ width: '100%', paddingHorizontal: 20, maxWidth }}>
         {children}
       </View>
     </ScrollView>
@@ -66,7 +65,12 @@ export const ScreenContent = ({
     // there (behavior={undefined} disables it). "height" mode double-applies
     // on top of that OS resize, which is what was squishing/hiding content
     // like message input bars behind the keyboard instead of showing them.
-    <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    // Uses inline style, not className - NativeWind's className compile
+    // step has been unreliable on this app's current build (see
+    // login.tsx's identical fix), and a zero-flex KeyboardAvoidingView here
+    // would silently break keyboard-avoidance app-wide since this is the
+    // shared wrapper most screens use.
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {content}
     </KeyboardAvoidingView>
   );
