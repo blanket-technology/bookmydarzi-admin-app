@@ -72,7 +72,7 @@ export default function LoginOtpVerificationScreen() {
   const seconds = cooldown % 60;
 
   return (
-    <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} className="flex-1">
+    <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} style={{ flex: 1 }}>
       <View
         pointerEvents="none"
         style={{
@@ -104,7 +104,7 @@ export default function LoginOtpVerificationScreen() {
         // on top of that and hid/squished content behind the keyboard.
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={{
@@ -117,19 +117,31 @@ export default function LoginOtpVerificationScreen() {
         >
           <Pressable
             onPress={() => router.back()}
-            className="px-6 mb-2 flex-row items-center"
-            style={{ position: 'absolute', top: insets.top + 12, left: 0 }}
+            style={{
+              position: 'absolute',
+              top: insets.top + 12,
+              left: 0,
+              paddingHorizontal: 24,
+              marginBottom: 8,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
             hitSlop={10}
           >
             <Ionicons name="arrow-back" size={22} color="#7D622A" />
           </Pressable>
 
-          <View className="px-6 flex-1 justify-center items-center">
-            <View className="w-full" style={{ maxWidth: 440 }}>
-              <View className="items-center mb-8" style={{ marginTop: 36 }}>
+          <View style={{ paddingHorizontal: 24, flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ width: '100%', maxWidth: 440 }}>
+              <View style={{ alignItems: 'center', marginBottom: 32, marginTop: 36 }}>
                 <View
-                  className="w-[72px] h-[72px] rounded-[24px] items-center justify-center mb-5"
                   style={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: 24,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 20,
                     backgroundColor: 'rgba(255,255,255,0.75)',
                     borderWidth: 1,
                     borderColor: 'rgba(184,146,62,0.28)',
@@ -137,13 +149,13 @@ export default function LoginOtpVerificationScreen() {
                 >
                   <Ionicons name="shield-checkmark" size={32} color="#B8923E" />
                 </View>
-                <Text className="text-2xl font-bold tracking-tight" style={{ color: '#2C1A0E' }}>
+                <Text style={{ fontSize: 24, fontWeight: '700', letterSpacing: -0.5, color: '#2C1A0E' }}>
                   Verify it&apos;s you
                 </Text>
-                <Text className="text-sm mt-2 text-center" style={{ color: '#8a7561' }}>
+                <Text style={{ fontSize: 14, marginTop: 8, textAlign: 'center', color: '#8a7561' }}>
                   We sent a 6-digit code to
                 </Text>
-                <Text className="text-sm font-semibold" style={{ color: '#B8923E' }}>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: '#B8923E' }}>
                   {email}
                 </Text>
               </View>
@@ -157,7 +169,7 @@ export default function LoginOtpVerificationScreen() {
                   padding: 24,
                 }}
               >
-                <Text className="text-xs font-semibold mb-3 tracking-wide text-center" style={{ color: '#8a7561' }}>
+                <Text style={{ fontSize: 12, fontWeight: '600', marginBottom: 12, letterSpacing: 0.4, textAlign: 'center', color: '#8a7561' }}>
                   ENTER VERIFICATION CODE
                 </Text>
 
@@ -184,10 +196,10 @@ export default function LoginOtpVerificationScreen() {
                       }}
                     >
                       {verifyMutation.isPending ? (
-                        <Text className="text-[#052a2e] font-bold text-base">Verifying…</Text>
+                        <Text style={{ color: '#052a2e', fontWeight: '700', fontSize: 16 }}>Verifying…</Text>
                       ) : (
                         <>
-                          <Text className="text-[#052a2e] font-bold text-base mr-1.5">Verify &amp; Sign In</Text>
+                          <Text style={{ color: '#052a2e', fontWeight: '700', fontSize: 16, marginRight: 6 }}>Verify &amp; Sign In</Text>
                           <Ionicons name="checkmark-circle" size={18} color="#052a2e" />
                         </>
                       )}
@@ -195,14 +207,13 @@ export default function LoginOtpVerificationScreen() {
                   </Pressable>
                 </Animated.View>
 
-                <View className="flex-row items-center justify-center mt-5">
-                  <Text className="text-sm" style={{ color: '#a3927e' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 20 }}>
+                  <Text style={{ fontSize: 14, color: '#a3927e' }}>
                     Didn&apos;t get the code?{' '}
                   </Text>
                   <Pressable onPress={handleResend} disabled={cooldown > 0 || resendMutation.isPending} hitSlop={6}>
                     <Text
-                      className="text-sm font-semibold"
-                      style={{ color: cooldown > 0 ? '#c3b6a5' : '#B8923E' }}
+                      style={{ fontSize: 14, fontWeight: '600', color: cooldown > 0 ? '#c3b6a5' : '#B8923E' }}
                     >
                       {cooldown > 0
                         ? `Resend in ${minutes > 0 ? `${minutes}:${seconds.toString().padStart(2, '0')}` : `${seconds}s`}`
@@ -212,9 +223,9 @@ export default function LoginOtpVerificationScreen() {
                 </View>
               </View>
 
-              <View className="flex-row items-center justify-center mt-8">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 32 }}>
                 <Ionicons name="lock-closed-outline" size={13} color="#b3a493" />
-                <Text className="text-xs ml-1.5" style={{ color: '#b3a493' }}>
+                <Text style={{ fontSize: 12, marginLeft: 6, color: '#b3a493' }}>
                   This code expires shortly for your security
                 </Text>
               </View>

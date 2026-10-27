@@ -94,13 +94,13 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} className="flex-1">
+    <LinearGradient colors={['#FDFBF7', '#FAF3E4', '#F5E6C0']} style={{ flex: 1 }}>
       <KeyboardAvoidingView
         // Android already resizes the window for the keyboard via app.json's
         // softwareKeyboardLayoutMode: "resize" - "height" here double-applied
         // on top of that and hid/squished content behind the keyboard.
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={{
@@ -110,17 +110,17 @@ export default function ForgotPasswordScreen() {
             justifyContent: 'center',
           }}
         >
-          <Pressable onPress={() => router.back()} hitSlop={8} className="px-6 mb-4">
+          <Pressable onPress={() => router.back()} hitSlop={8} style={{ paddingHorizontal: 24, marginBottom: 16 }}>
             <Ionicons name="arrow-back" size={24} color="#7D622A" />
           </Pressable>
 
-          <View className="px-6 items-center">
-            <View className="w-full" style={{ maxWidth: 480 }}>
-            <View className="bg-white rounded-[32px] p-6">
-              <Text className="text-2xl font-bold text-slate-900 mb-1">
+          <View style={{ paddingHorizontal: 24, alignItems: 'center' }}>
+            <View style={{ width: '100%', maxWidth: 480 }}>
+            <View style={{ backgroundColor: '#fff', borderRadius: 32, padding: 24 }}>
+              <Text style={{ fontSize: 24, fontWeight: '700', color: '#0f172a', marginBottom: 4 }}>
                 Forgot Password
               </Text>
-              <Text className="text-slate-500 mb-6">
+              <Text style={{ color: '#64748b', marginBottom: 24 }}>
                 {step === 'request' && 'Enter your email to receive a reset OTP'}
                 {step === 'verify' && 'Enter the OTP sent to your email'}
                 {step === 'reset' && 'Create your new password'}
@@ -170,14 +170,14 @@ export default function ForgotPasswordScreen() {
                     disabled={otp.trim().length !== 6}
                     fullWidth
                   />
-                  <View className="flex-row justify-between mt-3">
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 }}>
                     <Pressable onPress={handleResend} accessibilityRole="button" hitSlop={10}>
-                      <Text className="text-sm font-semibold" style={{ color: '#7D622A' }}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#7D622A' }}>
                         Resend code
                       </Text>
                     </Pressable>
                     <Pressable onPress={() => setStep('request')} accessibilityRole="button" hitSlop={10}>
-                      <Text className="text-sm font-semibold" style={{ color: '#7D622A' }}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#7D622A' }}>
                         Change email
                       </Text>
                     </Pressable>

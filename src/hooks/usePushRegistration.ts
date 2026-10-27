@@ -39,24 +39,39 @@ export async function unregisterPushTokenBestEffort(): Promise<void> {
 // channel's job, see the MAX-importance channel set up below) but every
 // state should behave consistently, so it's set regardless.
 export function configureNotificationHandler(): void {
-  if (handlerConfigured || isExpoGo) return;
+  if (handlerConfigured) return;
   handlerConfigured = true;
-  import('expo-notifications')
-    .then((Notifications) => {
-      Notifications.setNotificationHandler({
-        handleNotification: async () => ({
-          shouldShowAlert: true,
-          shouldShowBanner: true,
-          shouldShowList: true,
-          shouldPlaySound: true,
-          shouldSetBadge: false,
-        }),
+  // Defensive: isExpoGo should already skip this entirely, but Expo Go's
+  // executionEnvironment detection has been observed unreliable depending
+  // on how the dev server is launched (--go vs a plain `expo start` the
+  // Expo Go client connects to). This is a second, independent layer -
+  // even if isExpoGo reads wrong, the try/catch below guarantees a missing
+  // native module (expo-notifications' TopicSubscriptionModule etc., never
+  // bundled into the generic Expo Go client) can only fail this one
+  // best-effort call, never the app's own render tree.
+  if (isExpoGo) return;
+  try {
+    import('expo-notifications')
+      .then((Notifications) => {
+        Notifications.setNotificationHandler({
+          handleNotification: async () => ({
+            shouldShowAlert: true,
+            shouldShowBanner: true,
+            shouldShowList: true,
+            shouldPlaySound: true,
+            shouldSetBadge: false,
+          }),
+        });
+      })
+      .catch(() => {
+        // Same best-effort posture as push registration below - a device
+        // that can't load expo-notifications shouldn't block app startup.
       });
-    })
-    .catch(() => {
-      // Same best-effort posture as push registration below - a device
-      // that can't load expo-notifications shouldn't block app startup.
-    });
+  } catch {
+    // Synchronous throw from the import() call itself (e.g. a native
+    // module failing to resolve at module-evaluation time, not just at
+    // an awaited call) - same best-effort posture.
+  }
 }
 
 // Registers this device's Expo push token with the backend so the existing

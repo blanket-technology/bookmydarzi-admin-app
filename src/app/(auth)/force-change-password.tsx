@@ -65,19 +65,26 @@ export default function ForceChangePasswordScreen() {
   };
 
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScreenContent>
-        <View className="items-center mt-10 mb-6">
+        <View style={{ alignItems: 'center', marginTop: 40, marginBottom: 24 }}>
           <View
-            className="w-16 h-16 rounded-full items-center justify-center mb-4"
-            style={{ backgroundColor: colors.primaryLight }}
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 16,
+              backgroundColor: colors.primaryLight,
+            }}
           >
             <Ionicons name="shield-checkmark-outline" size={30} color={colors.primary} />
           </View>
-          <Text className="text-xl font-bold text-center" style={{ color: colors.text }}>
+          <Text style={{ fontSize: 20, fontWeight: '700', textAlign: 'center', color: colors.text }}>
             Set a new password
           </Text>
-          <Text className="text-sm text-center mt-2 px-6" style={{ color: colors.textMuted }}>
+          <Text style={{ fontSize: 14, textAlign: 'center', marginTop: 8, paddingHorizontal: 24, color: colors.textMuted }}>
             Your account was created with a default password. For your security, set a new
             password before continuing.
           </Text>
@@ -129,11 +136,11 @@ export default function ForceChangePasswordScreen() {
         </Card>
 
         <Pressable
-          className="items-center mt-5 py-2"
+          style={{ alignItems: 'center', marginTop: 20, paddingVertical: 8 }}
           onPress={() => logoutMutation.mutate()}
           disabled={logoutMutation.isPending}
         >
-          <Text className="text-sm font-semibold" style={{ color: colors.textMuted }}>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMuted }}>
             Not you? Sign out
           </Text>
         </Pressable>

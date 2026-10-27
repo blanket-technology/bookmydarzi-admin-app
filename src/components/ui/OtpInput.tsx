@@ -64,8 +64,8 @@ export const OtpInput = ({ value, onChange, length = 6, error, autoFocus = true 
   };
 
   return (
-    <View className="mb-2">
-      <View className="flex-row justify-between gap-2">
+    <View style={{ marginBottom: 8 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
         {digits.map((digit, index) => {
           const filled = digit.length > 0;
           const isNextToFill = !filled && (index === 0 || digits[index - 1]);
@@ -84,8 +84,9 @@ export const OtpInput = ({ value, onChange, length = 6, error, autoFocus = true 
                 textAlign="center"
                 textAlignVertical="center"
                 selectTextOnFocus
-                className="rounded-2xl font-bold"
                 style={{
+                  borderRadius: 16,
+                  fontWeight: '700',
                   width: boxSize,
                   height: boxSize,
                   fontSize,
@@ -111,7 +112,7 @@ export const OtpInput = ({ value, onChange, length = 6, error, autoFocus = true 
         })}
       </View>
       {error ? (
-        <Text className="text-xs mt-2" style={{ color: colors.error }}>
+        <Text style={{ fontSize: 12, marginTop: 8, color: colors.error }}>
           {error}
         </Text>
       ) : null}
