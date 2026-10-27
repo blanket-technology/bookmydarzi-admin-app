@@ -32,6 +32,18 @@
         "buildType": "apk"
       }
     },
+    "preview-simulator": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://web-production-efff7.up.railway.app",
+        "EXPO_PUBLIC_APP_ENV": "production",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
+        "SENTRY_DISABLE_NATIVE_DEBUG_UPLOAD": "true"
+      },
+      "ios": {
+        "simulator": true
+      }
+    },
     "production": {
       "env": {
         "EXPO_PUBLIC_API_BASE_URL": "https://web-production-efff7.up.railway.app",
