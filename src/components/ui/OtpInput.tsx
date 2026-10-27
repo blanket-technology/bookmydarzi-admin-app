@@ -1,6 +1,5 @@
 import { useRef } from 'react';
-import { TextInput, View, useWindowDimensions } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 
 interface OtpInputProps {
@@ -71,7 +70,7 @@ export const OtpInput = ({ value, onChange, length = 6, error, autoFocus = true 
           const filled = digit.length > 0;
           const isNextToFill = !filled && (index === 0 || digits[index - 1]);
           return (
-            <Animated.View key={index} entering={FadeIn.delay(index * 40).duration(250)}>
+            <View key={index}>
               <TextInput
                 ref={(ref) => {
                   inputRefs.current[index] = ref;
@@ -107,18 +106,14 @@ export const OtpInput = ({ value, onChange, length = 6, error, autoFocus = true 
                   color: colors.text,
                 }}
               />
-            </Animated.View>
+            </View>
           );
         })}
       </View>
       {error ? (
-        <Animated.Text
-          entering={FadeIn}
-          className="text-xs mt-2"
-          style={{ color: colors.error }}
-        >
+        <Text className="text-xs mt-2" style={{ color: colors.error }}>
           {error}
-        </Animated.Text>
+        </Text>
       ) : null}
     </View>
   );

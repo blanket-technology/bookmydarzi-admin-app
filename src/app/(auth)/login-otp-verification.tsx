@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
-import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OtpInput, Pressable } from '@/components/ui';
 import {
@@ -126,7 +126,7 @@ export default function LoginOtpVerificationScreen() {
 
           <View className="px-6 flex-1 justify-center items-center">
             <View className="w-full" style={{ maxWidth: 440 }}>
-              <Animated.View entering={FadeInDown.duration(500)} className="items-center mb-8" style={{ marginTop: 36 }}>
+              <View className="items-center mb-8" style={{ marginTop: 36 }}>
                 <View
                   className="w-[72px] h-[72px] rounded-[24px] items-center justify-center mb-5"
                   style={{
@@ -146,10 +146,9 @@ export default function LoginOtpVerificationScreen() {
                 <Text className="text-sm font-semibold" style={{ color: '#B8923E' }}>
                   {email}
                 </Text>
-              </Animated.View>
+              </View>
 
-              <Animated.View
-                entering={FadeInUp.delay(150).duration(500)}
+              <View
                 style={{
                   backgroundColor: 'rgba(255,255,255,0.65)',
                   borderRadius: 28,
@@ -211,14 +210,14 @@ export default function LoginOtpVerificationScreen() {
                     </Text>
                   </Pressable>
                 </View>
-              </Animated.View>
+              </View>
 
-              <Animated.View entering={FadeInUp.delay(300).duration(500)} className="flex-row items-center justify-center mt-8">
+              <View className="flex-row items-center justify-center mt-8">
                 <Ionicons name="lock-closed-outline" size={13} color="#b3a493" />
                 <Text className="text-xs ml-1.5" style={{ color: '#b3a493' }}>
                   This code expires shortly for your security
                 </Text>
-              </Animated.View>
+              </View>
             </View>
           </View>
         </ScrollView>

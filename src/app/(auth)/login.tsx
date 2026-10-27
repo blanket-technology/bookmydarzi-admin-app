@@ -5,7 +5,7 @@ import { Link } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
-import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { Pressable } from '@/components/ui/Pressable';
 import { toast } from '@/store/toastStore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -210,7 +210,7 @@ export default function LoginScreen() {
         >
           <View className="px-6 flex-1 justify-center items-center">
             <View className="w-full" style={{ maxWidth: 440 }}>
-              <Animated.View entering={FadeInDown.duration(500)} className="items-center mb-9">
+              <View className="items-center mb-9">
                 <View
                   className="w-[72px] h-[72px] rounded-[24px] items-center justify-center mb-5"
                   style={{
@@ -230,10 +230,9 @@ export default function LoginScreen() {
                     OPERATIONS PORTAL
                   </Text>
                 </View>
-              </Animated.View>
+              </View>
 
-              <Animated.View
-                entering={FadeInUp.delay(150).duration(500)}
+              <View
                 style={{
                   backgroundColor: 'rgba(255,255,255,0.65)',
                   borderRadius: 28,
@@ -356,14 +355,14 @@ export default function LoginScreen() {
                     </LinearGradient>
                   </Pressable>
                 </Animated.View>
-              </Animated.View>
+              </View>
 
-              <Animated.View entering={FadeInUp.delay(300).duration(500)} className="flex-row items-center justify-center mt-8">
+              <View className="flex-row items-center justify-center mt-8">
                 <Ionicons name="shield-checkmark-outline" size={14} color="#b3a493" />
                 <Text className="text-xs ml-1.5" style={{ color: '#b3a493' }}>
                   Secured by BookMyDarzi authentication system.
                 </Text>
-              </Animated.View>
+              </View>
             </View>
           </View>
         </ScrollView>
