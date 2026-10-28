@@ -207,7 +207,7 @@ export default function SettingsScreen() {
             value={Constants.expoConfig?.version ?? '1.0.0'}
             colors={colors}
           />
-          <SettingRow icon="globe-outline" label="BookMyDarzi Admin" value="Enterprise" colors={colors} />
+          <SettingRow icon="globe-outline" label="BookMyDarzi Operations" value="Enterprise" colors={colors} />
           <SettingRow
             icon="shield-checkmark-outline"
             label={t('settings.privacyPolicy')}

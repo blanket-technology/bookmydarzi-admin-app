@@ -226,7 +226,7 @@ export const CustomDrawer = (props: DrawerContentComponentProps) => {
         >
           <Ionicons name="cut" size={18} color={colors.primary} />
           <Text className="font-semibold ml-2" style={{ color: colors.text }}>
-            BookMyDarzi Admin
+            BookMyDarzi Operations
           </Text>
         </View>
       </View>

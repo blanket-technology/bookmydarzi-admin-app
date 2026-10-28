@@ -1,6 +1,6 @@
 {
   "appLock": {
-    "prompt": "Unlock BookMyDarzi Admin",
+    "prompt": "Unlock BookMyDarzi Operations",
     "title": "App Locked",
     "hint": "Use Face ID or your passcode to continue.",
     "unlock": "Unlock",
@@ -657,7 +657,7 @@
     "hint": "Unlock with Face ID or fingerprint to continue.",
     "unlock": "Unlock",
     "verifying": "Verifying...",
-    "prompt": "Unlock BookMyDarzi Admin"
+    "prompt": "Unlock BookMyDarzi Operations"
   },
   "orderActions": {
     "accept": "Accept Order",

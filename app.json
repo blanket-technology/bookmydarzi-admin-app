@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "BookMyDarzi Admin",
+    "name": "BookMyDarzi Operations",
     "slug": "bookmydarzi-admin",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bookmydarzi.admin",
-      "buildNumber": "13",
+      "buildNumber": "15",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true
