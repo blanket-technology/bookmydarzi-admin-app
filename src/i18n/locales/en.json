@@ -106,7 +106,7 @@
     "codPending": "COD Pending",
     "employeeFootnote": "Based on your {{count}} most recent assigned orders. Open Orders for the full, filterable list.",
     "tailorFootnote": "Based on your {{count}} most recent orders. Open Orders for the full, filterable list.",
-    "earningsCompleted": "Earnings (completed)",
+    "earningsCompleted": "Total Earnings",
     "yourWork": "Your Work",
     "assigned": "Assigned",
     "stitching": "Stitching",

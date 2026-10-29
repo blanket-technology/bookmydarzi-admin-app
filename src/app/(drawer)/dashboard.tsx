@@ -297,7 +297,16 @@ export default function DashboardScreen() {
   // total earned to date, matching the per-order TailorPayout rows this
   // same number is built from server-side.
   const { data: tailorPayoutSummary } = useMyPayoutSummary(isTailorRole);
-  const tailorCompletedEarnings =
+  // Bug fix: this figure is pending+paid combined (see comment above), but
+  // the stat was labeled "Earnings (completed)" - a tailor with e.g. ₹500
+  // pending and ₹0 paid saw "Earnings (completed): ₹500" here, then opened
+  // My Earnings and saw that same ₹500 tagged "Pending", reading as a
+  // contradiction even though both screens read the identical number from
+  // the same endpoint. Renamed the stat to "Total Earnings" (see
+  // dashboard.earningsCompleted in en.json/hi.json) instead of changing
+  // what this sums - the dashboard's own intent, per the comment above, is
+  // the tailor's full earned-to-date total, not just what's been paid out.
+  const tailorTotalEarnings =
     Number(tailorPayoutSummary?.pending_amount ?? 0) + Number(tailorPayoutSummary?.paid_amount ?? 0);
   // GET /employee/me/online - same live-status source the Pickups/Deliveries
   // manual toggle already updates, so this pill reflects real state instead
@@ -475,7 +484,7 @@ export default function DashboardScreen() {
               <RoleDashboardHero
                 greeting={timeOfDayGreeting(t)}
                 name={firstName ?? t('dashboard.thereGreeting')}
-                primaryStat={{ label: t('dashboard.earningsCompleted'), value: formatCurrency(tailorCompletedEarnings) }}
+                primaryStat={{ label: t('dashboard.earningsCompleted'), value: formatCurrency(tailorTotalEarnings) }}
                 onlineBadge={
                   <Pressable onPress={() => router.push('/(drawer)/broadcasts')}>
                     <OnlineStatusPill isOnline={Boolean(tailorProfile?.IsOnline)} />
