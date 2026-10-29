@@ -136,6 +136,7 @@
     "verified": "Verified",
     "pendingVerification": "Pending verification",
     "kycUploadHint": "Upload all 3 documents to become eligible for verification by your admin.",
+    "kycVerifiedLockedHint": "Your documents are verified and locked. Contact support to update or remove one.",
     "uploaded": "Uploaded",
     "notUploaded": "Not uploaded",
     "replace": "Replace",

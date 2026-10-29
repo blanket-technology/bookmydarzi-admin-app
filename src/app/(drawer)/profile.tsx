@@ -159,7 +159,7 @@ function KycStatusCard({ role }: { role: 'tailor' | 'employee' }) {
         />
       </View>
       <Text className="text-xs mb-3" style={{ color: colors.textSecondary }}>
-        {t('profile.kycUploadHint')}
+        {kyc?.is_approved ? t('profile.kycVerifiedLockedHint') : t('profile.kycUploadHint')}
       </Text>
 
       {KYC_DOCS.map((doc) => {
@@ -191,7 +191,7 @@ function KycStatusCard({ role }: { role: 'tailor' | 'employee' }) {
             </View>
             {isBusy ? (
               <Ionicons name="hourglass-outline" size={18} color={colors.textMuted} />
-            ) : url ? (
+            ) : kyc?.is_approved ? null : url ? (
               <Pressable
                 onPress={() =>
                   Alert.alert(t('profile.removeDocTitle'), t('profile.removeDocBody'), [
@@ -207,7 +207,13 @@ function KycStatusCard({ role }: { role: 'tailor' | 'employee' }) {
                 <Ionicons name="trash-outline" size={18} color={colors.error} />
               </Pressable>
             ) : null}
-            {!isBusy ? (
+            {/* Bug fix: once verified, a tailor/employee could still freely
+                delete or replace their KYC document from this screen - no
+                re-verification trigger, no admin visibility into the swap.
+                Matches the backend lock in kyc_self_service.py
+                (_assert_kyc_self_service_allowed) - once approved, any
+                change goes through admin/support instead of self-service. */}
+            {!isBusy && !kyc?.is_approved ? (
               <Pressable onPress={() => pickAndUpload(doc.type)} hitSlop={8}>
                 <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
                   {url ? t('profile.replace') : t('profile.upload')}
