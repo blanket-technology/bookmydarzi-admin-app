@@ -136,7 +136,7 @@ export default function ForgotPasswordScreen() {
                     render={({ field: { onChange, onBlur, value } }) => (
                       <Input
                         label="Email"
-                        placeholder="admin@bookmydarzi.com"
+                        placeholder="Enter your email"
                         value={value}
                         onChangeText={onChange}
                         onBlur={onBlur}

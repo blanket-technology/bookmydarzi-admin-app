@@ -277,7 +277,7 @@ export default function LoginScreen() {
                     <GlassField
                       icon="mail-outline"
                       label="Email"
-                      placeholder="you@bookmydarzi.com"
+                      placeholder="Enter your email"
                       value={value}
                       onChangeText={onChange}
                       onBlur={onBlur}
