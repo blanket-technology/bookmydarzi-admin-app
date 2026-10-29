@@ -164,4 +164,27 @@ export const tailorService = {
     );
     return data;
   },
+
+  // Structured specialization checklist (matches real ServiceSubCategory
+  // ids, what find_eligible_tailors actually routes orders against) - was
+  // only ever settable at application time via SpecializationChecklist;
+  // an already-approved tailor had no way to have it corrected/updated
+  // without a re-application. See GET/PUT /admin/tailors/{id}/specializations.
+  getTailorSpecializations: async (tailorId: string): Promise<{ tailor_id: number; service_sub_category_ids: number[] }> => {
+    const { data } = await apiClient.get<{ tailor_id: number; service_sub_category_ids: number[] }>(
+      ENDPOINTS.ADMIN.TAILOR_SPECIALIZATIONS(tailorId),
+    );
+    return data;
+  },
+
+  updateTailorSpecializations: async (
+    tailorId: string,
+    serviceSubCategoryIds: number[],
+  ): Promise<{ tailor_id: number; service_sub_category_ids: number[] }> => {
+    const { data } = await apiClient.put<{ tailor_id: number; service_sub_category_ids: number[] }>(
+      ENDPOINTS.ADMIN.TAILOR_SPECIALIZATIONS(tailorId),
+      { service_sub_category_ids: serviceSubCategoryIds },
+    );
+    return data;
+  },
 };

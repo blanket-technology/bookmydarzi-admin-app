@@ -18,6 +18,7 @@ import {
   type StaffOrderStatusOption,
 } from '@/features/staffDetail/components';
 import { StaffVerificationCard } from '@/features/staffDetail/components/StaffVerificationCard';
+import { TailorSpecializationCard } from '@/features/tailors/components/TailorSpecializationCard';
 import { KYC_DOCS, type KycDocKey } from '@/features/staffDetail/types';
 import {
   useDeleteTailorMutation,
@@ -373,11 +374,6 @@ export default function TailorDetailsScreen() {
               onChangeText={(v) => setEditForm((p) => (p ? { ...p, mobile: v } : p))}
               error={editForm.mobile.trim() && !isValidMobile(editForm.mobile) ? 'Enter a valid 10-digit mobile number' : undefined}
             />
-            <Input
-              label="Specialization"
-              value={editForm.specialization}
-              onChangeText={(v) => setEditForm((p) => (p ? { ...p, specialization: v } : p))}
-            />
             <Pressable
               onPress={() => setEditForm((p) => (p ? { ...p, isActive: !p.isActive } : p))}
               className="flex-row items-center justify-between py-2"
@@ -400,6 +396,12 @@ export default function TailorDetailsScreen() {
                 />
               </View>
             </View>
+          </Card>
+        ) : null}
+
+        {activeTab === 'overview' ? (
+          <Card className="mt-4 mb-4">
+            <TailorSpecializationCard tailorId={id} />
           </Card>
         ) : null}
 

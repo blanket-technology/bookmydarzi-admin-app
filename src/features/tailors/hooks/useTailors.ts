@@ -144,3 +144,28 @@ export const useUploadTailorKycMutation = (tailorId: string) => {
     onError: (error) => toast.error(getMutationError(error)),
   });
 };
+
+// Structured checklist (real ServiceSubCategory ids) - was only ever
+// settable at application time (SpecializationChecklist in the Add Tailor
+// Application flow); an already-approved tailor had no way to have this
+// corrected/updated without a full re-application.
+export const useTailorSpecializations = (tailorId: string, enabled = true) =>
+  useQuery({
+    queryKey: ['tailor-specializations', tailorId],
+    queryFn: () => tailorService.getTailorSpecializations(tailorId),
+    enabled: enabled && !!tailorId,
+  });
+
+export const useUpdateTailorSpecializationsMutation = (tailorId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (serviceSubCategoryIds: number[]) =>
+      tailorService.updateTailorSpecializations(tailorId, serviceSubCategoryIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tailor-specializations', tailorId] });
+      queryClient.invalidateQueries({ queryKey: ['tailor', tailorId] });
+      toast.success('Specialization updated');
+    },
+    onError: (error) => toast.error(getMutationError(error)),
+  });
+};

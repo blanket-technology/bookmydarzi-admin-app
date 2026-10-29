@@ -44,6 +44,7 @@ export const ENDPOINTS = {
     TAILORS_WORKLOAD: '/api/v1/admin/tailors/workload',
     TAILOR_DETAIL: (tailorId: string) => `/api/v1/admin/tailors/${tailorId}`,
     TAILOR_KYC: (tailorId: string) => `/api/v1/admin/tailors/${tailorId}/kyc`,
+    TAILOR_SPECIALIZATIONS: (tailorId: string) => `/api/v1/admin/tailors/${tailorId}/specializations`,
     TAILOR_APPLICATIONS: '/api/v1/admin/tailor-applications',
     TAILOR_APPLICATION_DETAIL: (applicationId: string) =>
       `/api/v1/admin/tailor-applications/${applicationId}`,
