@@ -58,12 +58,7 @@ export default function CancellationPolicyScreen() {
       <Header
         title="Cancellation Policy"
         subtitle="Per-stage refund rules"
-        showMenu={false}
-        rightAction={
-          <Pressable onPress={() => router.back()} hitSlop={8}>
-            <Ionicons name="close" size={24} color={colors.text} />
-          </Pressable>
-        }
+        showBack
       />
       <ScreenContent>
         {isLoading ? (

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -48,7 +48,7 @@ export default function SupportTicketDetailScreen() {
   if (isError || !ticket) {
     return (
       <View className="flex-1" style={{ backgroundColor: colors.background }}>
-        <Header title="Support Ticket" showMenu={false} />
+        <Header title="Support Ticket" showBack />
         <EmptyState
           title="Failed to load ticket"
           description={formatApiErrorDetail(error)}
@@ -75,17 +75,13 @@ export default function SupportTicketDetailScreen() {
       <Header
         title={ticket.ticket_code ?? `Ticket #${ticket.id}`}
         subtitle={ticket.subject}
-        showMenu={false}
+        showBack
         rightAction={
           isStaff ? (
             <Pressable onPress={() => setStatusSheetVisible(true)} hitSlop={8}>
               <Ionicons name="options-outline" size={22} color={colors.text} />
             </Pressable>
-          ) : (
-            <Pressable onPress={() => router.back()} hitSlop={8}>
-              <Ionicons name="close" size={24} color={colors.text} />
-            </Pressable>
-          )
+          ) : undefined
         }
       />
       <KeyboardAvoidingView

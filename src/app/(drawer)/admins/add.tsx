@@ -58,7 +58,7 @@ export default function AddAdminScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title="Register Admin" subtitle="Create a new admin account" showMenu={false} />
+      <Header title="Register Admin" subtitle="Create a new admin account" showBack />
       {/* ScreenContent already wraps itself in a correctly-configured
           KeyboardAvoidingView (avoidKeyboard defaults true) - this screen
           doesn't need its own, and nesting two caused Android to

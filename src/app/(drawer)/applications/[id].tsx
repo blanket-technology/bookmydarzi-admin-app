@@ -44,7 +44,7 @@ export default function ApplicationDetailScreen() {
   if (isError || !application) {
     return (
       <View className="flex-1" style={{ backgroundColor: colors.background }}>
-        <Header title="Application" showMenu={false} />
+        <Header title="Application" showBack />
         <EmptyState
           title="Failed to load application"
           description={formatApiErrorDetail(error)}
@@ -111,12 +111,7 @@ export default function ApplicationDetailScreen() {
       <Header
         title={application.application_number}
         subtitle={capitalize(application.status)}
-        showMenu={false}
-        rightAction={
-          <Pressable onPress={() => router.back()} hitSlop={8}>
-            <Ionicons name="close" size={24} color={colors.text} />
-          </Pressable>
-        }
+        showBack
       />
 
       <ScreenContent showsVerticalScrollIndicator={false}>

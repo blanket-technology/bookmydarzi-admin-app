@@ -100,7 +100,7 @@ export function AddTailorApplicationForm() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title="Add Tailor" subtitle="Submit an application for review" showMenu={false} />
+      <Header title="Add Tailor" subtitle="Submit an application for review" showBack />
       <ScreenContent keyboardShouldPersistTaps="handled">
         <Input label="Full Name" value={fullName} onChangeText={setFullName} error={errors.fullName} />
         <Input

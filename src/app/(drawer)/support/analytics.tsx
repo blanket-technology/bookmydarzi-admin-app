@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { RefreshControl, Text, View } from 'react-native';
-import { Card, EmptyState, Header, Pressable, ScreenContent, SkeletonList, StatCard } from '@/components/ui';
+import { Card, EmptyState, Header, ScreenContent, SkeletonList, StatCard } from '@/components/ui';
 import { useChatAnalytics } from '@/features/chat/hooks/useChat';
 import { useTheme } from '@/hooks/useTheme';
 import { formatApiErrorDetail } from '@/utils/errors';
@@ -22,12 +21,7 @@ export default function ChatAnalyticsScreen() {
       <Header
         title="Chat Analytics"
         subtitle={periodLabel}
-        showMenu={false}
-        rightAction={
-          <Pressable onPress={() => router.back()} hitSlop={8}>
-            <Ionicons name="close" size={24} color={colors.text} />
-          </Pressable>
-        }
+        showBack
       />
 
       {isLoading ? (

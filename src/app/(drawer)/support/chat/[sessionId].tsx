@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -225,16 +225,11 @@ export default function ChatThreadScreen() {
       <Header
         title="Conversation"
         subtitle={headerSubtitle}
-        showMenu={false}
+        showBack
         rightAction={
-          <View className="flex-row items-center gap-3">
-            <Pressable onPress={() => setHistoryOpen(true)} hitSlop={8}>
-              <Ionicons name="time-outline" size={22} color={colors.text} />
-            </Pressable>
-            <Pressable onPress={() => router.back()} hitSlop={8}>
-              <Ionicons name="close" size={24} color={colors.text} />
-            </Pressable>
-          </View>
+          <Pressable onPress={() => setHistoryOpen(true)} hitSlop={8}>
+            <Ionicons name="time-outline" size={22} color={colors.text} />
+          </Pressable>
         }
       />
 

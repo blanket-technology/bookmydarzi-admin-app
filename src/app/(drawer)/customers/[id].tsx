@@ -196,7 +196,7 @@ export default function CustomerDetailsScreen() {
   if (isError || !user) {
     return (
       <View className="flex-1" style={{ backgroundColor: colors.background }}>
-        <Header title="Customer Details" showMenu={false} />
+        <Header title="Customer Details" showBack />
         <EmptyState title="Customer not found" actionLabel="Go Back" onAction={() => router.back()} />
       </View>
     );
@@ -204,20 +204,7 @@ export default function CustomerDetailsScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header
-        title="Customer Details"
-        showMenu={false}
-        rightAction={
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel="Close customer details"
-          >
-            <Ionicons name="close" size={24} color={colors.text} />
-          </Pressable>
-        }
-      />
+      <Header title="Customer Details" showBack />
 
       <Card className="mx-5 mt-3 items-center" style={{ borderRadius: 24 }}>
         <Avatar name={user.full_name} imageUrl={user.profile_image_url} size={72} />

@@ -398,7 +398,7 @@ export default function OrderDetailsScreen() {
   if (isError || !order) {
     return (
       <View className="flex-1" style={{ backgroundColor: colors.background }}>
-        <Header title={t('orderDetail.title')} showMenu={false} />
+        <Header title={t('orderDetail.title')} showBack />
         <EmptyState
           title={isError ? t('orderDetail.failedToLoad') : t('orderDetail.notFound')}
           description={isError ? formatApiErrorDetail(error) : undefined}
@@ -420,7 +420,7 @@ export default function OrderDetailsScreen() {
       <Header
         title={order.order_code ?? t('orderDetail.title')}
         subtitle={orderStatusLabel(order.status)}
-        showMenu={false}
+        showBack
         rightAction={
           <View className="flex-row items-center gap-4">
             {!isTailorRole ? (

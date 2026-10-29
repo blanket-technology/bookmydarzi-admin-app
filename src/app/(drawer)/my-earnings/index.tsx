@@ -27,7 +27,7 @@ function BridgeEarningsComingSoon() {
   const { colors } = useTheme();
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title="My Earnings" showMenu={false} />
+      <Header title="My Earnings" />
       <View className="flex-1 items-center justify-center px-8">
         <View
           className="w-24 h-24 rounded-full items-center justify-center mb-6"

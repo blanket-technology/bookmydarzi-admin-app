@@ -176,7 +176,7 @@ export default function AdminPermissionsScreen() {
   if (adminError || effectiveError) {
     return (
       <View className="flex-1" style={{ backgroundColor: colors.background }}>
-        <Header title="Admin Access" showMenu={false} />
+        <Header title="Admin Access" showBack />
         <EmptyState
           title="Couldn't load permissions"
           description="Check your connection and try again."
@@ -193,7 +193,7 @@ export default function AdminPermissionsScreen() {
   if (!admin) {
     return (
       <View className="flex-1" style={{ backgroundColor: colors.background }}>
-        <Header title="Admin Access" showMenu={false} />
+        <Header title="Admin Access" showBack />
         <EmptyState title="Admin not found" actionLabel="Go Back" onAction={() => router.back()} />
       </View>
     );
@@ -201,15 +201,7 @@ export default function AdminPermissionsScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header
-        title="Admin Access"
-        showMenu={false}
-        rightAction={
-          <Pressable onPress={() => router.back()} hitSlop={8}>
-            <Ionicons name="close" size={24} color={colors.text} />
-          </Pressable>
-        }
-      />
+      <Header title="Admin Access" showBack />
       <ScreenContent>
         <Card className="flex-row items-center mb-4">
           <Avatar name={admin.full_name ?? admin.email} size={48} />

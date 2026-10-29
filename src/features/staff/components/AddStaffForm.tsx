@@ -89,7 +89,7 @@ export function AddStaffForm({ lockedRole, title, subtitle }: AddStaffFormProps)
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title={title} subtitle={subtitle} showMenu={false} />
+      <Header title={title} subtitle={subtitle} showBack />
       <KeyboardAvoidingView
         // Android already resizes the window for the keyboard via app.json's
         // softwareKeyboardLayoutMode: "resize" - "height" here double-applied

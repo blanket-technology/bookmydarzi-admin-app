@@ -43,7 +43,7 @@ export default function NewSupportTicketScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title={isPrefilled ? 'Contact Support' : 'Raise a Ticket'} showMenu={false} />
+      <Header title={isPrefilled ? 'Contact Support' : 'Raise a Ticket'} showBack />
       {/* ScreenContent already wraps itself in a correctly-configured
           KeyboardAvoidingView (avoidKeyboard defaults true) - nesting a
           second one here double-applied Android's keyboard avoidance on top

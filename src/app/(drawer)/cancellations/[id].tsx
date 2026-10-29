@@ -42,7 +42,7 @@ export default function CancellationDetailScreen() {
   if (isError || !cancellation) {
     return (
       <View className="flex-1" style={{ backgroundColor: colors.background }}>
-        <Header title="Cancellation" showMenu={false} />
+        <Header title="Cancellation" showBack />
         <EmptyState
           title="Failed to load cancellation"
           description={formatApiErrorDetail(error)}
@@ -105,15 +105,7 @@ export default function CancellationDetailScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header
-        title="Cancellation Details"
-        showMenu={false}
-        rightAction={
-          <Pressable onPress={() => router.back()} hitSlop={8}>
-            <Ionicons name="close" size={24} color={colors.text} />
-          </Pressable>
-        }
-      />
+      <Header title="Cancellation Details" showBack />
       <ScreenContent>
         <Card className="mb-4">
           <View className="flex-row items-center justify-between mb-3">

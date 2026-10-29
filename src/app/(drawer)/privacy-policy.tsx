@@ -1,7 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
-import { Card, Header, Pressable, ScreenContent } from '@/components/ui';
+import { Card, Header, ScreenContent } from '@/components/ui';
 import { useTheme } from '@/hooks/useTheme';
 
 interface Section {
@@ -43,20 +41,11 @@ const SECTIONS: Section[] = [
 ];
 
 export default function PrivacyPolicyScreen() {
-  const router = useRouter();
   const { colors } = useTheme();
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header
-        title="Privacy Policy"
-        showMenu={false}
-        rightAction={
-          <Pressable onPress={() => router.back()} hitSlop={8}>
-            <Ionicons name="close" size={24} color={colors.text} />
-          </Pressable>
-        }
-      />
+      <Header title="Privacy Policy" showBack />
       <ScreenContent showsVerticalScrollIndicator={false}>
         {SECTIONS.map((s) => (
           <Card className="mb-4" key={s.heading}>

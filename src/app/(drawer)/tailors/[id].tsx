@@ -311,7 +311,7 @@ export default function TailorDetailsScreen() {
   if (isError || !tailor) {
     return (
       <View className="flex-1" style={{ backgroundColor: colors.background }}>
-        <Header title="Tailor Details" showMenu={false} />
+        <Header title="Tailor Details" showBack />
         <EmptyState title="Tailor not found" actionLabel="Go Back" onAction={() => router.back()} />
       </View>
     );
@@ -321,20 +321,7 @@ export default function TailorDetailsScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header
-        title="Tailor Details"
-        showMenu={false}
-        rightAction={
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel="Close tailor details"
-          >
-            <Ionicons name="close" size={24} color={colors.text} />
-          </Pressable>
-        }
-      />
+      <Header title="Tailor Details" showBack />
 
       <StaffDetailHero
         identity={{
