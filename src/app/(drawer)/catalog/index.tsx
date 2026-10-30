@@ -28,7 +28,7 @@ import { requireAmountInput } from '@/utils/money';
 type SheetKind = 'category' | 'service_line' | 'service' | null;
 
 const CATEGORY_FORM = { name: '', description: '', image_url: '', display_order: '0', is_active: true };
-const LINE_FORM = { name: '', description: '', image_url: '', display_order: '0', is_active: true };
+const LINE_FORM = { name: '', description: '', image_url: '', display_order: '0', is_active: true, group_label: '' };
 const SERVICE_FORM = {
   name: '',
   description: '',
@@ -168,6 +168,7 @@ export default function CatalogScreen() {
       image_url: line.image_url ?? '',
       display_order: String(line.display_order),
       is_active: line.is_active,
+      group_label: line.group_label ?? '',
     });
     setSheetKind('service_line');
   };
@@ -180,6 +181,7 @@ export default function CatalogScreen() {
       image_url: optionalText(lineForm.image_url, !!editingLine),
       display_order: Math.max(0, Number(lineForm.display_order) || 0),
       is_active: lineForm.is_active,
+      group_label: optionalText(lineForm.group_label, !!editingLine),
     };
     if (editingLine) {
       updateLineMutation.mutate({ id: editingLine.id, payload }, { onSuccess: () => setSheetKind(null) });
@@ -436,6 +438,12 @@ export default function CatalogScreen() {
       >
         <Input label="Name" value={lineForm.name} onChangeText={(t) => setLineForm((f) => ({ ...f, name: t }))} />
         <Input label="Description" value={lineForm.description} onChangeText={(t) => setLineForm((f) => ({ ...f, description: t }))} multiline />
+        <Input
+          label="Group (optional)"
+          value={lineForm.group_label}
+          onChangeText={(t) => setLineForm((f) => ({ ...f, group_label: t }))}
+          placeholder="e.g. Men, Women, Kids"
+        />
         <Input label="Image URL" value={lineForm.image_url} onChangeText={(t) => setLineForm((f) => ({ ...f, image_url: t }))} autoCapitalize="none" />
         <Button
           title="Upload Image"

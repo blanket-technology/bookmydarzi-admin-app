@@ -54,6 +54,10 @@ export interface ServiceLineTree {
   image_url?: string | null;
   starting_price?: number | null;
   is_active: boolean;
+  /** Display-only sub-grouping within this line's category (e.g. "Men",
+   * "Women", "Kids") - lets a flat category like Custom Alterations render
+   * as visually grouped sections. Null means ungrouped. */
+  group_label?: string | null;
   stitching_types: StitchingTypeSummary[];
 }
 
@@ -88,6 +92,7 @@ export interface ServiceLinePayload {
   image_url?: string;
   display_order?: number;
   is_active?: boolean;
+  group_label?: string;
 }
 
 export interface ServicePayload {
