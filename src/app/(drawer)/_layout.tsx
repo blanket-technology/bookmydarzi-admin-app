@@ -94,7 +94,9 @@ export default function DrawerLayout() {
           <Drawer.Screen name="billing/index" options={{ title: 'Billing' }} />
           <Drawer.Screen name="payouts/index" options={{ title: 'Tailor Payouts' }} />
           <Drawer.Screen name="bridge-payouts/index" options={{ title: 'Bridge Payouts' }} />
+          <Drawer.Screen name="cash-settlements/index" options={{ title: 'Cash Settlements' }} />
           <Drawer.Screen name="my-earnings/index" options={{ title: 'My Earnings' }} />
+          <Drawer.Screen name="cash-balance/index" options={{ title: 'Cash Balance' }} />
           <Drawer.Screen name="account-settings/index" options={{ title: 'Account Settings' }} />
           <Drawer.Screen name="notifications" options={{ title: 'Notifications' }} />
           <Drawer.Screen name="support" options={{ title: 'Support' }} />

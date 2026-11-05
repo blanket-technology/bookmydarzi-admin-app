@@ -434,7 +434,10 @@
     "noBalance": "There is no balance to collect for this order.",
     "notOnline": "Online QR payment is not available right now. Please collect cash.",
     "close": "Close",
-    "deliverHint": "Payment received. Hand over the garment, then confirm the delivery."
+    "deliverHint": "Payment received. Hand over the garment, then confirm the delivery.",
+    "channelCash": "Cash",
+    "channelMyUpi": "My UPI",
+    "myUpiHint": "Collected via your own UPI app, not BookMyDarzi QR. Recorded the same way as cash for reconciliation."
   },
   "correctStatus": {
     "title": "Correct Status",

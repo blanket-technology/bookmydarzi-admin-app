@@ -391,10 +391,14 @@ export interface RejectOrderRequest {
   reason?: string;
 }
 
-/** Manual collection is cash only: QR payments are confirmed by the backend
- * (Razorpay) the moment the customer pays - see DeliveryPaymentStatus. */
+/** Manual (off-platform) collection: cash or the employee's OWN UPI/QR, not
+ * BookMyDarzi's own Razorpay delivery QR - that one is confirmed by the
+ * backend automatically the moment the customer pays (see
+ * DeliveryPaymentStatus). Both manual channels carry the same trust level
+ * (no independent proof of payment) and both feed the cash-ledger
+ * reconciliation - see cash_ledger_service.py on the backend. */
 export interface CollectPaymentRequest {
-  method: 'cash';
+  method: 'cash' | 'employee_upi';
   amount: number;
   notes?: string;
 }

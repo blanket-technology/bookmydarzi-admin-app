@@ -75,10 +75,22 @@ const MENU_ITEMS: {
     permission: 'bridgePayouts',
   },
   {
+    label: 'Cash Settlements',
+    icon: 'swap-horizontal-outline',
+    route: '/(drawer)/cash-settlements',
+    permission: 'cashSettlements',
+  },
+  {
     label: 'My Earnings',
     icon: 'cash-outline',
     route: '/(drawer)/my-earnings',
     permission: 'myEarnings',
+  },
+  {
+    label: 'Cash Balance',
+    icon: 'wallet-outline',
+    route: '/(drawer)/cash-balance',
+    permission: 'cashBalance',
   },
   {
     label: 'Notifications',
@@ -108,7 +120,7 @@ const DRAWER_SECTIONS: { key: string; title: string; routes: string[] }[] = [
   },
   { key: 'people', title: 'people', routes: ['customers', 'tailors', 'employees', 'admins', 'leave'] },
   { key: 'catalog', title: 'catalog', routes: ['catalog', 'inventory', 'lookbook', 'homepage', 'offers', 'service-areas', 'faqs'] },
-  { key: 'finance', title: 'finance', routes: ['payments', 'revenue', 'billing', 'payouts', 'bridge-payouts', 'my-earnings'] },
+  { key: 'finance', title: 'finance', routes: ['payments', 'revenue', 'billing', 'payouts', 'bridge-payouts', 'cash-settlements', 'my-earnings', 'cash-balance'] },
   { key: 'system', title: 'system', routes: ['audit-log', 'roles-permissions'] },
   { key: 'account', title: 'account', routes: ['notifications', 'settings', 'profile'] },
 ];

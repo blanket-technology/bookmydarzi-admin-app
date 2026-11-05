@@ -101,6 +101,17 @@ export interface AppPermissions {
    * Bridge employee sees their OWN earnings here, never the admin-only
    * cross-tailor/cross-employee payout list those two flags gate. */
   myEarnings: boolean;
+  /** Own off-platform (cash/employee-UPI) collection balance and settlement
+   * submission (GET/POST /employee/cash/*) - Bridge/employee only, the only
+   * role that ever collects money at the door. See
+   * app/services/cash/cash_ledger_service.py's module docstring. */
+  cashBalance: boolean;
+  /** Admin review of employee cash/employee-UPI settlements
+   * (/admin/cash/settlements*) - ADMIN or SUPERADMIN, never EMPLOYEE (an
+   * employee reviewing their own or a colleague's cash settlement is
+   * exactly the conflict of interest this screen exists to prevent - see
+   * app/api/v1/endpoints/admin.py's _require_admin_cash). */
+  cashSettlements: boolean;
   /** Moderating customer reviews (/admin/reviews*) is admin/superadmin-only on the backend. */
   reviews: boolean;
 }
@@ -149,6 +160,8 @@ const ADMIN_PERMISSIONS: AppPermissions = {
   payouts: false,
   bridgePayouts: false,
   myEarnings: false,
+  cashBalance: false,
+  cashSettlements: true,
   reviews: true,
 };
 
@@ -208,6 +221,8 @@ const EMPLOYEE_PERMISSIONS: AppPermissions = {
   payouts: false,
   bridgePayouts: false,
   myEarnings: true,
+  cashBalance: true,
+  cashSettlements: false,
   reviews: false,
 };
 
@@ -255,6 +270,8 @@ const TAILOR_PERMISSIONS: AppPermissions = {
   payouts: false,
   bridgePayouts: false,
   myEarnings: true,
+  cashBalance: false,
+  cashSettlements: false,
   reviews: false,
 };
 
@@ -291,6 +308,8 @@ const NO_PERMISSIONS: AppPermissions = {
   payouts: false,
   bridgePayouts: false,
   myEarnings: false,
+  cashBalance: false,
+  cashSettlements: false,
   reviews: false,
 };
 
@@ -445,6 +464,8 @@ export const ROUTE_PERMISSION_MAP: Record<string, keyof AppPermissions> = {
   payouts: 'payouts',
   'bridge-payouts': 'bridgePayouts',
   'my-earnings': 'myEarnings',
+  'cash-balance': 'cashBalance',
+  'cash-settlements': 'cashSettlements',
   'account-settings': 'profile',
   // Reachable from Settings for every signed-in role (it was unmapped, so the
   // guard failed closed and the screen showed "no access").

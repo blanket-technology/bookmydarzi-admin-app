@@ -56,6 +56,7 @@ export const CollectPaymentSheet = ({
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   const [tab, setTab] = useState<Tab>('qr');
+  const [cashChannel, setCashChannel] = useState<'cash' | 'employee_upi'>('cash');
   const [cashConfirmed, setCashConfirmed] = useState(false);
   // Cash recorded in this session: the backend now reports no balance, but show the
   // "paid" state (not "nothing to collect") until the delivery is confirmed.
@@ -79,6 +80,7 @@ export const CollectPaymentSheet = ({
   useEffect(() => {
     if (visible) {
       setTab('qr');
+      setCashChannel('cash');
       setCashConfirmed(false);
       setCashRecorded(false);
       setImageFailed(false);
@@ -134,7 +136,7 @@ export const CollectPaymentSheet = ({
   const confirmCash = () => {
     if (!cashConfirmed || dueAmount <= 0) return;
     collectCash.mutate(
-      { orderId, payload: { method: 'cash', amount: dueAmount } },
+      { orderId, payload: { method: cashChannel, amount: dueAmount } },
       {
         onSuccess: () => {
           setCashRecorded(true);
@@ -286,6 +288,43 @@ export const CollectPaymentSheet = ({
             <Text className="text-sm mb-4" style={{ color: colors.textSecondary }}>
               {t('collectPayment.cashHint', { amount: formatRupees(dueAmount) })}
             </Text>
+            <View className="flex-row gap-2 mb-4">
+              <Pressable
+                onPress={() => setCashChannel('cash')}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: cashChannel === 'cash' }}
+                className="flex-1 py-2.5 rounded-xl border items-center flex-row justify-center gap-1.5"
+                style={{
+                  borderColor: cashChannel === 'cash' ? colors.primary : colors.border,
+                  backgroundColor: cashChannel === 'cash' ? `${colors.primary}15` : colors.surface,
+                }}
+              >
+                <Ionicons name="cash-outline" size={16} color={cashChannel === 'cash' ? colors.primary : colors.textSecondary} />
+                <Text style={{ color: cashChannel === 'cash' ? colors.primary : colors.text, fontWeight: '600', fontSize: 13 }}>
+                  {t('collectPayment.channelCash')}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setCashChannel('employee_upi')}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: cashChannel === 'employee_upi' }}
+                className="flex-1 py-2.5 rounded-xl border items-center flex-row justify-center gap-1.5"
+                style={{
+                  borderColor: cashChannel === 'employee_upi' ? colors.primary : colors.border,
+                  backgroundColor: cashChannel === 'employee_upi' ? `${colors.primary}15` : colors.surface,
+                }}
+              >
+                <Ionicons name="phone-portrait-outline" size={16} color={cashChannel === 'employee_upi' ? colors.primary : colors.textSecondary} />
+                <Text style={{ color: cashChannel === 'employee_upi' ? colors.primary : colors.text, fontWeight: '600', fontSize: 13 }}>
+                  {t('collectPayment.channelMyUpi')}
+                </Text>
+              </Pressable>
+            </View>
+            {cashChannel === 'employee_upi' ? (
+              <Text className="text-xs mb-4" style={{ color: colors.textMuted }}>
+                {t('collectPayment.myUpiHint')}
+              </Text>
+            ) : null}
             <Pressable
               onPress={() => setCashConfirmed((v) => !v)}
               accessibilityRole="checkbox"

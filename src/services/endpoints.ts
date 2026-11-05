@@ -114,6 +114,11 @@ export const ENDPOINTS = {
     BRIDGE_PAYOUT_SUMMARY: (employeeId: string) => `/api/v1/admin/bridge-payouts/summary/${employeeId}`,
     BRIDGE_LEG_RATES: '/api/v1/admin/bridge-leg-rates',
     BRIDGE_LEG_RATE_DETAIL: (rateId: string) => `/api/v1/admin/bridge-leg-rates/${rateId}`,
+    CASH_BALANCES: '/api/v1/admin/cash/balances',
+    CASH_SETTLEMENTS: '/api/v1/admin/cash/settlements',
+    CASH_SETTLEMENT_CONFIRM: (settlementId: string) => `/api/v1/admin/cash/settlements/${settlementId}/confirm`,
+    CASH_SETTLEMENT_REJECT: (settlementId: string) => `/api/v1/admin/cash/settlements/${settlementId}/reject`,
+    CASH_CAP: '/api/v1/admin/settings/cash-cap',
   },
   LOCATION: {
     ADMIN_SERVICE_AREAS: '/api/v1/location/admin/service-areas',
@@ -144,6 +149,10 @@ export const ENDPOINTS = {
     ORDER_MEASUREMENT: (orderId: string) =>
       `/api/v1/employee/orders/${orderId}/measurement`,
     ORDER_ADD_ADDON: (orderId: string) => `/api/v1/employee/orders/${orderId}/addons`,
+    CASH_BALANCE: '/api/v1/employee/cash/balance',
+    CASH_LEDGER: '/api/v1/employee/cash/ledger',
+    CASH_SETTLEMENTS: '/api/v1/employee/cash/settlements',
+    CASH_SETTLEMENT_PROOF: (settlementId: string) => `/api/v1/employee/cash/settlements/${settlementId}/proof`,
     TAILORS: '/api/v1/employee/tailors',
     ONLINE_STATUS: '/api/v1/employee/me/online',
     DELIVERY_BROADCASTS: '/api/v1/employee/delivery-broadcasts',
