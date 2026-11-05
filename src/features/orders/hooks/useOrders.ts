@@ -427,6 +427,20 @@ export const useUpdateOrderNotesMutation = () => {
   });
 };
 
+export const useUpdateOrderGstinMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderId, gstin }: { orderId: string; gstin: string | null }) =>
+      orderService.updateGstin(orderId, gstin),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(variables.orderId) });
+      toast.success('GSTIN updated');
+    },
+    onError: (error) => toast.error(formatApiErrorDetail(error)),
+  });
+};
+
 // Admin/superadmin recovery tool — see orderService.triggerBroadcast.
 export const useTriggerBroadcastMutation = () => {
   const queryClient = useQueryClient();

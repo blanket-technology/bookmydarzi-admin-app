@@ -124,6 +124,8 @@ export interface AdminOrderItem {
   amount?: number;
   booking_amount?: number;
   remaining_amount?: number;
+  customer_gstin?: string | null;
+  gstin_editable?: boolean;
   tailor_id?: string;
   tailor_name?: string;
   /** Staff-only (same visibility rule as tailor_name) - lets a Bridge
@@ -259,6 +261,8 @@ export interface MyOrderItem {
   FinalAmount: number;
   BookingAmount?: number;
   RemainingAmount?: number;
+  CustomerGstin?: string | null;
+  GstinEditable?: boolean;
   UrgencyLevel?: string | null;
   PickupType?: string | null;
   ScheduledPickupAt?: string | null;

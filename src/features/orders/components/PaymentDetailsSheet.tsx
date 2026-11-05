@@ -11,10 +11,12 @@ import {
   usePaymentRefunds,
   useUpdatePaymentStatusMutation,
 } from '@/features/payments/hooks/usePayments';
+import { useOrder, useUpdateOrderGstinMutation } from '@/features/orders/hooks/useOrders';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/store/toastStore';
 import { capitalize, formatMoney, formatDateTime } from '@/utils/errors';
+import { isValidGstin, normalizeGstin } from '@/utils/gstin';
 import { DetailRow } from './DetailRow';
 
 // Same field mapping as web's PaymentDetailModal.jsx: TransactionId is
@@ -81,9 +83,13 @@ export const PaymentDetailsSheet = ({
 
   const { data: payment, isLoading: isPaymentLoading, isError: isPaymentError } = usePaymentByOrder(orderId, visible);
   const { data: refunds } = usePaymentRefunds(payment?.Id, visible && isStaffRole);
+  const { data: order } = useOrder(orderId, visible);
   const updatePaymentStatusMutation = useUpdatePaymentStatusMutation(orderId);
   const createRefundMutation = useCreateRefundMutation(orderId);
   const markRefundManualMutation = useMarkRefundManualMutation(orderId);
+  const updateGstinMutation = useUpdateOrderGstinMutation();
+  const [editingGstin, setEditingGstin] = useState(false);
+  const [gstinDraft, setGstinDraft] = useState('');
 
   const handleMarkRefundManual = () => {
     if (!payment || manualRefundTargetId === null || !manualRefundReference.trim()) return;
@@ -154,6 +160,18 @@ export const PaymentDetailsSheet = ({
       return;
     }
     setPendingRefundAmount(value);
+  };
+
+  const handleSaveGstin = () => {
+    const trimmed = gstinDraft.trim();
+    if (trimmed && !isValidGstin(trimmed)) {
+      toast.error(t('paymentDetails.gstinInvalid'));
+      return;
+    }
+    updateGstinMutation.mutate(
+      { orderId, gstin: trimmed ? normalizeGstin(trimmed) : null },
+      { onSuccess: () => setEditingGstin(false) },
+    );
   };
 
   const handleRefund = () => {
@@ -228,6 +246,57 @@ export const PaymentDetailsSheet = ({
               <DetailRow label={t('paymentDetails.failureReason')} value={payment.FailureReason} colors={colors} />
             ) : null}
             <DetailRow label={t('orderSummary.created')} value={formatDateTime(payment.CreatedAt)} colors={colors} />
+
+            <View className="mt-3 pt-3 border-t" style={{ borderColor: colors.border }}>
+              {editingGstin ? (
+                <View>
+                  <Input
+                    label={t('paymentDetails.gstin')}
+                    value={gstinDraft}
+                    onChangeText={(v) => setGstinDraft(v.toUpperCase())}
+                    placeholder={t('paymentDetails.gstinPlaceholder')}
+                    maxLength={15}
+                    autoCapitalize="characters"
+                  />
+                  <View className="flex-row gap-2 mt-1">
+                    <Button
+                      title={t('paymentDetails.gstinSave')}
+                      onPress={handleSaveGstin}
+                      loading={updateGstinMutation.isPending}
+                    />
+                    <Button
+                      title={t('paymentDetails.gstinCancel')}
+                      variant="outline"
+                      onPress={() => setEditingGstin(false)}
+                    />
+                  </View>
+                  {order && !order.gstin_editable ? (
+                    <Text className="text-xs mt-1.5" style={{ color: '#d97706' }}>
+                      {t('paymentDetails.gstinInvoicedNote')}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : (
+                <Pressable
+                  onPress={() => {
+                    setGstinDraft(order?.customer_gstin ?? '');
+                    setEditingGstin(true);
+                  }}
+                  className="flex-row items-center justify-between"
+                  accessibilityRole="button"
+                >
+                  <View>
+                    <Text className="text-xs" style={{ color: colors.textMuted }}>{t('paymentDetails.gstin')}</Text>
+                    <Text className="text-sm font-medium mt-0.5" style={{ color: colors.text }}>
+                      {order?.customer_gstin || '—'}
+                    </Text>
+                  </View>
+                  <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
+                    {order?.customer_gstin ? t('paymentDetails.gstinEdit') : t('paymentDetails.gstinAdd')}
+                  </Text>
+                </Pressable>
+              )}
+            </View>
 
             {isStaffRole && refunds && refunds.length > 0 ? (
               <View className="mt-4">

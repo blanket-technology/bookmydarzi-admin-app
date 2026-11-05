@@ -77,6 +77,7 @@ export const ENDPOINTS = {
     ORDER_ITEM_CANCELLATION_PREVIEW: (orderId: string, itemId: string) =>
       `/api/v1/admin/orders/${orderId}/items/${itemId}/cancellation-preview`,
     ORDER_NOTES: (orderId: string) => `/api/v1/admin/orders/${orderId}/notes`,
+    ORDER_GSTIN: (orderId: string) => `/api/v1/admin/orders/${orderId}/gstin`,
     ORDER_BROADCAST: (orderId: string) => `/api/v1/admin/orders/${orderId}/broadcast`,
     HOMEPAGE_BANNERS: '/api/v1/admin/homepage/banners',
     HOMEPAGE_BANNER: (bannerId: string) => `/api/v1/admin/homepage/banners/${bannerId}`,

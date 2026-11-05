@@ -1,10 +1,10 @@
 {
   "appLock": {
-    "prompt": "BookMyDarzi Operations अनलॉक करें",
     "title": "ऐप लॉक है",
-    "hint": "जारी रखने के लिए Face ID या अपना पासकोड इस्तेमाल करें।",
+    "hint": "जारी रखने के लिए Face ID या फिंगरप्रिंट से अनलॉक करें।",
     "unlock": "अनलॉक करें",
-    "verifying": "सत्यापित हो रहा है..."
+    "verifying": "सत्यापित हो रहा है...",
+    "prompt": "BookMyDarzi Operations अनलॉक करें"
   },
   "common": {
     "loading": "लोड हो रहा है...",
@@ -476,7 +476,15 @@
     "noStatusChanges": "वर्तमान स्थिति से कोई बदलाव संभव नहीं है।",
     "confirmStatusTitle": "भुगतान की स्थिति बदलें?",
     "confirmStatusBody": "इस भुगतान को \"{{status}}\" करें? इससे भुगतान रिकॉर्ड और ऑर्डर की सेटलमेंट बदलेगी।",
-    "confirmStatusRefunded": "यह केवल रिकॉर्ड को रिफंड चिह्नित करता है। ग्राहक को कोई पैसा नहीं भेजता। असली रिफंड के लिए \"रिफंड करें\" उपयोग करें। जारी रखें?"
+    "confirmStatusRefunded": "यह केवल रिकॉर्ड को रिफंड चिह्नित करता है। ग्राहक को कोई पैसा नहीं भेजता। असली रिफंड के लिए \"रिफंड करें\" उपयोग करें। जारी रखें?",
+    "gstin": "GSTIN",
+    "gstinAdd": "जोड़ें",
+    "gstinEdit": "संपादित करें",
+    "gstinSave": "सहेजें",
+    "gstinCancel": "रद्द करें",
+    "gstinPlaceholder": "उदा. 09AABCT1234A1Z5",
+    "gstinInvalid": "एक मान्य 15-अक्षर का GSTIN दर्ज करें, या इसे हटा दें।",
+    "gstinInvoicedNote": "ऑर्डर का पहले ही इनवॉइस बन चुका है - यह अगले इनवॉइस डाउनलोड पर लागू होगा।"
   },
   "measurementManage": {
     "male": "पुरुष",
@@ -652,13 +660,6 @@
     "updating": "अपडेट हो रहा है…",
     "onlineReceivingChats": "आप ऑनलाइन हैं — चैट मिल रही हैं",
     "offlineGoOnline": "आप ऑफलाइन हैं — चैट पाने के लिए ऑनलाइन हो जाएं"
-  },
-  "appLock": {
-    "title": "ऐप लॉक है",
-    "hint": "जारी रखने के लिए Face ID या फिंगरप्रिंट से अनलॉक करें।",
-    "unlock": "अनलॉक करें",
-    "verifying": "सत्यापित हो रहा है...",
-    "prompt": "BookMyDarzi Operations अनलॉक करें"
   },
   "orderActions": {
     "accept": "ऑर्डर स्वीकार करें",

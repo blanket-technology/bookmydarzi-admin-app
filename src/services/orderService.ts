@@ -49,6 +49,8 @@ function normalizeOrderResponse(item: MyOrderItem): AdminOrderItem {
     final_amount: item.FinalAmount,
     booking_amount: item.BookingAmount,
     remaining_amount: item.RemainingAmount,
+    customer_gstin: item.CustomerGstin ?? null,
+    gstin_editable: item.GstinEditable ?? true,
     tailor_id: item.TailorId != null ? String(item.TailorId) : undefined,
     // TailorName is only ever populated by the backend for staff-facing
     // responses (build_order_response's include_tailor_name flag) — never
@@ -254,6 +256,11 @@ export const orderService = {
 
   updateNotes: async (orderId: string, payload: OrderNotesRequest) => {
     const { data } = await apiClient.patch(ENDPOINTS.ADMIN.ORDER_NOTES(orderId), payload);
+    return data;
+  },
+
+  updateGstin: async (orderId: string, gstin: string | null) => {
+    const { data } = await apiClient.patch(ENDPOINTS.ADMIN.ORDER_GSTIN(orderId), { gstin });
     return data;
   },
 

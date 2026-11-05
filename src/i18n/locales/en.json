@@ -1,10 +1,10 @@
 {
   "appLock": {
-    "prompt": "Unlock BookMyDarzi Operations",
     "title": "App Locked",
-    "hint": "Use Face ID or your passcode to continue.",
+    "hint": "Unlock with Face ID or fingerprint to continue.",
     "unlock": "Unlock",
-    "verifying": "Verifying..."
+    "verifying": "Verifying...",
+    "prompt": "Unlock BookMyDarzi Operations"
   },
   "common": {
     "loading": "Loading...",
@@ -476,7 +476,15 @@
     "noStatusChanges": "No status changes are possible from the current status.",
     "confirmStatusTitle": "Change payment status?",
     "confirmStatusBody": "Set this payment to \"{{status}}\"? This edits the payment record and the order's settlement.",
-    "confirmStatusRefunded": "This only marks the record as refunded. It does NOT send any money to the customer. Use \"Issue refund\" to actually refund. Continue?"
+    "confirmStatusRefunded": "This only marks the record as refunded. It does NOT send any money to the customer. Use \"Issue refund\" to actually refund. Continue?",
+    "gstin": "GSTIN",
+    "gstinAdd": "Add",
+    "gstinEdit": "Edit",
+    "gstinSave": "Save",
+    "gstinCancel": "Cancel",
+    "gstinPlaceholder": "e.g. 09AABCT1234A1Z5",
+    "gstinInvalid": "Enter a valid 15-character GSTIN, or clear it.",
+    "gstinInvoicedNote": "Order already invoiced - this takes effect on the next invoice download."
   },
   "measurementManage": {
     "male": "Male",
@@ -652,13 +660,6 @@
     "updating": "Updating…",
     "onlineReceivingChats": "You're online — receiving chats",
     "offlineGoOnline": "You're offline — go online to receive chats"
-  },
-  "appLock": {
-    "title": "App Locked",
-    "hint": "Unlock with Face ID or fingerprint to continue.",
-    "unlock": "Unlock",
-    "verifying": "Verifying...",
-    "prompt": "Unlock BookMyDarzi Operations"
   },
   "orderActions": {
     "accept": "Accept Order",
