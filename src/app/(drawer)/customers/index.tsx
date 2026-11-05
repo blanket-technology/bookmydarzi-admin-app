@@ -74,6 +74,9 @@ export default function CustomersScreen() {
           {item.email ?? item.mobile}
         </Text>
         <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
+          {item.signup_city || item.signup_state
+            ? `${[item.signup_city, item.signup_state].filter(Boolean).join(', ')} · `
+            : ''}
           Joined {formatDate(item.created_at)}
         </Text>
       </View>

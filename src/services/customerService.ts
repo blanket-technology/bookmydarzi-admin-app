@@ -37,6 +37,8 @@ function normalizeAdminUser(raw: RawAdminUser): AdminUserItem {
     created_at: raw.CreatedAt ?? undefined,
     last_login: raw.LastLogin ?? undefined,
     profile_image_url: raw.ProfileImageUrl ?? undefined,
+    signup_city: raw.SignupCity ?? undefined,
+    signup_state: raw.SignupState ?? undefined,
   };
 }
 

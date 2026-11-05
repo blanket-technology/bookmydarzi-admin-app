@@ -16,6 +16,12 @@ export interface AdminUserItem {
   last_login?: string;
   profile_image_url?: string;
   orders_count?: number;
+  // IP-geolocated city/state captured once at signup - see
+  // app/services/location/ip_geolocation.py on the backend. Best-effort:
+  // undefined for any signup before this feature shipped, or where the
+  // lookup simply failed.
+  signup_city?: string;
+  signup_state?: string;
 }
 
 export interface AdminUsersResponse {
@@ -44,6 +50,8 @@ export interface RawAdminUser {
   CreatedAt?: string | null;
   LastLogin?: string | null;
   ProfileImageUrl?: string | null;
+  SignupCity?: string | null;
+  SignupState?: string | null;
 }
 
 export interface RawAdminUsersResponse {
