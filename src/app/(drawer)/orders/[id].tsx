@@ -479,6 +479,30 @@ export default function OrderDetailsScreen() {
           <OrderTrackingTimeline orderId={order.order_id} />
         )}
 
+        {/* Bridge integration for live tracking: the employee holding the
+            currently-active leg sees a plain confirmation that their GPS
+            position (already sent every ~20s while online - useLocation.ts)
+            is being shown live to the customer on a map, with a distance +
+            ETA. Mirrors exactly which (status, employee column) pairs the
+            backend's own live_tracking_service.py treats as trackable -
+            keep these in sync if that list ever changes. */}
+        {isEmployeeRole &&
+        ((order.status === ORDER_STATUS.PICKUP_PENDING && String(order.assigned_employee_id) === String(user?.id)) ||
+          (order.status === ORDER_STATUS.OUT_FOR_DELIVERY && String(order.delivery_employee_id) === String(user?.id)) ||
+          (order.status === ORDER_STATUS.RETURN_IN_TRANSIT && String(order.return_employee_id) === String(user?.id)) ||
+          (order.status === ORDER_STATUS.REPAIR_PICKUP_IN_TRANSIT && String(order.repair_pickup_employee_id) === String(user?.id)) ||
+          (order.status === ORDER_STATUS.REPAIR_DELIVERY_IN_TRANSIT && String(order.repair_delivery_employee_id) === String(user?.id))) ? (
+          <View
+            className="mb-4 flex-row items-center rounded-3xl p-4"
+            style={{ backgroundColor: colors.primaryLight }}
+          >
+            <Ionicons name="navigate-circle-outline" size={20} color={colors.primary} />
+            <Text className="text-xs font-semibold ml-2.5 flex-1" style={{ color: colors.text }}>
+              {t('orderDetail.liveTrackingActive')}
+            </Text>
+          </View>
+        ) : null}
+
         <OrderSummaryCard order={order} isTailorRole={isTailorRole} />
 
         {!isTailorRole ? <OrderAddressCard order={order} /> : null}

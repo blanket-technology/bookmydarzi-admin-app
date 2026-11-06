@@ -248,6 +248,7 @@
     "loadingOrder": "Loading order...",
     "loadingTimeline": "Loading timeline...",
     "timeline": "Timeline",
+    "liveTrackingActive": "Live tracking active - the customer can see your location and ETA on a map",
     "failedToLoad": "Failed to load order",
     "notFound": "Order not found",
     "goBack": "Go Back",
