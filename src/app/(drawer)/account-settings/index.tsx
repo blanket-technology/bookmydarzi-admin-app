@@ -115,7 +115,7 @@ export default function AccountSettingsScreen() {
 
   const onUpdateProfile = (data: ProfileForm) => {
     updateMutation.mutate(
-      { FirstName: data.firstName, LastName: data.lastName },
+      { first_name: data.firstName, last_name: data.lastName },
       {
         onSuccess: () => toast.success(t('profile.profileUpdated')),
         onError: (error) => toast.error(getMutationError(error)),

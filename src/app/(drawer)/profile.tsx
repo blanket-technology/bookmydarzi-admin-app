@@ -233,6 +233,13 @@ function TailorProfileSection() {
   const { t } = useAppLanguage();
   const { data: tailorProfile, isLoading } = useMyTailorProfile();
   const updateMutation = useUpdateMyTailorProfileMutation();
+  // Bug fix: availability used to be local Switch state only, bundled into
+  // the full-form PATCH and sent only when "Save Changes" was pressed - a
+  // tailor who toggled it then navigated away without saving lost the
+  // change with no warning. The toggle now fires its own PATCH immediately
+  // on change, independent of the specialization/experience/location/bio
+  // form below, and reverts itself if that call fails.
+  const availabilityMutation = useUpdateMyTailorProfileMutation();
   const [isAvailable, setIsAvailable] = useState(true);
 
   const form = useForm<TailorProfileForm>({
@@ -249,13 +256,21 @@ function TailorProfileSection() {
     if (tailorProfile) setIsAvailable(tailorProfile.IsAvailable);
   }, [tailorProfile]);
 
+  const onToggleAvailable = (next: boolean) => {
+    const previous = isAvailable;
+    setIsAvailable(next);
+    availabilityMutation.mutate(
+      { is_available: next },
+      { onError: () => setIsAvailable(previous) },
+    );
+  };
+
   const onSave = (data: TailorProfileForm) => {
     updateMutation.mutate({
       specialization: data.specialization?.trim() || undefined,
       experience: data.experience ? Number(data.experience) : undefined,
       location: data.location?.trim() || undefined,
       bio: data.bio?.trim() || undefined,
-      is_available: isAvailable,
     });
   };
 
@@ -313,8 +328,17 @@ function TailorProfileSection() {
           )}
         />
 
-        <View className="flex-row items-center justify-between py-2 mb-3">
-          <View>
+        <Button
+          title={t('profile.saveChanges')}
+          onPress={() => void form.handleSubmit(onSave)()}
+          loading={updateMutation.isPending}
+          fullWidth
+        />
+      </Card>
+
+      <Card className="mb-4">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-1 mr-3">
             <Text className="text-sm font-semibold" style={{ color: colors.text }}>
               {t('profile.availableForOrders')}
             </Text>
@@ -322,15 +346,13 @@ function TailorProfileSection() {
               {t('profile.availableForOrdersHint')}
             </Text>
           </View>
-          <Switch value={isAvailable} onValueChange={setIsAvailable} trackColor={{ true: colors.primary }} />
+          <Switch
+            value={isAvailable}
+            onValueChange={onToggleAvailable}
+            disabled={availabilityMutation.isPending}
+            trackColor={{ true: colors.primary }}
+          />
         </View>
-
-        <Button
-          title={t('profile.saveChanges')}
-          onPress={() => void form.handleSubmit(onSave)()}
-          loading={updateMutation.isPending}
-          fullWidth
-        />
       </Card>
 
       <PortfolioSection images={tailorProfile?.PortfolioImages ?? []} />

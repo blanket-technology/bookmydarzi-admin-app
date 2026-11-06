@@ -92,6 +92,18 @@ export const useOrder = (orderId: string, enabled = true) =>
     enabled: enabled && !!orderId,
   });
 
+// Real status timeline (timestamp + reason per step) - the data behind
+// "when did this happen" / "what was the issue", for any role that can
+// view the order (customer, the order's own tailor, employee, admin).
+// Used to fill the gap OrderStepper intentionally leaves blank for
+// off-path orders (cancelled, returned, repair) - see OrderTrackingTimeline.
+export const useOrderTracking = (orderId: string, enabled = true) =>
+  useQuery({
+    queryKey: QUERY_KEYS.ORDER_TRACKING(orderId),
+    queryFn: () => orderService.getOrderTracking(orderId),
+    enabled: enabled && !!orderId,
+  });
+
 // Active add-ons available for the specific service booked on this order
 // item - used by AddOrderAddonSheet so the employee picks from the real
 // catalog for that service, not a free-text guess. Public endpoint (no

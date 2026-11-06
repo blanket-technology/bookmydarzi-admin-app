@@ -246,6 +246,8 @@
   "orderDetail": {
     "title": "ऑर्डर विवरण",
     "loadingOrder": "ऑर्डर लोड हो रहा है...",
+    "loadingTimeline": "टाइमलाइन लोड हो रही है...",
+    "timeline": "टाइमलाइन",
     "failedToLoad": "ऑर्डर लोड नहीं हो सका",
     "notFound": "ऑर्डर नहीं मिला",
     "goBack": "वापस जाएं",

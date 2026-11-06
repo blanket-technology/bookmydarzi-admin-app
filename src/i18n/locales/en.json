@@ -246,6 +246,8 @@
   "orderDetail": {
     "title": "Order Details",
     "loadingOrder": "Loading order...",
+    "loadingTimeline": "Loading timeline...",
+    "timeline": "Timeline",
     "failedToLoad": "Failed to load order",
     "notFound": "Order not found",
     "goBack": "Go Back",

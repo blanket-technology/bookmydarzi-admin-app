@@ -53,9 +53,11 @@ import { UpdateProgressSheet } from '@/features/orders/components/UpdateProgress
 import { ProgressPhotosSection } from '@/features/orders/components/ProgressPhotosSection';
 import { PendingOfferCard } from '@/features/orders/components/PendingOfferCard';
 import { OrderStepper } from '@/features/orders/components/OrderStepper';
+import { OrderTrackingTimeline } from '@/features/orders/components/OrderTrackingTimeline';
 import { OrderSummaryCard } from '@/features/orders/components/OrderSummaryCard';
 import { StickyActionBar } from '@/features/orders/components/StickyActionBar';
 import { orderNextStepHint } from '@/features/orders/workflowHints';
+import { OFF_PATH_STATUSES } from '@/features/orders/workflow';
 import { OrderAddressCard } from '@/features/orders/components/OrderAddressCard';
 import { OrderNotesCard } from '@/features/orders/components/OrderNotesCard';
 import { RepairRequestCard } from '@/features/orders/components/RepairRequestCard';
@@ -461,12 +463,21 @@ export default function OrderDetailsScreen() {
           />
         ) : null}
 
-        <View
-          className="rounded-3xl border px-3 pt-4 pb-3 mb-4"
-          style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        >
-          <OrderStepper status={order.status} />
-        </View>
+        {!OFF_PATH_STATUSES.has(String(order.status)) ? (
+          <View
+            className="rounded-3xl border px-3 pt-4 pb-3 mb-4"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          >
+            <OrderStepper status={order.status} />
+          </View>
+        ) : (
+          // OrderStepper deliberately renders nothing for an order that's
+          // left the happy path (cancelled/return/repair) - this is the
+          // real replacement: the actual per-step timeline with timestamps
+          // and the real reason, for every role (tailor included) that can
+          // view this order. Previously nothing filled this gap at all.
+          <OrderTrackingTimeline orderId={order.order_id} />
+        )}
 
         <OrderSummaryCard order={order} isTailorRole={isTailorRole} />
 

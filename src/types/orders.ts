@@ -469,3 +469,46 @@ export interface DeliveryPaymentStatus {
   expires_at?: string | null;
   transaction_id?: string | null;
 }
+
+// GET /orders/{id}/tracking - the real ORDER_TRACKING timeline (status,
+// timestamp, note/reason per step), already built server-side for every
+// role assert_can_view_order allows (customer, the order's own tailor,
+// employee, admin) - see app/services/orders/order_tracking_builder.py.
+export interface OrderTimelinePartner {
+  name: string;
+  photo_url?: string | null;
+  mobile?: string | null;
+}
+
+export interface OrderTimelineStage {
+  status: string;
+  title: string;
+  description?: string | null;
+  completed: boolean;
+  current: boolean;
+  /** ISO-8601 when this stage was reached. */
+  timestamp?: string | null;
+  /** Extra context - currently only set on 'cancelled', carrying the real reason. */
+  note?: string | null;
+  partner?: OrderTimelinePartner | null;
+}
+
+export interface OrderCurrentStage {
+  current_stage: string;
+  title: string;
+  description: string;
+}
+
+export interface OrderTracking {
+  order_id: number;
+  order_code: string;
+  status: string;
+  current_status: string;
+  current_stage: OrderCurrentStage;
+  expected_delivery_date?: string | null;
+  display_eta?: string | null;
+  can_report_issue: boolean;
+  inspection_window_expires_at?: string | null;
+  can_reschedule: boolean;
+  timeline: OrderTimelineStage[];
+}

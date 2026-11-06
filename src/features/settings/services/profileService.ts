@@ -21,6 +21,20 @@ export interface UserProfile {
   IsMobileVerified?: boolean;
 }
 
+// PATCH /users/profile request shape - the backend's UpdateProfileRequest
+// schema only recognizes these snake_case fields (bug fix: this call used
+// to send Partial<UserProfile>'s PascalCase keys, which the backend
+// silently ignored since it has no unknown-field fields - the request
+// returned 200 but never updated anything).
+export interface ProfileUpdateRequest {
+  first_name?: string;
+  last_name?: string;
+  profile_image?: string;
+  gender?: string;
+  email?: string;
+  default_gstin?: string;
+}
+
 export interface RequestEmailChangePayload {
   new_email: string;
   password?: string;
@@ -47,7 +61,7 @@ export const profileService = {
     return data;
   },
 
-  updateProfile: async (payload: Partial<UserProfile>) => {
+  updateProfile: async (payload: ProfileUpdateRequest) => {
     const { data } = await apiClient.patch(ENDPOINTS.USERS.PROFILE, payload);
     return data;
   },

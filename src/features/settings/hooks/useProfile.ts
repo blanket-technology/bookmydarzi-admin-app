@@ -3,9 +3,9 @@ import { QUERY_KEYS } from '@/constants/queryKeys';
 import {
   profileService,
   type ChangePasswordRequest,
+  type ProfileUpdateRequest,
   type RequestEmailChangePayload,
   type RequestMobileChangePayload,
-  type UserProfile,
   type VerifyEmailChangePayload,
   type VerifyMobileChangePayload,
 } from '@/features/settings/services/profileService';
@@ -19,7 +19,7 @@ export const useProfile = () =>
 export const useUpdateProfileMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Partial<UserProfile>) =>
+    mutationFn: (payload: ProfileUpdateRequest) =>
       profileService.updateProfile(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PROFILE });

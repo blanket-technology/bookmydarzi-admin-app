@@ -245,6 +245,7 @@ export const ENDPOINTS = {
   ORDERS: {
     MY_ORDERS: '/api/v1/orders/my-orders',
     DETAIL: (orderId: string) => `/api/v1/orders/${orderId}`,
+    TRACKING: (orderId: string) => `/api/v1/orders/${orderId}/tracking`,
     UPDATE_STATUS: (orderId: string) => `/api/v1/orders/${orderId}/status`,
     COMPLETE_REPAIR: (orderId: string) => `/api/v1/orders/${orderId}/complete-repair`,
     PHOTOS: (orderId: string) => `/api/v1/orders/${orderId}/photos`,

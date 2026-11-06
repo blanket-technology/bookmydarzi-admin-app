@@ -2,6 +2,7 @@ export const QUERY_KEYS = {
   DASHBOARD: ['dashboard'] as const,
   ORDERS: (params?: Record<string, unknown>) => ['orders', params] as const,
   ORDER: (id: string) => ['order', id] as const,
+  ORDER_TRACKING: (id: string) => ['order', id, 'tracking'] as const,
   USERS: (params?: Record<string, unknown>) => ['users', params] as const,
   USER: (id: string) => ['user', id] as const,
   STAFF: (params?: Record<string, unknown>) => ['staff', params] as const,

@@ -18,6 +18,7 @@ import type {
   OrderBroadcastStatus,
   OrderNotesRequest,
   OrderStatusUpdateRequest,
+  OrderTracking,
   OrdersQueryParams,
   RejectOrderRequest,
   SchedulePickupRequest,
@@ -133,6 +134,14 @@ export const orderService = {
   getOrderById: async (orderId: string): Promise<AdminOrderItem> => {
     const { data } = await apiClient.get<MyOrderItem>(ENDPOINTS.ORDERS.DETAIL(orderId));
     return normalizeOrderResponse(data);
+  },
+
+  // Real ORDER_TRACKING timeline (status + timestamp + reason per step) -
+  // same access rules as getOrderById, safe for any role (customer, the
+  // order's own tailor, employee, admin). See types/orders.ts OrderTracking.
+  getOrderTracking: async (orderId: string): Promise<OrderTracking> => {
+    const { data } = await apiClient.get<OrderTracking>(ENDPOINTS.ORDERS.TRACKING(orderId));
+    return data;
   },
 
   // Tailor-scoped order list — backend excludes TAILOR from GET /admin/orders,
