@@ -226,6 +226,7 @@ export default function OrdersScreen() {
       <Header
         title={t('orders.title')}
         subtitle={t('orders.totalOrders', { count: data?.total ?? 0 })}
+        showBack
         rightAction={
           <Pressable
             onPress={() => setFilterVisible(true)}

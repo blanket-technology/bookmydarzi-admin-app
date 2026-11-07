@@ -139,7 +139,7 @@ export default function AccountSettingsScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title="Account Settings" subtitle="Security, contact details & personal info" />
+      <Header title="Account Settings" subtitle="Security, contact details & personal info" showBack showMenu={false} />
       <ScreenContent>
         <Card className="mb-4">
           <Text className="text-lg font-bold mb-1" style={{ color: colors.text }}>

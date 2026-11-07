@@ -271,6 +271,7 @@ export default function RepairPickupsScreen() {
       <Header
         title={t('repairPickups.title')}
         subtitle={isOnline ? t('pickups.pendingOffers', { count: offers.length }) : t('pickups.youAreOffline')}
+        showBack
       />
       <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
         <Card className="mb-4 flex-row items-center justify-between">

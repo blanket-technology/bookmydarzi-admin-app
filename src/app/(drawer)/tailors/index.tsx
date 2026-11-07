@@ -142,6 +142,7 @@ export default function TailorsScreen() {
       <Header
         title="Tailors"
         subtitle={view === 'list' ? `${data?.total ?? tailors.length} tailors` : `${workload.length} tailors · workload`}
+        showBack
         rightAction={
           <Pressable
             onPress={() => router.push('/(drawer)/tailors/add')}

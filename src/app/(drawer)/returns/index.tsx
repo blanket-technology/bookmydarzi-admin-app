@@ -271,7 +271,7 @@ export default function ReturnsScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title={t('returns.title')} subtitle={isOnline ? t('pickups.pendingOffers', { count: offers.length }) : t('pickups.youAreOffline')} />
+      <Header title={t('returns.title')} subtitle={isOnline ? t('pickups.pendingOffers', { count: offers.length }) : t('pickups.youAreOffline')} showBack />
       <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
         <Card className="mb-4 flex-row items-center justify-between">
           <View className="flex-1 mr-3">

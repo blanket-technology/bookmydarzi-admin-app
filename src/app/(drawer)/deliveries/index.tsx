@@ -285,7 +285,7 @@ export default function DeliveriesScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title={t('deliveries.title')} subtitle={isOnline ? t('pickups.pendingOffers', { count: offers.length }) : t('pickups.youAreOffline')} />
+      <Header title={t('deliveries.title')} subtitle={isOnline ? t('pickups.pendingOffers', { count: offers.length }) : t('pickups.youAreOffline')} showBack />
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ alignItems: 'center', paddingBottom: 24 }}

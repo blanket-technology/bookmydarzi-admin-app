@@ -73,6 +73,7 @@ export default function EmployeesScreen() {
       <Header
         title="Bridge"
         subtitle={`${data?.total ?? staff.length} staff members`}
+        showBack
         rightAction={
           <Pressable
             onPress={() => router.push('/(drawer)/employees/add')}

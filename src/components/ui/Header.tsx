@@ -11,12 +11,23 @@ interface HeaderProps {
   title: string;
   subtitle?: string;
   showMenu?: boolean;
-  /** Show a back arrow instead of the hamburger menu icon - for a
-   * drawer-level screen that's still commonly reached by navigating INTO
-   * it (e.g. Support, opened from a dashboard shortcut or a push
-   * notification) rather than only via the drawer itself. Falls back to
-   * the dashboard if there's no screen to go back to (e.g. this was the
-   * first screen after a cold-start deep link). */
+  /** Show a back arrow - for a drawer-level screen that's also commonly
+   * reached by navigating INTO it (e.g. Orders, Customers, Support,
+   * opened from a dashboard shortcut, a push notification, or drilling in
+   * from another screen) rather than only via the drawer itself. Falls
+   * back to the dashboard if there's no screen to go back to (e.g. this
+   * was the first screen after a cold-start deep link).
+   *
+   * When the screen is ALSO a real drawer menu item, pass showMenu (the
+   * default) alongside it so both controls render together - router.
+   * canGoBack() is not a reliable way to tell "came from the drawer" apart
+   * from "came from a drill-in" in an Expo Router + Drawer setup (a
+   * documented, version-dependent quirk - github.com/expo/expo/issues/38536),
+   * so rather than guess wrong in either direction, a dual-purpose screen
+   * just gets both the back arrow and the hamburger button, always
+   * correct regardless of how the user arrived. Pass showMenu={false}
+   * explicitly only for a screen that's genuinely never reached from the
+   * drawer (e.g. a true sub-screen with no drawer entry at all). */
   showBack?: boolean;
   rightAction?: React.ReactNode;
 }
@@ -34,7 +45,18 @@ export const Header = ({
   // Tablet/desktop show a permanent sidebar (see (drawer)/_layout), so a hamburger
   // that opens nothing would be a dead control.
   const { isTablet } = useResponsive();
-  const showMenuButton = !showBack && showMenu && !isTablet;
+  const showMenuButton = showMenu && !isTablet;
+
+  const iconButtonStyle = {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderWidth: 1,
+  };
 
   return (
     <View
@@ -56,38 +78,19 @@ export const Header = ({
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Go back"
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: 12,
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderWidth: 1,
-            }}
+            style={[iconButtonStyle, { marginRight: showBack && showMenuButton ? 8 : 12 }]}
           >
             <Ionicons name="arrow-back" size={20} color={colors.text} />
           </Pressable>
-        ) : showMenuButton ? (
+        ) : null}
+        {showMenuButton ? (
           <Pressable
             onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
             pressScale={0.92}
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Open navigation menu"
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: 12,
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderWidth: 1,
-            }}
+            style={[iconButtonStyle, { marginRight: 12 }]}
           >
             <Ionicons name="menu" size={22} color={colors.text} />
           </Pressable>

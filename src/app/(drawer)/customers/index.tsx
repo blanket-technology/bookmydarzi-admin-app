@@ -90,7 +90,7 @@ export default function CustomersScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title="Customers" subtitle={`${data?.total ?? users.length} customers`} />
+      <Header title="Customers" subtitle={`${data?.total ?? users.length} customers`} showBack />
       <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
         <SearchBar
           value={search}

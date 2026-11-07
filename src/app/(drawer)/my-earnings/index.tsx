@@ -27,7 +27,7 @@ function BridgeEarningsComingSoon() {
   const { colors } = useTheme();
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title="My Earnings" />
+      <Header title="My Earnings" showBack />
       <View className="flex-1 items-center justify-center px-8">
         <View
           className="w-24 h-24 rounded-full items-center justify-center mb-6"
@@ -122,7 +122,7 @@ export default function MyEarningsScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title="My Earnings" subtitle="Your real payout history" />
+      <Header title="My Earnings" subtitle="Your real payout history" showBack />
       <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
         {summaryLoading ? (
           <View className="mb-4">

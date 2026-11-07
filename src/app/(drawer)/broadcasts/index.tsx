@@ -122,7 +122,7 @@ export default function BroadcastsScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Header title="Broadcasts" subtitle={isOnline ? `${offers.length} pending offers` : 'You are offline'} />
+      <Header title="Broadcasts" subtitle={isOnline ? `${offers.length} pending offers` : 'You are offline'} showBack />
       <View className="px-5 flex-1 w-full self-center" style={{ maxWidth: contentMaxWidth }}>
         <Card className="mb-4 flex-row items-center justify-between">
           <View className="flex-1 mr-3">
