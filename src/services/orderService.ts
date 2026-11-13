@@ -50,6 +50,8 @@ function normalizeOrderResponse(item: MyOrderItem): AdminOrderItem {
     final_amount: item.FinalAmount,
     booking_amount: item.BookingAmount,
     remaining_amount: item.RemainingAmount,
+    delivery_priority: item.DeliveryPriority ?? null,
+    delivery_charge: item.DeliveryCharge ?? undefined,
     customer_gstin: item.CustomerGstin ?? null,
     gstin_editable: item.GstinEditable ?? true,
     tailor_id: item.TailorId != null ? String(item.TailorId) : undefined,

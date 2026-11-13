@@ -97,6 +97,13 @@ export const OrderSummaryCard = ({ order, isTailorRole = false }: { order: Admin
           {typeof order.remaining_amount === 'number' && order.remaining_amount > 0 && (
             <DetailRow label={t('orders.balanceDue')} value={formatCurrency(order.remaining_amount)} colors={colors} />
           )}
+          {typeof order.delivery_charge === 'number' && order.delivery_charge > 0 && (
+            <DetailRow
+              label={t('orderSummary.deliveryCharge')}
+              value={`${formatCurrency(order.delivery_charge)} (${capitalize(order.delivery_priority ?? 'priority')})`}
+              colors={colors}
+            />
+          )}
         </>
       ) : null}
       <DetailRow label={t('orderSummary.urgency')} value={capitalize(order.urgency_level ?? '—')} colors={colors} />

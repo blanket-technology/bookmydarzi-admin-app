@@ -224,6 +224,7 @@
     "category": "Category",
     "alterationType": "Alteration Type",
     "payment": "Payment",
+    "deliveryCharge": "Delivery charge",
     "urgency": "Urgency",
     "created": "Created",
     "expectedDelivery": "Expected Delivery",

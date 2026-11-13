@@ -124,6 +124,12 @@ export interface AdminOrderItem {
   amount?: number;
   booking_amount?: number;
   remaining_amount?: number;
+  /** 'regular' (0%), 'priority' (+5%), or 'express' (+10%) - see
+   * app/constants/delivery_priority.py. Redacted (absent/0) for tailor,
+   * same as every other price field - order_response_builder.py's
+   * redact_order_response_for_tailor. */
+  delivery_priority?: string | null;
+  delivery_charge?: number;
   customer_gstin?: string | null;
   gstin_editable?: boolean;
   tailor_id?: string;
@@ -261,6 +267,8 @@ export interface MyOrderItem {
   FinalAmount: number;
   BookingAmount?: number;
   RemainingAmount?: number;
+  DeliveryPriority?: string | null;
+  DeliveryCharge?: number | null;
   CustomerGstin?: string | null;
   GstinEditable?: boolean;
   UrgencyLevel?: string | null;
