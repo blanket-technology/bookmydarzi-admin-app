@@ -4,20 +4,16 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Text, View } from 'react-native';
 import { z } from 'zod';
-import { Button, Card, Header, Input, PasswordInput, Pressable, ScreenContent } from '@/components/ui';
+import { Button, Card, Header, Input, Pressable, ScreenContent } from '@/components/ui';
 import { useLogoutMutation } from '@/features/auth/hooks/useAuthMutations';
 import { ChangeEmailSheet } from '@/features/settings/components/ChangeEmailSheet';
 import { ChangeMobileSheet } from '@/features/settings/components/ChangeMobileSheet';
-import {
-  useChangePasswordMutation,
-  useProfile,
-  useUpdateProfileMutation,
-} from '@/features/settings/hooks/useProfile';
+import { ChangePasswordSheet } from '@/features/settings/components/ChangePasswordSheet';
+import { useProfile, useUpdateProfileMutation } from '@/features/settings/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppLanguage } from '@/hooks/useAppLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/store/toastStore';
-import { newPasswordRule } from '@/features/auth/schemas/authSchemas';
 import { getMutationError } from '@/utils/errors';
 
 const profileSchema = z.object({
@@ -25,19 +21,7 @@ const profileSchema = z.object({
   lastName: z.string().trim().min(2, 'Enter at least 2 characters'),
 });
 
-const passwordSchema = z
-  .object({
-    oldPassword: z.string().min(6, 'Enter your current password'),
-    newPassword: newPasswordRule,
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  });
-
 type ProfileForm = z.infer<typeof profileSchema>;
-type PasswordForm = z.infer<typeof passwordSchema>;
 
 // Same tappable icon-left / value+chevron-right settings row Profile used
 // to render inline - moved here verbatim.
@@ -94,9 +78,8 @@ export default function AccountSettingsScreen() {
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const updateMutation = useUpdateProfileMutation();
-  const passwordMutation = useChangePasswordMutation();
   const logoutMutation = useLogoutMutation();
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordSheetVisible, setPasswordSheetVisible] = useState(false);
   const [emailSheetVisible, setEmailSheetVisible] = useState(false);
   const [mobileSheetVisible, setMobileSheetVisible] = useState(false);
 
@@ -108,30 +91,11 @@ export default function AccountSettingsScreen() {
     },
   });
 
-  const passwordForm = useForm<PasswordForm>({
-    resolver: zodResolver(passwordSchema),
-    defaultValues: { oldPassword: '', newPassword: '', confirmPassword: '' },
-  });
-
   const onUpdateProfile = (data: ProfileForm) => {
     updateMutation.mutate(
       { first_name: data.firstName, last_name: data.lastName },
       {
         onSuccess: () => toast.success(t('profile.profileUpdated')),
-        onError: (error) => toast.error(getMutationError(error)),
-      },
-    );
-  };
-
-  const onChangePassword = (data: PasswordForm) => {
-    passwordMutation.mutate(
-      { old_password: data.oldPassword, new_password: data.newPassword },
-      {
-        onSuccess: () => {
-          toast.success(t('profile.passwordChanged'));
-          passwordForm.reset();
-          setShowPasswordForm(false);
-        },
         onError: (error) => toast.error(getMutationError(error)),
       },
     );
@@ -168,41 +132,9 @@ export default function AccountSettingsScreen() {
               icon="lock-closed-outline"
               label={t('profile.password')}
               value="••••••••"
-              onPress={() => setShowPasswordForm((prev) => !prev)}
+              onPress={() => setPasswordSheetVisible(true)}
             />
           </View>
-
-          {showPasswordForm ? (
-            <View className="mt-4 pt-4 border-t" style={{ borderColor: colors.border }}>
-              <Controller
-                control={passwordForm.control}
-                name="oldPassword"
-                render={({ field: { onChange, value }, fieldState }) => (
-                  <PasswordInput label={t('profile.currentPassword')} value={value} onChangeText={onChange} error={fieldState.error?.message} />
-                )}
-              />
-              <Controller
-                control={passwordForm.control}
-                name="newPassword"
-                render={({ field: { onChange, value }, fieldState }) => (
-                  <PasswordInput label={t('profile.newPassword')} value={value} onChangeText={onChange} error={fieldState.error?.message} />
-                )}
-              />
-              <Controller
-                control={passwordForm.control}
-                name="confirmPassword"
-                render={({ field: { onChange, value }, fieldState }) => (
-                  <PasswordInput label={t('profile.confirmPassword')} value={value} onChangeText={onChange} error={fieldState.error?.message} />
-                )}
-              />
-              <Button
-                title={t('profile.updatePassword')}
-                onPress={() => void passwordForm.handleSubmit(onChangePassword)()}
-                loading={passwordMutation.isPending}
-                fullWidth
-              />
-            </View>
-          ) : null}
         </Card>
 
         <Card className="mb-4">
@@ -247,6 +179,7 @@ export default function AccountSettingsScreen() {
         hasExistingEmail={Boolean(profile?.Email ?? user?.email)}
       />
       <ChangeMobileSheet visible={mobileSheetVisible} onClose={() => setMobileSheetVisible(false)} />
+      <ChangePasswordSheet visible={passwordSheetVisible} onClose={() => setPasswordSheetVisible(false)} />
     </View>
   );
 }
