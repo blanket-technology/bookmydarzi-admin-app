@@ -19,16 +19,24 @@ const SECTIONS: Section[] = [
     body: 'This app uses your name, mobile number, email, and role to identify you when you sign in. Depending on your role, you may also see customer delivery addresses, order details, progress photos you or a customer upload, and chat messages, so you can fulfil and manage orders.',
   },
   {
+    heading: 'Location',
+    body: "With your permission, this app uses your device's precise or approximate location to match you to nearby pickup/delivery jobs, show your live position to dispatch while a job is active, and let you go online/offline for new work. Location is not collected when you are signed out or marked offline.",
+  },
+  {
+    heading: 'Biometric unlock',
+    body: "If you enable Face ID/fingerprint app-lock, your device's own operating system handles the biometric match - we never receive or store your fingerprint or face data ourselves.",
+  },
+  {
     heading: 'How we use your information',
     body: "Your account details are used to sign you in, apply the correct permissions for your role, and attribute the actions you take (accepting orders, assigning tailors, updating order status) for support and audit purposes. Customer data you see while working is used only to fulfil that customer's order.",
   },
   {
     heading: 'Who we share it with',
-    body: 'Customer information visible in this app is shared only as needed within BookMyDarzi to fulfil orders - it is never sold or shared with third parties outside what is required to run the platform (e.g. Razorpay for payment processing on the customer side).',
+    body: 'Customer information visible in this app is shared only as needed within BookMyDarzi to fulfil orders - it is never sold or shared with third parties outside what is required to run the platform (e.g. Razorpay for payment processing on the customer side). Photos you upload are stored with ImageKit, our image hosting provider. Push notifications are delivered through Firebase Cloud Messaging, Google’s notification service - it receives only your device’s notification token, not your account data.',
   },
   {
     heading: 'Data retention',
-    body: 'Order records, chat messages, and audit logs are retained for as long as needed for operational and legal record-keeping. Progress photos are retained as part of the order history.',
+    body: 'Order records, chat messages, and audit logs are retained for as long as needed for operational and legal record-keeping. Progress photos are retained as part of the order history. Location data tied to a specific job is retained as part of that job’s delivery history; we do not keep a continuous location trail once you go offline.',
   },
   {
     heading: 'Accounts',
