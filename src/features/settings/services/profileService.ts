@@ -31,7 +31,6 @@ export interface ProfileUpdateRequest {
   last_name?: string;
   profile_image?: string;
   gender?: string;
-  email?: string;
   default_gstin?: string;
 }
 
